@@ -1,31 +1,47 @@
+import { useEffect, useState } from 'react';
+
 interface TitleScreenProps {
   onStart: () => void;
   onShowHowToPlay: () => void;
 }
 
+const BUTTON_REVEAL_DELAY_MS = 2000;
+
+/**
+ * ファーストビュー（FV.png）を全画面表示し、世界観を邪魔しないよう
+ * 操作ボタンは表示から少し間を置いてからフェードインさせる。
+ */
 function TitleScreen({ onStart, onShowHowToPlay }: TitleScreenProps) {
+  const [showActions, setShowActions] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowActions(true), BUTTON_REVEAL_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="screen title-screen">
-      <div className="title-screen__badge">2050</div>
-      <h1 className="title-screen__title">
-        近未来★
-        <br />
-        人生ゲーム
-      </h1>
-      <p className="title-screen__lead">
-        ルーレットを回して人生を進めよう。
-        <br />
-        AI・宇宙旅行・介護ロボット…
-        <br />
-        近未来の出来事があなたの人生を変える。
-      </p>
-      <button type="button" className="btn btn--primary btn--large" onClick={onStart}>
-        ゲームをはじめる
-      </button>
-      <button type="button" className="btn btn--ghost btn--large" onClick={onShowHowToPlay}>
-        遊び方を見る
-      </button>
-      <p className="title-screen__note">2〜4人であそべます</p>
+      <img src="/FV.png" alt="近未来★人生ゲーム" className="title-screen__fv-image" />
+
+      <div className={`title-screen__actions ${showActions ? 'title-screen__actions--visible' : ''}`}>
+        <button
+          type="button"
+          className="title-screen__cta title-screen__cta--primary"
+          onClick={onStart}
+          disabled={!showActions}
+        >
+          スタート
+        </button>
+        <button
+          type="button"
+          className="title-screen__cta title-screen__cta--ghost"
+          onClick={onShowHowToPlay}
+          disabled={!showActions}
+        >
+          遊び方
+        </button>
+        <p className="title-screen__note">2〜4人であそべます</p>
+      </div>
     </div>
   );
 }
