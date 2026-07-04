@@ -20,7 +20,8 @@ import type {
 } from '../types/game';
 import { STAT_KEYS } from '../types/game';
 
-export const BOARD_SIZE = 120;
+// 「1マス＝1歳」で統一：position 0（0歳・誕生）〜position 100（100歳）の101マス構成。
+export const BOARD_SIZE = 101;
 
 export const STAT_LABELS: Record<StatKey, string> = {
   money: '資産',
@@ -189,7 +190,7 @@ export function getLifeStageName(age: number): string {
   return findLifeStageMeta(age).name;
 }
 
-/** マス位置から人生ステージを判定する（盤面は0〜119マスがおおむね年齢と対応する尺度になっている）。 */
+/** マス位置から人生ステージを判定する（盤面は0〜100マス＝0〜100歳と1対1で対応する）。 */
 export function getBoardStage(position: number): LifeStage {
   return findLifeStageMeta(position).id;
 }
@@ -634,7 +635,7 @@ export function initializePlayers(inputs: PlayerSetupInput[]): Player[] {
     );
     const experienceBonus = ageDiff * AGE_HANDICAP_EXPERIENCE_PER_YEAR;
 
-    // 盤面は0〜119マスで人生全体（幼少期〜老後）を表すため、盤面上の「年齢」は
+    // 盤面は0〜100マス（1マス＝1歳）で人生全体（幼少期〜老後）を表すため、盤面上の「年齢」は
     // プレイヤーの実年齢ではなく、マス位置（＝人生の進み具合）と連動させる。
     // 実年齢はスタート補正（初期マス・初期経験値）の算出だけに使う。
     const player: Player = {
@@ -1104,7 +1105,7 @@ export function rankPlayers(players: Player[]): RankedPlayer[] {
 // ---------------------------------------------------------------------------
 // 80歳（=盤面position80）以降、老後・近未来エリアは固定ゴールを持たない。
 // ターンごとに確率判定を行い、ステータスに応じて選ばれた理由で「人生の卒業」を迎える。
-// 盤面の物理的な終端（position 119）に達した場合も、その時点で強制的に卒業扱いにする。
+// 盤面の物理的な終端（position 100＝100歳）に達した場合も、その時点で強制的に卒業扱いにする。
 
 export const ELDER_GRADUATION_START_AGE = 80;
 
@@ -1151,10 +1152,37 @@ export const GRADUATION_REASONS: GraduationReason[] = [
     title: '最終章',
     body: '長いセカンドライフを楽しみ、穏やかに卒業しました。',
   },
+  // 80歳未満でも、低確率で起こりうる「人生終了」イベント用の理由。
+  // 理不尽で嫌な印象にならないよう、老後の卒業と同じく静かで品のある言葉を選んでいる。
+  {
+    id: 'earlyAccident',
+    label: '不慮の事故',
+    title: '人生の卒業',
+    body: '突然の出来事により、志半ばで人生の幕を閉じることになりました。それでも、積み重ねてきた日々は確かなものでした。',
+  },
+  {
+    id: 'earlyIllness',
+    label: '病気',
+    title: '人生の卒業',
+    body: '病と向き合う日々の中で、静かに人生の幕を閉じました。短い時間の中にも、たしかな輝きがありました。',
+  },
+  {
+    id: 'earlyDisaster',
+    label: '災害',
+    title: '人生の卒業',
+    body: '思いがけない災害により、人生の幕を閉じることになりました。あなたが歩んできた道のりは、確かにここにありました。',
+  },
 ];
 
 export function getGraduationReason(id: string): GraduationReason {
   return GRADUATION_REASONS.find((r) => r.id === id) ?? GRADUATION_REASONS[3];
+}
+
+/** 80歳未満の「人生終了」イベントが発生した際、イベントのカテゴリに応じた理由を選ぶ。 */
+export function pickEarlyEndingReason(category: EventCategory): GraduationReason {
+  if (category === 'illness') return getGraduationReason('earlyIllness');
+  if (category === 'disaster') return getGraduationReason('earlyDisaster');
+  return getGraduationReason('earlyAccident');
 }
 
 /** 年代（80歳〜）とステータスから、その回の「卒業確率」を計算する。 */

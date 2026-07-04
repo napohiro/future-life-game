@@ -23,7 +23,7 @@ const EXTRA_SLOWDOWN_SPINS = 1; // 減速中にあと何周してから止まる
 const STOPPED_BOUNCE_MS = 320;
 const RESULT_PAUSE_MS = 600; // バウンド後、さらに余韻を持たせる時間（合計で停止後 約0.9秒 でコマが動き出す）
 const TICK_SOUND_INTERVAL_MS = 110;
-const NUMBER_RADIUS_PX = 46;
+const NUMBER_RADIUS_PX = 38;
 
 /**
  * 人生ゲーム風の盤面型ルーレット。

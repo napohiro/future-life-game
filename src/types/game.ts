@@ -116,6 +116,9 @@ export interface EventChoice {
   label: string;
   effects: StatEffects;
   statusEffects?: StatusEffects;
+  // このコマンドを選んだ場合に「人生終了」に至る確率（0〜1）。低確率・任意設定。
+  // 安全側の選択肢では設定しない（＝回避できる）ことで、プレイヤーの選択で軽減・回避できる余地を残す。
+  endsLifeChance?: number;
 }
 
 export interface GameEvent {
@@ -127,6 +130,8 @@ export interface GameEvent {
   squareType: SquareType;
   effects: StatEffects;
   statusEffects?: StatusEffects;
+  // 選択肢を持たないイベント自体が「人生終了」に至る確率（0〜1）。低確率・任意設定。
+  endsLifeChance?: number;
   // 人生ログにそのまま使う本文。「〇〇して、〇〇になった」のような一文。
   logText: string;
   rarity: Rarity;
@@ -247,6 +252,7 @@ export interface PendingEventResult {
   statusEffects?: StatusEffects;
   choiceLabel?: string;
   eventType: EventType;
+  endsLifeChance?: number;
 }
 
 export interface PendingBranchChoice {

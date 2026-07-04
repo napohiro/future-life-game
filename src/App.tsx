@@ -36,6 +36,7 @@ import {
   initializePlayers,
   isGameFinished,
   movePlayerPosition,
+  pickEarlyEndingReason,
   rollDice,
   rollGraduationCheck,
 } from './utils/gameLogic';
@@ -229,9 +230,16 @@ function App() {
       if (!prev.activeEvent) return prev;
       const effects = choice ? choice.effects : prev.activeEvent.effects;
       const statusEffects = choice ? choice.statusEffects : prev.activeEvent.statusEffects;
+      const endsLifeChance = choice ? choice.endsLifeChance : prev.activeEvent.endsLifeChance;
       return {
         ...prev,
-        pendingResult: { effects, statusEffects, choiceLabel: choice?.label, eventType: getEventType(prev.activeEvent) },
+        pendingResult: {
+          effects,
+          statusEffects,
+          endsLifeChance,
+          choiceLabel: choice?.label,
+          eventType: getEventType(prev.activeEvent),
+        },
       };
     });
   };
@@ -241,8 +249,12 @@ function App() {
       if (!prev.activeEvent || !prev.pendingResult || !prev.activePlayerIdForEvent) return prev;
       const event = prev.activeEvent;
       const result = prev.pendingResult;
+      // 選択（または選択肢のないイベント自体）に人生終了の確率が設定されている場合、
+      // ここで低確率抽選を行う。安全な選択肢を選べば endsLifeChance が付かないため、
+      // プレイヤーの選択次第で回避できる。
+      const rolledEarlyEnding = result.endsLifeChance !== undefined && Math.random() < result.endsLifeChance;
 
-      const updatedPlayers = prev.players.map((p) => {
+      let updatedPlayers = prev.players.map((p) => {
         if (p.id !== prev.activePlayerIdForEvent) return p;
         const withEffects = applyEffectsToPlayer(p, result.effects);
         const withStatusEffects = applyStatusEffectsToPlayer(withEffects, result.statusEffects);
@@ -259,10 +271,30 @@ function App() {
           effects: result.effects,
           statusEffects: result.statusEffects,
           category: event.category,
-          importance: isMilestoneSquare ? 'critical' : deriveImportance(event.rarity),
+          importance: isMilestoneSquare || rolledEarlyEnding ? 'critical' : deriveImportance(event.rarity),
           eventType: result.eventType,
         });
       });
+
+      if (rolledEarlyEnding) {
+        // 80歳未満でも起こりうる、低確率の「人生終了」。老後の卒業と同じ仕組み（pendingGraduation）を
+        // 再利用することで、人生新聞・人生ログ・最終ステータスの扱いや以降のターン除外を統一している。
+        const endingPlayer = updatedPlayers.find((p) => p.id === prev.activePlayerIdForEvent)!;
+        const reason = pickEarlyEndingReason(event.category);
+        updatedPlayers = updatedPlayers.map((p) =>
+          p.id === prev.activePlayerIdForEvent
+            ? { ...p, finished: true, graduationAge: endingPlayer.age, graduationReasonId: reason.id }
+            : p,
+        );
+        return {
+          ...prev,
+          players: updatedPlayers,
+          activeEvent: null,
+          pendingResult: null,
+          activePlayerIdForEvent: null,
+          pendingGraduation: { playerId: endingPlayer.id, playerName: endingPlayer.name, age: endingPlayer.age, reason },
+        };
+      }
 
       const finished = isGameFinished(updatedPlayers);
       const nextIndex = finished

@@ -804,11 +804,12 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   background: #fff;
   border-radius: 16px;
-  padding: 14px 18px 14px 16px;
+  padding: 18px 22px 18px 16px;
   box-shadow: 0 8px 20px rgba(31, 36, 48, 0.12);
+  overflow: hidden;
 }
 
 .roulette__info {
@@ -818,13 +819,13 @@
 
 .roulette-wheel-frame {
   position: relative;
-  width: 140px;
-  height: 140px;
+  width: 128px;
+  height: 128px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 6px;
+  margin: 10px 4px 8px;
   background: none;
   border: none;
   padding: 0;
@@ -847,10 +848,10 @@
 
 .roulette-wheel-pointer {
   position: absolute;
-  top: -6px;
+  top: -2px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 22px;
+  font-size: 18px;
   color: #1f2430;
   z-index: 5;
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
@@ -858,8 +859,8 @@
 
 .roulette-wheel {
   position: relative;
-  width: 126px;
-  height: 126px;
+  width: 112px;
+  height: 112px;
   border-radius: 50%;
   background: conic-gradient(
     from -30deg,
@@ -870,7 +871,7 @@
     #8b5cf6 240deg 300deg,
     #f5c518 300deg 360deg
   );
-  border: 5px solid #fff;
+  border: 4px solid #fff;
   box-shadow: 0 8px 20px rgba(31, 36, 48, 0.25), inset 0 0 0 2px rgba(31, 36, 48, 0.12);
   transition: none;
 }
@@ -927,7 +928,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 21px;
+  font-size: 18px;
   font-weight: 800;
   color: #fff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
@@ -938,21 +939,21 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #ffffff, #d9dfe8 70%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 14px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 0 0 2px rgba(31, 36, 48, 0.1);
   z-index: 4;
 }
 
 .roulette-wheel__tap-hint {
   position: absolute;
-  bottom: -8px;
+  bottom: -2px;
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
@@ -998,6 +999,36 @@
 .roulette__result-readout--placeholder {
   color: #8891a5;
   font-weight: 600;
+}
+
+@media (min-width: 640px) {
+  .roulette {
+    padding: 20px 26px 20px 20px;
+  }
+
+  .roulette-wheel-frame {
+    width: 160px;
+    height: 160px;
+  }
+
+  .roulette-wheel {
+    width: 142px;
+    height: 142px;
+  }
+
+  .roulette-wheel__number {
+    font-size: 22px;
+  }
+
+  .roulette-wheel__hub {
+    width: 38px;
+    height: 38px;
+    font-size: 17px;
+  }
+
+  .roulette-wheel-pointer {
+    font-size: 22px;
+  }
 }
 
 /* ---------- player card ---------- */
