@@ -15,6 +15,7 @@ import WorldSettings from './components/WorldSettings';
 import type {
   BranchRoute,
   EventChoice,
+  FateOutcome,
   GameSettings,
   GameState,
   MoveAnimationState,
@@ -35,8 +36,11 @@ import {
   getEventType,
   initializePlayers,
   isGameFinished,
+  mergeStatEffects,
+  mergeStatusEffects,
   movePlayerPosition,
   pickEarlyEndingReason,
+  pickFateOutcome,
   rollDice,
   rollGraduationCheck,
 } from './utils/gameLogic';
@@ -228,6 +232,21 @@ function App() {
   const handleChooseEventOption = (choice?: EventChoice) => {
     setGameState((prev) => {
       if (!prev.activeEvent) return prev;
+      const fateRoulette = choice ? choice.fateRoulette : prev.activeEvent.fateRoulette;
+      // 運命ルーレットが設定されている場合は、結果をすぐには確定せず、
+      // ルーレットを回してから（handleFateSettled経由で）結果を確定する。
+      if (fateRoulette) {
+        return {
+          ...prev,
+          pendingFateRoulette: {
+            fateRoulette,
+            baseEffects: choice ? choice.effects : prev.activeEvent.effects,
+            baseStatusEffects: choice ? choice.statusEffects : prev.activeEvent.statusEffects,
+            baseEndsLifeChance: choice ? choice.endsLifeChance : prev.activeEvent.endsLifeChance,
+            choiceLabel: choice?.label,
+          },
+        };
+      }
       const effects = choice ? choice.effects : prev.activeEvent.effects;
       const statusEffects = choice ? choice.statusEffects : prev.activeEvent.statusEffects;
       const endsLifeChance = choice ? choice.endsLifeChance : prev.activeEvent.endsLifeChance;
@@ -244,6 +263,38 @@ function App() {
     });
   };
 
+  // 運命ルーレットが回り始めるタイミングで、結果をあらかじめ1回だけ抽選する
+  // （移動用ルーレットのonRollと同じパターン：見た目の着地先を決めるため先に確定させる）。
+  const handleSpinFate = (): FateOutcome => {
+    const pending = gameState.pendingFateRoulette;
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    return pickFateOutcome(pending!.fateRoulette.outcomes, currentPlayer, pending!.fateRoulette.influenceStat);
+  };
+
+  // 運命ルーレットが完全に止まったら、選択の効果とルーレットの結果を合算し、通常の結果画面へ進む。
+  const handleFateSettled = (outcome: FateOutcome) => {
+    setGameState((prev) => {
+      if (!prev.pendingFateRoulette || !prev.activeEvent) return prev;
+      const pending = prev.pendingFateRoulette;
+      const effects = mergeStatEffects(pending.baseEffects, outcome.effects);
+      const statusEffects = mergeStatusEffects(pending.baseStatusEffects, outcome.statusEffects);
+      const endsLifeChance = outcome.endsLifeChance ?? pending.baseEndsLifeChance;
+      return {
+        ...prev,
+        pendingFateRoulette: null,
+        pendingResult: {
+          effects,
+          statusEffects,
+          endsLifeChance,
+          choiceLabel: pending.choiceLabel,
+          eventType: getEventType(prev.activeEvent),
+          fateOutcomeLabel: outcome.label,
+          fateSeverity: outcome.severity,
+        },
+      };
+    });
+  };
+
   const handleConfirmEventResult = () => {
     setGameState((prev) => {
       if (!prev.activeEvent || !prev.pendingResult || !prev.activePlayerIdForEvent) return prev;
@@ -253,6 +304,8 @@ function App() {
       // ここで低確率抽選を行う。安全な選択肢を選べば endsLifeChance が付かないため、
       // プレイヤーの選択次第で回避できる。
       const rolledEarlyEnding = result.endsLifeChance !== undefined && Math.random() < result.endsLifeChance;
+      // 運命ルーレットで大成功・大失敗を引いた場合は、人生新聞・人生ログで目立つよう重要度を上げる。
+      const isBigFateResult = result.fateSeverity === 'greatSuccess' || result.fateSeverity === 'greatFailure';
 
       let updatedPlayers = prev.players.map((p) => {
         if (p.id !== prev.activePlayerIdForEvent) return p;
@@ -271,8 +324,10 @@ function App() {
           effects: result.effects,
           statusEffects: result.statusEffects,
           category: event.category,
-          importance: isMilestoneSquare || rolledEarlyEnding ? 'critical' : deriveImportance(event.rarity),
+          importance: isMilestoneSquare || rolledEarlyEnding || isBigFateResult ? 'critical' : deriveImportance(event.rarity),
           eventType: result.eventType,
+          fateOutcomeLabel: result.fateOutcomeLabel,
+          fateSeverity: result.fateSeverity,
         });
       });
 
@@ -450,8 +505,12 @@ function App() {
               age={gameState.players.find((p) => p.id === gameState.activePlayerIdForEvent)?.age ?? 0}
               squareType={activeDraw.squareType}
               result={gameState.pendingResult}
+              pendingFate={gameState.pendingFateRoulette}
+              soundEnabled={soundEnabled}
               onChoose={handleChooseEventOption}
               onConfirm={handleConfirmEventResult}
+              onSpinFate={handleSpinFate}
+              onFateSettled={handleFateSettled}
             />
           )}
           {gameState.pendingBranchChoice && (

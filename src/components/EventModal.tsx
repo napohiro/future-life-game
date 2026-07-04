@@ -1,7 +1,10 @@
-import type { EventChoice, GameEvent, PendingEventResult, SquareType, StatKey } from '../types/game';
+import FateRoulette from './FateRoulette';
+import type { EventChoice, FateOutcome, GameEvent, PendingEventResult, PendingFateRoulette, SquareType, StatKey } from '../types/game';
 import {
   EVENT_TYPE_ICONS,
   EVENT_TYPE_LABELS,
+  FATE_SEVERITY_ICONS,
+  FATE_SEVERITY_LABELS,
   SQUARE_TYPE_META,
   STAT_ICONS,
   STAT_LABELS,
@@ -16,8 +19,12 @@ interface EventModalProps {
   age: number;
   squareType: SquareType;
   result: PendingEventResult | null;
+  pendingFate: PendingFateRoulette | null;
+  soundEnabled: boolean;
   onChoose: (choice?: EventChoice) => void;
   onConfirm: () => void;
+  onSpinFate: () => FateOutcome;
+  onFateSettled: (outcome: FateOutcome) => void;
 }
 
 const RARITY_BADGE: Record<GameEvent['rarity'], string | null> = {
@@ -50,7 +57,18 @@ const MOOD_BANNER: Partial<Record<SquareType, { text: string; className: string 
   work: { text: '💼 仕事にまつわる出来事', className: 'modal__mood-banner--work' },
 };
 
-function EventModal({ event, age, squareType, result, onChoose, onConfirm }: EventModalProps) {
+function EventModal({
+  event,
+  age,
+  squareType,
+  result,
+  pendingFate,
+  soundEnabled,
+  onChoose,
+  onConfirm,
+  onSpinFate,
+  onFateSettled,
+}: EventModalProps) {
   const squareMeta = SQUARE_TYPE_META[squareType];
   const rarityBadge = RARITY_BADGE[event.rarity];
   const milestone = getBoardMilestone(age);
@@ -81,7 +99,15 @@ function EventModal({ event, age, squareType, result, onChoose, onConfirm }: Eve
             <h3 className="modal__title">{event.title}</h3>
             <p className="modal__description">{event.description}</p>
 
-            {event.choices ? (
+            {pendingFate ? (
+              <FateRoulette
+                title={pendingFate.fateRoulette.title}
+                outcomes={pendingFate.fateRoulette.outcomes}
+                soundEnabled={soundEnabled}
+                onSpin={onSpinFate}
+                onSettled={onFateSettled}
+              />
+            ) : event.choices ? (
               <div className="modal__choices">
                 {event.choices.map((choice) => (
                   <button
@@ -110,6 +136,14 @@ function EventModal({ event, age, squareType, result, onChoose, onConfirm }: Eve
             </div>
             <h3 className="modal__title">{event.title}</h3>
             {result.choiceLabel && <p className="modal__choice-label">選択：{result.choiceLabel}</p>}
+            {result.fateOutcomeLabel && result.fateSeverity && (
+              <div className={`modal__fate-result modal__fate-result--${result.fateSeverity}`}>
+                <span className="modal__fate-result-icon">{FATE_SEVERITY_ICONS[result.fateSeverity]}</span>
+                <span className="modal__fate-result-label">
+                  運命の結果：{result.fateOutcomeLabel}（{FATE_SEVERITY_LABELS[result.fateSeverity]}）
+                </span>
+              </div>
+            )}
 
             <ul className="modal__effects">
               {(Object.keys(result.effects) as StatKey[]).map((key) => {

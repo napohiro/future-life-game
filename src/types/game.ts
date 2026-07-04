@@ -111,6 +111,30 @@ export interface StatusEffects {
   housingStatus?: string;
 }
 
+// 運命ルーレットの結果の重要度（見た目の色・アイコンに使う5段階）。
+export type FateSeverity = 'greatSuccess' | 'success' | 'neutral' | 'failure' | 'greatFailure';
+
+export interface FateOutcome {
+  id: string;
+  label: string;
+  severity: FateSeverity;
+  // 抽選の基準重み。プレイヤーのステータス（influenceStat）に応じて少しだけ補正される。
+  weight: number;
+  effects: StatEffects;
+  statusEffects?: StatusEffects;
+  // この結果に至った場合の「人生終了」確率（0〜1）。最も厳しい結果（greatFailure）にのみ設定するのが基本。
+  endsLifeChance?: number;
+}
+
+// どのステータスが結果の出やすさに少し影響するか（例：健康が高いほど健康リスク系の良い結果が出やすい）。
+export type FateInfluenceStat = 'health' | 'trust' | 'money' | 'aiAffinity';
+
+export interface FateRoulette {
+  title: string;
+  outcomes: FateOutcome[];
+  influenceStat?: FateInfluenceStat;
+}
+
 export interface EventChoice {
   id: string;
   label: string;
@@ -119,6 +143,8 @@ export interface EventChoice {
   // このコマンドを選んだ場合に「人生終了」に至る確率（0〜1）。低確率・任意設定。
   // 安全側の選択肢では設定しない（＝回避できる）ことで、プレイヤーの選択で軽減・回避できる余地を残す。
   endsLifeChance?: number;
+  // 設定されている場合、選択直後に結果を確定せず、運命ルーレットを表示してから結果を確定する。
+  fateRoulette?: FateRoulette;
 }
 
 export interface GameEvent {
@@ -132,6 +158,8 @@ export interface GameEvent {
   statusEffects?: StatusEffects;
   // 選択肢を持たないイベント自体が「人生終了」に至る確率（0〜1）。低確率・任意設定。
   endsLifeChance?: number;
+  // 選択肢を持たないイベント自体に運命ルーレットを設定する場合に使う。
+  fateRoulette?: FateRoulette;
   // 人生ログにそのまま使う本文。「〇〇して、〇〇になった」のような一文。
   logText: string;
   rarity: Rarity;
@@ -156,6 +184,9 @@ export interface LifeLogEntry {
   category: EventCategory;
   importance: LogImportance;
   eventType: EventType;
+  // 運命ルーレットを経た結果の場合のみ設定される。
+  fateOutcomeLabel?: string;
+  fateSeverity?: FateSeverity;
 }
 
 export interface Player {
@@ -253,6 +284,18 @@ export interface PendingEventResult {
   choiceLabel?: string;
   eventType: EventType;
   endsLifeChance?: number;
+  fateOutcomeLabel?: string;
+  fateSeverity?: FateSeverity;
+}
+
+// 選択肢（または選択肢のないイベント自体）に運命ルーレットが設定されていた場合、
+// 実際に回して結果が決まるまでの間だけ保持する一時的な状態。
+export interface PendingFateRoulette {
+  fateRoulette: FateRoulette;
+  baseEffects: StatEffects;
+  baseStatusEffects?: StatusEffects;
+  baseEndsLifeChance?: number;
+  choiceLabel?: string;
 }
 
 export interface PendingBranchChoice {
@@ -281,6 +324,7 @@ export interface GameState {
   activeEvent: GameEvent | null;
   activePlayerIdForEvent: string | null;
   pendingResult: PendingEventResult | null;
+  pendingFateRoulette: PendingFateRoulette | null;
   pendingBranchChoice: PendingBranchChoice | null;
   pendingGraduation: PendingGraduation | null;
   showLifeLog: boolean;

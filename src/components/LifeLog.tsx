@@ -4,6 +4,7 @@ import {
   EVENT_CATEGORY_LABELS,
   EVENT_TYPE_ICONS,
   EVENT_TYPE_LABELS,
+  FATE_SEVERITY_ICONS,
   STAT_ICONS,
   STATUS_FIELD_ICONS,
   formatLifeLogHeadline,
@@ -119,6 +120,11 @@ function LifeLog({ players, onClose }: LifeLogProps) {
               <div className="life-log__headline">{formatLifeLogHeadline(log)}</div>
               <div className="life-log__description">{log.eventDescription}</div>
               {log.choiceLabel && <div className="life-log__choice">選択：{log.choiceLabel}</div>}
+              {log.fateOutcomeLabel && log.fateSeverity && (
+                <div className={`life-log__fate-result life-log__fate-result--${log.fateSeverity}`}>
+                  {FATE_SEVERITY_ICONS[log.fateSeverity]} 運命の結果：{log.fateOutcomeLabel}
+                </div>
+              )}
               <div className="life-log__effects">
                 <EffectBadges effects={log.effects} statusEffects={log.statusEffects} />
               </div>

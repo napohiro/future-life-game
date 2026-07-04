@@ -1,3 +1,10 @@
+import {
+  HEALTH_RISK_FATE_ROULETTE,
+  INVESTMENT_FATE_ROULETTE,
+  JOB_CHANGE_FATE_ROULETTE,
+  RELATIONSHIP_FATE_ROULETTE,
+  TECH_FATE_ROULETTE,
+} from './fateRoulettes';
 import type { GameEvent } from '../types/game';
 
 // ============================================================
@@ -2029,8 +2036,8 @@ const nearFutureExpansionEvents: GameEvent[] = [
       {
         id: 'a',
         label: '転職する',
-        effects: { money: 10, freedom: -5, relationships: -15, actionPower: 10 },
-        statusEffects: { occupation: '大企業勤務', annualIncomeDelta: 80 },
+        effects: { relationships: -15, freedom: -5 },
+        fateRoulette: JOB_CHANGE_FATE_ROULETTE,
       },
       {
         id: 'b',
@@ -2205,8 +2212,8 @@ const nearFutureExpansionEvents: GameEvent[] = [
     eventType: 'choice',
     choices: [
       { id: 'a', label: '利益を確定する', effects: { money: 40, mentalStrength: 5 } },
-      { id: 'b', label: 'さらに賭ける', effects: { money: 80, luck: -10 } },
-      { id: 'c', label: '半分だけ確定する', effects: { money: 55, mentalStrength: 3 } },
+      { id: 'b', label: 'さらに投資する', effects: { luck: -5 }, fateRoulette: INVESTMENT_FATE_ROULETTE },
+      { id: 'c', label: '半分だけ確定する', effects: { money: 20, mentalStrength: 3 } },
     ],
   },
   {
@@ -2658,7 +2665,7 @@ const nearFutureExpansionEvents: GameEvent[] = [
     eventType: 'choice',
     choices: [
       { id: 'a', label: '危険な誘いを断る', effects: { mentalStrength: 5, relationships: -5 } },
-      { id: 'b', label: '挑戦してみる', effects: { happiness: 10, actionPower: 10, luck: -5 }, endsLifeChance: 0.005 },
+      { id: 'b', label: '挑戦してみる', effects: { happiness: 5 }, fateRoulette: HEALTH_RISK_FATE_ROULETTE },
     ],
   },
   {
@@ -2674,7 +2681,7 @@ const nearFutureExpansionEvents: GameEvent[] = [
     eventType: 'choice',
     choices: [
       { id: 'a', label: '治療を優先する', effects: { money: -15, health: 10 } },
-      { id: 'b', label: '忙しさを理由に先延ばしにする', effects: { money: 10, health: -20 }, endsLifeChance: 0.008 },
+      { id: 'b', label: '忙しさを理由に先延ばしにする', effects: { money: 10 }, fateRoulette: HEALTH_RISK_FATE_ROULETTE },
     ],
   },
   {
@@ -2690,7 +2697,7 @@ const nearFutureExpansionEvents: GameEvent[] = [
     eventType: 'choice',
     choices: [
       { id: 'a', label: '危険な誘いを断る', effects: { trust: 5 } },
-      { id: 'b', label: '誘いに乗ってしまう', effects: { money: 30, trust: -15 }, endsLifeChance: 0.006 },
+      { id: 'b', label: '誘いに乗ってしまう', effects: { trust: -15 }, fateRoulette: HEALTH_RISK_FATE_ROULETTE },
     ],
   },
   {
@@ -2706,7 +2713,7 @@ const nearFutureExpansionEvents: GameEvent[] = [
     eventType: 'choice',
     choices: [
       { id: 'a', label: '安全な避難行動を取る', effects: { mentalStrength: 5, money: -10 } },
-      { id: 'b', label: '様子を見に行く', effects: { money: 10 }, endsLifeChance: 0.01 },
+      { id: 'b', label: '様子を見に行く', effects: {}, fateRoulette: HEALTH_RISK_FATE_ROULETTE },
     ],
   },
   {
@@ -2722,7 +2729,7 @@ const nearFutureExpansionEvents: GameEvent[] = [
     eventType: 'choice',
     choices: [
       { id: 'a', label: 'すぐに精密検査を受ける', effects: { money: -20, health: 15 } },
-      { id: 'b', label: '先延ばしにする', effects: { money: 10, health: -15 }, endsLifeChance: 0.012 },
+      { id: 'b', label: '先延ばしにする', effects: { money: 10 }, fateRoulette: HEALTH_RISK_FATE_ROULETTE },
     ],
   },
   {
@@ -2738,7 +2745,42 @@ const nearFutureExpansionEvents: GameEvent[] = [
     eventType: 'choice',
     choices: [
       { id: 'a', label: '無理せずしっかり休む', effects: { health: 10, happiness: -5 } },
-      { id: 'b', label: '無理して活動を続ける', effects: { happiness: 10, actionPower: 10 }, endsLifeChance: 0.012 },
+      { id: 'b', label: '無理して活動を続ける', effects: { happiness: 5 }, fateRoulette: HEALTH_RISK_FATE_ROULETTE },
+    ],
+  },
+
+  // ---------------- 運命ルーレット連携イベント（恋愛・近未来テクノロジー） ----------------
+  {
+    id: 'nf-fate-love-01',
+    title: '気になる人から食事に誘われた',
+    description: '最近仲良くなった人から、食事に誘われました。少し緊張します。',
+    ageCategory: 'stage3',
+    category: 'love',
+    squareType: 'love',
+    effects: {},
+    logText: '気になる人からの誘いに、どう応じるか選んだ。',
+    rarity: 'common',
+    eventType: 'choice',
+    choices: [
+      { id: 'a', label: '誘いに乗ってみる', effects: {}, fateRoulette: RELATIONSHIP_FATE_ROULETTE },
+      { id: 'b', label: '今回は見送る', effects: { freedom: 5 } },
+    ],
+  },
+  {
+    id: 'nf-fate-tech-01',
+    title: '新しいAIガジェットの先行体験に招待された',
+    description: '発表されたばかりの近未来ガジェットを、先行して試せる機会が来ました。',
+    ageCategory: 'stage3',
+    category: 'ai',
+    squareType: 'aiEra',
+    effects: {},
+    logText: '新しいガジェットの先行体験に、どう向き合うか選んだ。',
+    rarity: 'common',
+    eventType: 'choice',
+    futureTag: 'ai-gadget',
+    choices: [
+      { id: 'a', label: '試してみる', effects: {}, fateRoulette: TECH_FATE_ROULETTE },
+      { id: 'b', label: '様子を見る', effects: { mentalStrength: 3 } },
     ],
   },
 ];

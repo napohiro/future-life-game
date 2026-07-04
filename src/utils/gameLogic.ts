@@ -3,6 +3,8 @@ import { getCategoryBoostsForRoutes } from '../data/branchRoutes';
 import type {
   EventCategory,
   EventType,
+  FateInfluenceStat,
+  FateOutcome,
   GameEvent,
   GameSettings,
   GameState,
@@ -760,6 +762,89 @@ export function getEventType(event: GameEvent): EventType {
   return 'growth';
 }
 
+// ---------------------------------------------------------------------------
+// 運命ルーレット（イベント専用の小型ルーレットで「運」の要素を決める）
+// ---------------------------------------------------------------------------
+
+const FATE_GOOD_SEVERITIES = ['greatSuccess', 'success'];
+const FATE_BAD_SEVERITIES = ['failure', 'greatFailure'];
+
+/** ステータス値を -1〜+1 の補正係数に正規化する（moneyだけ基準値が異なる）。 */
+function normalizedStatShift(player: Player, stat: FateInfluenceStat): number {
+  if (stat === 'money') {
+    return Math.max(-1, Math.min(1, (player.money - 500) / 1000));
+  }
+  return Math.max(-1, Math.min(1, (player[stat] - 50) / 50));
+}
+
+/**
+ * プレイヤーのステータスに応じて、運命ルーレットの結果の出やすさを少しだけ補正する。
+ * 例：健康が高いほど健康リスク系の良い結果が、信用が高いほど転職・人間関係の好結果が出やすくなる。
+ * ただし補正幅は±30%程度に抑え、あくまで「運」の要素が中心になるようにしている。
+ */
+function applyFateStatInfluence(outcomes: FateOutcome[], player: Player, influenceStat?: FateInfluenceStat): FateOutcome[] {
+  if (!influenceStat) return outcomes;
+  const shift = normalizedStatShift(player, influenceStat) * 0.3;
+  return outcomes.map((outcome) => {
+    if (FATE_GOOD_SEVERITIES.includes(outcome.severity)) {
+      return { ...outcome, weight: Math.max(1, outcome.weight * (1 + shift)) };
+    }
+    if (FATE_BAD_SEVERITIES.includes(outcome.severity)) {
+      return { ...outcome, weight: Math.max(1, outcome.weight * (1 - shift)) };
+    }
+    return outcome;
+  });
+}
+
+/** 運命ルーレットの結果を、プレイヤーのステータスによる軽い補正込みで抽選する。 */
+export function pickFateOutcome(outcomes: FateOutcome[], player: Player, influenceStat?: FateInfluenceStat): FateOutcome {
+  const influenced = applyFateStatInfluence(outcomes, player, influenceStat);
+  const total = influenced.reduce((sum, o) => sum + o.weight, 0);
+  let roll = Math.random() * total;
+  for (const outcome of influenced) {
+    roll -= outcome.weight;
+    if (roll <= 0) return outcome;
+  }
+  return influenced[influenced.length - 1];
+}
+
+/** 選択の効果（choice.effects）と運命ルーレットの結果（outcome.effects）を合算する。 */
+export function mergeStatEffects(base: StatEffects, extra: StatEffects): StatEffects {
+  const merged: StatEffects = { ...base };
+  (Object.keys(extra) as StatKey[]).forEach((key) => {
+    merged[key] = (merged[key] ?? 0) + (extra[key] ?? 0);
+  });
+  return merged;
+}
+
+/** 状態ステータス（職業・年収など）は、運命ルーレットの結果があればそちらを優先して上書きする。 */
+export function mergeStatusEffects(base?: StatusEffects, extra?: StatusEffects): StatusEffects | undefined {
+  if (!base && !extra) return undefined;
+  const merged: StatusEffects = { ...base };
+  if (extra?.occupation !== undefined) merged.occupation = extra.occupation;
+  if (extra?.romanceStatus !== undefined) merged.romanceStatus = extra.romanceStatus;
+  if (extra?.housingStatus !== undefined) merged.housingStatus = extra.housingStatus;
+  const incomeDelta = (base?.annualIncomeDelta ?? 0) + (extra?.annualIncomeDelta ?? 0);
+  if (incomeDelta !== 0) merged.annualIncomeDelta = incomeDelta;
+  return merged;
+}
+
+export const FATE_SEVERITY_LABELS: Record<FateOutcome['severity'], string> = {
+  greatSuccess: '大成功',
+  success: '成功',
+  neutral: '普通',
+  failure: '失敗',
+  greatFailure: '大失敗',
+};
+
+export const FATE_SEVERITY_ICONS: Record<FateOutcome['severity'], string> = {
+  greatSuccess: '🌟',
+  success: '✨',
+  neutral: '➖',
+  failure: '⚡',
+  greatFailure: '💥',
+};
+
 export function deriveImportance(rarity: Rarity): LogImportance {
   if (rarity === 'superRare') return 'critical';
   if (rarity === 'rare') return 'high';
@@ -1289,6 +1374,7 @@ export function createInitialGameState(): GameState {
     activeEvent: null,
     activePlayerIdForEvent: null,
     pendingResult: null,
+    pendingFateRoulette: null,
     pendingBranchChoice: null,
     pendingGraduation: null,
     showLifeLog: false,
