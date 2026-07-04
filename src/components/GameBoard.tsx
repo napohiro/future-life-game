@@ -73,7 +73,7 @@ function GameBoard({
     <StageBackground stage={currentStage} className="screen game-board">
       <div
         className="game-board__top"
-        style={currentVisual ? { borderColor: currentVisual.color } : undefined}
+        style={currentVisual ? { borderLeftColor: currentVisual.color } : undefined}
       >
         {currentPlayer && !currentPlayer.finished ? (
           <div className="game-board__turn">
@@ -81,22 +81,45 @@ function GameBoard({
               {currentVisual!.icon}
             </span>
             <div className="game-board__turn-text">
-              <strong>{currentPlayer.name}</strong> さんの番です
-              <div className="game-board__turn-stage">{getLifeStageName(currentPlayer.age)}・{currentPlayer.age}歳</div>
+              <div className="game-board__turn-name">{currentPlayer.name}さん</div>
+              <div className="game-board__turn-meta">
+                <span className="game-board__turn-badge">現在の番</span>
+                <span className="game-board__turn-stage">
+                  {getLifeStageName(currentPlayer.age)}・{currentPlayer.age}歳
+                </span>
+              </div>
             </div>
           </div>
         ) : (
           <span>ゲーム終了処理中…</span>
         )}
         <div className="game-board__top-actions">
-          <button type="button" className="btn btn--ghost btn--icon" onClick={onToggleSound} title="効果音のON/OFF">
+          <button
+            type="button"
+            className="btn--icon-round"
+            onClick={onToggleSound}
+            title="効果音のON/OFF"
+            aria-label="効果音のON/OFF"
+          >
             {soundEnabled ? '🔊' : '🔇'}
           </button>
-          <button type="button" className="btn btn--ghost btn--small" onClick={onShowNewspaper}>
-            人生新聞
+          <button
+            type="button"
+            className="btn--icon-round"
+            onClick={onShowNewspaper}
+            title="人生新聞"
+            aria-label="人生新聞"
+          >
+            📰
           </button>
-          <button type="button" className="btn btn--ghost btn--small" onClick={onShowLifeLog}>
-            人生ログ
+          <button
+            type="button"
+            className="btn--icon-round"
+            onClick={onShowLifeLog}
+            title="人生ログ"
+            aria-label="人生ログ"
+          >
+            📖
           </button>
         </div>
       </div>
