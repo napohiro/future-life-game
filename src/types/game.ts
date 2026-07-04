@@ -228,7 +228,6 @@ export interface LifeLogEntry {
 export interface Player {
   id: string;
   name: string;
-  birthDate: string; // ISO 'YYYY-MM-DD'
   age: number;
   position: number;
   money: number;
@@ -390,7 +389,6 @@ export interface GameState {
 
 export interface PlayerSetupInput {
   name: string;
-  birthDate: string;
 }
 
 // ルーレット後、コマが1マスずつ進む演出の間だけ保持する一時的な状態。

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { PlayerSetupInput } from '../types/game';
-import { calculateAge } from '../utils/gameLogic';
 
 interface PlayerSetupProps {
   onStart: (inputs: PlayerSetupInput[]) => void;
@@ -8,7 +7,7 @@ interface PlayerSetupProps {
 }
 
 function createEmptyInputs(count: number): PlayerSetupInput[] {
-  return Array.from({ length: count }, () => ({ name: '', birthDate: '' }));
+  return Array.from({ length: count }, () => ({ name: '' }));
 }
 
 function PlayerSetup({ onStart, onBack }: PlayerSetupProps) {
@@ -30,9 +29,7 @@ function PlayerSetup({ onStart, onBack }: PlayerSetupProps) {
     setInputs((prev) => prev.map((input, i) => (i === index ? { ...input, [field]: value } : input)));
   };
 
-  const today = new Date().toISOString().slice(0, 10);
-
-  const isValid = inputs.every((input) => input.name.trim().length > 0 && input.birthDate.length > 0);
+  const isValid = inputs.every((input) => input.name.trim().length > 0);
 
   const handleSubmit = () => {
     if (!isValid) return;
@@ -60,41 +57,25 @@ function PlayerSetup({ onStart, onBack }: PlayerSetupProps) {
       </div>
 
       <div className="player-setup__list">
-        {inputs.map((input, index) => {
-          const age = input.birthDate ? calculateAge(input.birthDate) : null;
-          return (
-            <div key={index} className="player-setup__card">
-              <div className="player-setup__card-title">プレイヤー{index + 1}</div>
-              <label className="field">
-                <span className="field__label">名前</span>
-                <input
-                  type="text"
-                  className="field__input"
-                  placeholder="例：たろう"
-                  maxLength={12}
-                  value={input.name}
-                  onChange={(e) => handleFieldChange(index, 'name', e.target.value)}
-                />
-              </label>
-              <label className="field">
-                <span className="field__label">誕生日</span>
-                <input
-                  type="date"
-                  className="field__input"
-                  max={today}
-                  value={input.birthDate}
-                  onChange={(e) => handleFieldChange(index, 'birthDate', e.target.value)}
-                />
-              </label>
-              {age !== null && <div className="player-setup__age">現在の年齢：{age}歳</div>}
-            </div>
-          );
-        })}
+        {inputs.map((input, index) => (
+          <div key={index} className="player-setup__card player-setup__card--name-only">
+            <div className="player-setup__card-title">プレイヤー{index + 1}</div>
+            <label className="field">
+              <span className="field__label">名前</span>
+              <input
+                type="text"
+                className="field__input"
+                placeholder="例：たろう"
+                maxLength={12}
+                value={input.name}
+                onChange={(e) => handleFieldChange(index, 'name', e.target.value)}
+              />
+            </label>
+          </div>
+        ))}
       </div>
 
-      <p className="player-setup__hint">
-        ※ 年齢差は最年長プレイヤーを基準にスタート補正されます（若いプレイヤーほど有利にスタート）。
-      </p>
+      <p className="player-setup__hint">※ 全員0歳からスタートします。年齢に応じて人生イベントが変化していきます。</p>
 
       <div className="player-setup__actions">
         <button type="button" className="btn btn--ghost" onClick={onBack}>

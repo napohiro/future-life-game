@@ -183,6 +183,28 @@ export const ENCOUNTER_FATE_ROULETTE: FateRoulette = {
   ],
 };
 
+// 近未来編（2050年）専用。再生医療・身体拡張・長寿治療など「延命につながる医療選択」用。
+// 受けない場合は何のリスクも無いが、受ける場合はギャンブル性を持たせている
+// （大失敗のみ ends LifeChance を持たせ、選択と運で回避・軽減できる余地を残す）。
+export const LONGEVITY_TREATMENT_FATE_ROULETTE: FateRoulette = {
+  title: '延命医療の運命',
+  influenceStat: 'health',
+  outcomes: [
+    { id: 'rejuvenated', label: '劇的に若返った', severity: 'greatSuccess', weight: 10, effects: { health: 30, happiness: 15, aiAffinity: 5 } },
+    { id: 'recovered', label: '順調に回復した', severity: 'success', weight: 28, effects: { health: 15, happiness: 5 } },
+    { id: 'no-change', label: '目立った変化は無かった', severity: 'neutral', weight: 32, effects: {} },
+    { id: 'side-effect', label: '副作用に悩まされた', severity: 'failure', weight: 22, effects: { health: -10, mentalStrength: -5 } },
+    {
+      id: 'complication',
+      label: '深刻な合併症が出た',
+      severity: 'greatFailure',
+      weight: 8,
+      effects: { health: -25, mentalStrength: -10 },
+      endsLifeChance: 0.15,
+    },
+  ],
+};
+
 // 近未来編（2050年）専用の大型抽選。AI企業株・宇宙旅行・火星移住など、
 // 金額に加えexperience/aiAffinityも動く近未来らしい効果配分にしている。
 export const FUTURE_LOTTERY_FATE_ROULETTE: FateRoulette = {

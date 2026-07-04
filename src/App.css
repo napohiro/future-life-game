@@ -273,6 +273,23 @@
   box-shadow: 0 2px 8px rgba(31, 36, 48, 0.06);
 }
 
+/* 生年月日欄が無くなった分、名前欄だけをコンパクトな横並びにする。 */
+.player-setup__card--name-only {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.player-setup__card--name-only .player-setup__card-title {
+  flex-shrink: 0;
+}
+
+.player-setup__card--name-only .field {
+  flex: 1;
+  min-width: 0;
+}
+
 .player-setup__card-title {
   font-weight: 700;
   color: #2f6fed;
@@ -297,12 +314,6 @@
   padding: 10px 12px;
   font-size: 15px;
   color: #1f2430;
-}
-
-.player-setup__age {
-  font-size: 13px;
-  color: #2f6fed;
-  font-weight: 600;
 }
 
 .player-setup__hint {

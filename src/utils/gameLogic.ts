@@ -25,8 +25,8 @@ import type {
 } from '../types/game';
 import { STAT_KEYS } from '../types/game';
 
-// 「1マス＝1歳」で統一：position 0（0歳・誕生）〜position 100（100歳）の101マス構成。
-export const BOARD_SIZE = 101;
+// 「1マス＝1歳」で統一：position 0（0歳・誕生）〜position 150（150歳）の151マス構成。
+export const BOARD_SIZE = 151;
 
 export const STAT_LABELS: Record<StatKey, string> = {
   money: '資産',
@@ -372,6 +372,9 @@ export const BOARD_MILESTONES: BoardMilestone[] = [
   { position: 40, icon: '🔀', title: '人生の転機' },
   { position: 60, icon: '🌅', title: '定年・再出発' },
   { position: 80, icon: '🌌', title: '老後・近未来' },
+  { position: 100, icon: '💯', title: '長寿の節目' },
+  { position: 120, icon: '🌟', title: '長寿の頂' },
+  { position: 150, icon: '🏁', title: '人生の集大成' },
 ];
 
 export function getBoardMilestone(position: number): BoardMilestone | undefined {
@@ -708,62 +711,30 @@ const INITIAL_ROMANCE_STATUS = '独身';
 const INITIAL_HOUSING_STATUS = '実家暮らし';
 const MAX_ANNUAL_INCOME = 3000; // 単位: 万円。極端な値で表示が壊れないよう上限を設ける
 
-// 年齢差によるスタート補正のパラメータ（将来チューニングしやすいよう定数化）
-// 最年長プレイヤーとの年齢差が大きい（=年下の）プレイヤーほど、
-// 序盤で足並みを揃えられるよう初期マスと初期経験値にボーナスを付与する。
-const AGE_HANDICAP_POSITION_DIVISOR = 8; // 年齢差8歳ごとに1マス前進ボーナス
-const AGE_HANDICAP_MAX_POSITION_BONUS = 6;
-const AGE_HANDICAP_EXPERIENCE_PER_YEAR = 2;
-
-export function calculateAge(birthDate: string, today: Date = new Date()): number {
-  const birth = new Date(birthDate);
-  let age = today.getFullYear() - birth.getFullYear();
-  const monthDiff = today.getMonth() - birth.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age -= 1;
-  }
-  return Math.max(0, age);
-}
-
 function createId(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 /**
  * プレイヤー入力から初期プレイヤー状態を作成する。
- * 最年長プレイヤーを基準に、年齢差に応じた初期マス・初期経験値の補正を行う。
+ * 全員position 0・age 0からスタートする（時代設定の開始年＋年齢＝現在の暦年はgetCalendarYearで表示用に算出する）。
  */
 export function initializePlayers(inputs: PlayerSetupInput[]): Player[] {
-  const ages = inputs.map((input) => calculateAge(input.birthDate));
-  const oldestAge = Math.max(...ages);
-
-  return inputs.map((input, index) => {
-    const realAge = ages[index];
-    const ageDiff = Math.max(0, oldestAge - realAge);
-    const positionBonus = Math.min(
-      Math.floor(ageDiff / AGE_HANDICAP_POSITION_DIVISOR),
-      AGE_HANDICAP_MAX_POSITION_BONUS,
-    );
-    const experienceBonus = ageDiff * AGE_HANDICAP_EXPERIENCE_PER_YEAR;
-
-    // 盤面は0〜100マス（1マス＝1歳）で人生全体（幼少期〜老後）を表すため、盤面上の「年齢」は
-    // プレイヤーの実年齢ではなく、マス位置（＝人生の進み具合）と連動させる。
-    // 実年齢はスタート補正（初期マス・初期経験値）の算出だけに使う。
+  return inputs.map((input) => {
     const personality = pickRandomPersonality();
 
     const player: Player = {
       id: createId('player'),
       name: input.name.trim(),
-      birthDate: input.birthDate,
-      age: positionBonus,
-      position: positionBonus,
+      age: 0,
+      position: 0,
       money: INITIAL_MONEY,
       health: INITIAL_STAT_VALUE,
       happiness: INITIAL_STAT_VALUE,
       knowledge: INITIAL_STAT_VALUE,
       relationships: INITIAL_STAT_VALUE,
       freedom: INITIAL_STAT_VALUE,
-      experience: INITIAL_EXPERIENCE + experienceBonus,
+      experience: INITIAL_EXPERIENCE,
       luck: INITIAL_STAT_VALUE,
       mentalStrength: INITIAL_STAT_VALUE,
       trust: INITIAL_STAT_VALUE,
@@ -1387,6 +1358,13 @@ export const GRADUATION_REASONS: GraduationReason[] = [
     title: '人生の卒業',
     body: '思いがけない災害により、人生の幕を閉じることになりました。あなたが歩んできた道のりは、確かにここにありました。',
   },
+  // 盤面の物理的な終端（150歳）に到達した、ごく限られた人だけがたどり着く特別な卒業理由。
+  {
+    id: 'grandFinale',
+    label: '人生の集大成',
+    title: '人生の集大成',
+    body: '誰もがたどり着けるわけではない150年という長い旅を歩み切り、静かに、しかし誇らしく人生の幕を閉じました。',
+  },
 ];
 
 export function getGraduationReason(id: string): GraduationReason {
@@ -1400,16 +1378,28 @@ export function pickEarlyEndingReason(category: EventCategory): GraduationReason
   return getGraduationReason('earlyAccident');
 }
 
-/** 年代（80歳〜）とステータスから、その回の「卒業確率」を計算する。 */
+// 80〜149歳を10歳刻みで区切った基礎卒業確率。150歳（盤面終端）は`forcedGraduationAtBoardEnd`で
+// 必ず卒業となるため、ここでは149歳までをカバーすれば十分。150歳までの70年分の道のりに
+// 引き伸ばしたことで、旧来（〜100歳・20年分）よりもかなり緩やかな傾きにしてある。
+const GRADUATION_BASE_CHANCE_BY_AGE: { maxAge: number; base: number }[] = [
+  { maxAge: 89, base: 0.02 },
+  { maxAge: 99, base: 0.035 },
+  { maxAge: 109, base: 0.05 },
+  { maxAge: 119, base: 0.08 },
+  { maxAge: 129, base: 0.13 },
+  { maxAge: 139, base: 0.2 },
+  { maxAge: Infinity, base: 0.3 }, // 140〜149歳
+];
+
+/**
+ * 年代（80歳〜）とステータス・時代設定から、その回の「卒業確率」を計算する。
+ * 健康・寿命モード（世界設定）・時代選択（近未来編は長寿医療の分だけ延命しやすい）という
+ * 既存のレバーだけで、「健康管理や医療選択で長寿の可能性を高められる」を実現している。
+ */
 function calculateGraduationChance(player: Player, age: number, settings: GameSettings): number {
   if (age < ELDER_GRADUATION_START_AGE) return 0;
 
-  let base: number;
-  if (age <= 84) base = 0.05;
-  else if (age <= 89) base = 0.12;
-  else if (age <= 94) base = 0.25;
-  else if (age <= 99) base = 0.4;
-  else base = 0.55 + Math.min(0.3, (age - 100) * 0.02); // 100歳以降は年々じわじわ上がるが90%を超えない
+  const base = (GRADUATION_BASE_CHANCE_BY_AGE.find((b) => age <= b.maxAge) ?? GRADUATION_BASE_CHANCE_BY_AGE[GRADUATION_BASE_CHANCE_BY_AGE.length - 1]).base;
 
   // 健康が高いほど確率は下がり、低いほど上がる（50を基準に±）。
   const healthFactor = 1 - (player.health - 50) / 150;
@@ -1420,7 +1410,12 @@ function calculateGraduationChance(player: Player, age: number, settings: GameSe
     chance *= 0.7;
   }
 
-  return Math.min(0.9, Math.max(0.02, chance));
+  // 近未来編は長寿医療・再生医療等の恩恵で、同じ健康状態でも少しだけ延命しやすい。
+  if (settings.era === 'future') {
+    chance *= 0.8;
+  }
+
+  return Math.min(0.85, Math.max(0.015, chance));
 }
 
 /** 卒業理由を、プレイヤーのステータスに応じた重み付きランダムで選ぶ。 */
@@ -1454,9 +1449,9 @@ export function rollGraduationCheck(player: Player, age: number, settings: GameS
   return pickGraduationReason(player, age);
 }
 
-/** 盤面の物理的な終端（最終マス）に達したときの、強制的な卒業理由。 */
+/** 盤面の物理的な終端（150歳）に達したときの、強制的な卒業理由。 */
 export function forcedGraduationAtBoardEnd(player: Player): GraduationReason {
-  return player.health >= 60 ? getGraduationReason('longevity') : getGraduationReason('natural');
+  return player.health >= 60 ? getGraduationReason('grandFinale') : getGraduationReason('natural');
 }
 
 /** セカンドライフ（老後）をどれだけ楽しめたかを表す簡易スコア（0〜100）。 */

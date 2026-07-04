@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { BRANCH_POINTS, getBranchPointForPosition } from '../data/branchRoutes';
-import { getEraDefinition } from '../data/eras';
+import { getCalendarYear, getEraDefinition } from '../data/eras';
 import type { EraId, MoveAnimationState, Player } from '../types/game';
 import {
   buildSmoothPathD,
@@ -104,7 +104,7 @@ function GameBoard({
               </div>
               <div className="game-board__turn-name">{currentPlayer.name}さん</div>
               <div className="game-board__turn-meta">
-                {getLifeStageName(currentPlayer.age)}・{currentPlayer.age}歳
+                {getLifeStageName(currentPlayer.age)}・{currentPlayer.age}歳（{getCalendarYear(era, currentPlayer.age)}年）
               </div>
               <div className="game-board__turn-priority-stats">
                 <span>💰{currentPlayer.money.toLocaleString()}万円</span>
@@ -258,7 +258,7 @@ function GameBoard({
 
       <div className="game-board__players">
         {players.map((player, index) => (
-          <PlayerCard key={player.id} player={player} index={index} isCurrent={index === currentPlayerIndex} compact />
+          <PlayerCard key={player.id} player={player} index={index} isCurrent={index === currentPlayerIndex} era={era} compact />
         ))}
       </div>
     </StageBackground>

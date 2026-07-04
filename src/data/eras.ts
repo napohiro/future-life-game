@@ -30,3 +30,8 @@ export const DEFAULT_ERA: EraId = 'future';
 export function getEraDefinition(id: EraId): EraDefinition {
   return ERA_DEFINITIONS.find((era) => era.id === id) ?? ERA_DEFINITIONS[1];
 }
+
+/** 時代の開始年＋現在の年齢から、物語上の「現在の暦年」を算出する（例：現代編・30歳→2056年）。 */
+export function getCalendarYear(id: EraId, age: number): number {
+  return getEraDefinition(id).year + age;
+}
