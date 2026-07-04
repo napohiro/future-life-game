@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getEraDefinition } from '../data/eras';
 import type { AiSocietyLevel, DisasterFrequency, EconomyLevel, GameSettings, LongevityMode } from '../types/game';
 
 interface WorldSettingsProps {
@@ -32,17 +33,20 @@ const LONGEVITY_OPTIONS: { value: LongevityMode; label: string }[] = [
 
 function WorldSettings({ initialSettings, onStart, onBack }: WorldSettingsProps) {
   const [settings, setSettings] = useState<GameSettings>(initialSettings);
+  const eraDefinition = getEraDefinition(settings.era);
 
   return (
     <div className="screen world-settings">
       <h2 className="screen__heading">世界設定</h2>
       <p className="world-settings__lead">
-        あなたが生きる近未来社会の姿を選びましょう。ゲーム中のイベントの出やすさに、少しだけ影響します。
+        あなたが生きる社会の姿を選びましょう。ゲーム中のイベントの出やすさに、少しだけ影響します。
       </p>
 
       <div className="world-settings__card">
         <div className="world-settings__row-label">時代設定</div>
-        <div className="world-settings__era-badge">西暦 {settings.era} 年</div>
+        <div className="world-settings__era-badge">
+          {eraDefinition.icon} {eraDefinition.name}｜{eraDefinition.year}年
+        </div>
       </div>
 
       <div className="world-settings__card">

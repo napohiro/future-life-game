@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { BRANCH_POINTS, getBranchPointForPosition } from '../data/branchRoutes';
-import type { MoveAnimationState, Player } from '../types/game';
+import { getEraDefinition } from '../data/eras';
+import type { EraId, MoveAnimationState, Player } from '../types/game';
 import {
   buildSmoothPathD,
   generateBoardPath,
@@ -22,6 +23,7 @@ interface GameBoardProps {
   players: Player[];
   currentPlayerIndex: number;
   boardSize: number;
+  era: EraId;
   lastRoll: number | null;
   rollDisabled: boolean;
   moveAnimation: MoveAnimationState | null;
@@ -37,6 +39,7 @@ function GameBoard({
   players,
   currentPlayerIndex,
   boardSize,
+  era,
   lastRoll,
   rollDisabled,
   moveAnimation,
@@ -48,6 +51,7 @@ function GameBoard({
   onShowNewspaper,
 }: GameBoardProps) {
   const currentPlayer = players[currentPlayerIndex];
+  const eraDefinition = getEraDefinition(era);
   const currentSquareRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -71,6 +75,11 @@ function GameBoard({
 
   return (
     <StageBackground stage={currentStage} className="screen game-board">
+      <div className="game-board__era-strip">
+        <span className="game-board__era-pill">
+          {eraDefinition.icon} {eraDefinition.year}年｜{eraDefinition.name}
+        </span>
+      </div>
       <div
         className="game-board__top"
         style={

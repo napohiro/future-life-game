@@ -96,6 +96,19 @@ export type EventCategory =
 
 export type Rarity = 'common' | 'rare' | 'superRare';
 
+// 時代設定のID。将来「昭和編」「バブル編」等を追加する際は、この型に値を足し、
+// data/eras.ts の ERA_DEFINITIONS に定義を1件追加するだけでよい構造にしてある。
+export type EraId = 'present' | 'future';
+
+// 時代1つ分の定義（時代選択画面・世界設定バッジ・ゲーム画面上部表示で共通利用）。
+export interface EraDefinition {
+  id: EraId;
+  name: string; // 例：'現代編'
+  year: number; // 例：2026
+  description: string;
+  icon: string;
+}
+
 export type StatEffects = Partial<Record<StatKey, number>>;
 
 // イベントの性格を表す分類軸（EventCategoryとは別軸）。結果モーダル・人生ログの小さなラベル表示に使う。
@@ -182,6 +195,10 @@ export interface GameEvent {
   // 近未来イベント判定や、将来AIが生成タグ付けする際に使うフリータグ
   futureTag?: string;
   eventType?: EventType;
+  // このイベントが出現しうる時代を明示的に限定する場合に指定する（例：現代編専用イベントに ['present']）。
+  // 未指定の場合は全時代共通（既存イベントは原則これ）。近未来編限定の判定は futureTag / category(ai, space)
+  // から自動判定するため、既存イベントにこのフィールドを付与し直す必要はない。
+  era?: EraId[];
 }
 
 export type LogImportance = 'normal' | 'high' | 'critical';
@@ -294,6 +311,7 @@ export interface BranchPoint {
 
 export type GamePhase =
   | 'title'
+  | 'eraSelect'
   | 'setup'
   | 'worldSettings'
   | 'howToPlay'
@@ -307,7 +325,7 @@ export type LongevityMode = 'standard' | 'longevity';
 
 // 世界設定。Ver.1.0ではイベント抽選に軽く影響する程度だが、将来の本格反映のために独立した型にしてある。
 export interface GameSettings {
-  era: string; // 例: '2050'
+  era: EraId; // 時代選択画面で選んだ時代（'present'=現代編2026年 / 'future'=近未来編2050年）
   aiSocietyLevel: AiSocietyLevel;
   economy: EconomyLevel;
   disasterFrequency: DisasterFrequency;

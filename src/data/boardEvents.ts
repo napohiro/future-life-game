@@ -5,6 +5,7 @@ import {
   RELATIONSHIP_FATE_ROULETTE,
   TECH_FATE_ROULETTE,
 } from './fateRoulettes';
+import { presentEvents } from './presentEvents';
 import type { GameEvent } from '../types/game';
 
 // ============================================================
@@ -3130,6 +3131,7 @@ const lifePathEvents: GameEvent[] = [
 export const ALL_EVENTS: GameEvent[] = [
   ...nearFutureExpansionEvents,
   ...lifePathEvents,
+  ...presentEvents,
   ...infantEvents,
   ...childEvents,
   ...studentEvents,

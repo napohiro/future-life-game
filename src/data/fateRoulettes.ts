@@ -106,3 +106,17 @@ export const TECH_FATE_ROULETTE: FateRoulette = {
     { id: 'trouble', label: 'トラブル発生', severity: 'greatFailure', weight: 10, effects: { money: -30, mentalStrength: -10, trust: -5 } },
   ],
 };
+
+// 現代編（2026年）専用イベント用の軽いテクノロジー運。近未来編のTECH_FATE_ROULETTEとは異なり、
+// SNS/スマホ/生成AIツールなど「今の延長線上の便利さ」に振った効果量にしている。
+export const PRESENT_TECH_FATE_ROULETTE: FateRoulette = {
+  title: 'デジタル活用の運命',
+  influenceStat: 'aiAffinity',
+  outcomes: [
+    { id: 'viral-hit', label: '思わぬバズり', severity: 'greatSuccess', weight: 8, effects: { money: 20, happiness: 15, aiAffinity: 10 } },
+    { id: 'useful', label: '便利に使いこなせた', severity: 'success', weight: 26, effects: { freedom: 10, happiness: 8 } },
+    { id: 'so-so', label: 'まずまずの効果', severity: 'neutral', weight: 34, effects: { aiAffinity: 5 } },
+    { id: 'time-sink', label: '時間を取られただけだった', severity: 'failure', weight: 22, effects: { happiness: -5, mentalStrength: -5 } },
+    { id: 'backlash', label: '炎上・トラブルになった', severity: 'greatFailure', weight: 10, effects: { money: -15, trust: -10, mentalStrength: -10 } },
+  ],
+};

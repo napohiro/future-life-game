@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import './App.css';
 import { getBranchPointForPosition } from './data/branchRoutes';
+import EraSelect from './components/EraSelect';
 import EventModal from './components/EventModal';
 import FinalReport from './components/FinalReport';
 import GameBoard from './components/GameBoard';
@@ -14,6 +15,7 @@ import TitleScreen from './components/TitleScreen';
 import WorldSettings from './components/WorldSettings';
 import type {
   BranchRoute,
+  EraId,
   EventChoice,
   FateOutcome,
   GameSettings,
@@ -71,8 +73,12 @@ function App() {
   // ルーレット側が完全に停止・静止するまで、コマは実際には動かさない。
   const pendingMoveRef = useRef<PendingMove | null>(null);
 
-  const handleGoToSetup = () => {
-    setGameState((prev) => ({ ...prev, phase: 'setup' }));
+  const handleGoToEraSelect = () => {
+    setGameState((prev) => ({ ...prev, phase: 'eraSelect' }));
+  };
+
+  const handleEraSelected = (era: EraId) => {
+    setGameState((prev) => ({ ...prev, settings: { ...prev.settings, era }, phase: 'setup' }));
   };
 
   const handleShowHowToPlay = () => {
@@ -471,13 +477,20 @@ function App() {
   return (
     <div className="app-shell">
       {gameState.phase === 'title' && (
-        <TitleScreen onStart={handleGoToSetup} onShowHowToPlay={handleShowHowToPlay} />
+        <TitleScreen onStart={handleGoToEraSelect} onShowHowToPlay={handleShowHowToPlay} />
       )}
 
       {gameState.phase === 'howToPlay' && <HowToPlay onBack={handleBackToTitle} />}
 
+      {gameState.phase === 'eraSelect' && (
+        <EraSelect initialEra={gameState.settings.era} onStart={handleEraSelected} onBack={handleBackToTitle} />
+      )}
+
       {gameState.phase === 'setup' && (
-        <PlayerSetup onStart={handlePlayersReady} onBack={handleBackToTitle} />
+        <PlayerSetup
+          onStart={handlePlayersReady}
+          onBack={() => setGameState((prev) => ({ ...prev, phase: 'eraSelect' }))}
+        />
       )}
 
       {gameState.phase === 'worldSettings' && (
@@ -494,6 +507,7 @@ function App() {
             players={gameState.players}
             currentPlayerIndex={gameState.currentPlayerIndex}
             boardSize={gameState.boardSize}
+            era={gameState.settings.era}
             lastRoll={gameState.lastRoll}
             rollDisabled={
               gameState.activeEvent !== null ||
@@ -533,8 +547,12 @@ function App() {
               onAcknowledge={handleAcknowledgeGraduation}
             />
           )}
-          {gameState.showLifeLog && <LifeLog players={gameState.players} onClose={handleCloseLifeLog} />}
-          {gameState.showNewspaper && <Newspaper players={gameState.players} onClose={handleCloseNewspaper} />}
+          {gameState.showLifeLog && (
+            <LifeLog players={gameState.players} era={gameState.settings.era} onClose={handleCloseLifeLog} />
+          )}
+          {gameState.showNewspaper && (
+            <Newspaper players={gameState.players} era={gameState.settings.era} onClose={handleCloseNewspaper} />
+          )}
         </>
       )}
 

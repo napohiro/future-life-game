@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { LogImportance, Player, StatEffects, StatKey, StatusEffects } from '../types/game';
+import { getEraDefinition } from '../data/eras';
+import type { EraId, LogImportance, Player, StatEffects, StatKey, StatusEffects } from '../types/game';
 import {
   EVENT_CATEGORY_LABELS,
   EVENT_TYPE_ICONS,
@@ -13,6 +14,7 @@ import {
 
 interface LifeLogProps {
   players: Player[];
+  era: EraId;
   onClose: () => void;
 }
 
@@ -69,16 +71,17 @@ function EffectBadges({ effects, statusEffects }: { effects: StatEffects; status
   );
 }
 
-function LifeLog({ players, onClose }: LifeLogProps) {
+function LifeLog({ players, era, onClose }: LifeLogProps) {
   const [selectedPlayerId, setSelectedPlayerId] = useState(players[0]?.id);
   const selectedPlayerIndex = players.findIndex((p) => p.id === selectedPlayerId);
   const selectedPlayer = players[selectedPlayerIndex] ?? players[0];
+  const eraDefinition = getEraDefinition(era);
 
   return (
     <div className="modal-overlay">
       <div className="modal modal--tall">
         <div className="modal__header">
-          <h3 className="modal__title">📖 人生ログ</h3>
+          <h3 className="modal__title">📖 人生ログ（{eraDefinition.name}・{eraDefinition.year}年）</h3>
           <button type="button" className="btn btn--ghost btn--small" onClick={onClose}>
             閉じる
           </button>

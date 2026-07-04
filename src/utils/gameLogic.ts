@@ -1,6 +1,8 @@
 import { ALL_EVENTS, pickRandomEvent } from '../data/boardEvents';
 import { getCategoryBoostsForRoutes } from '../data/branchRoutes';
+import { DEFAULT_ERA } from '../data/eras';
 import type {
+  EraId,
   EventCategory,
   EventType,
   FateInfluenceStat,
@@ -433,12 +435,26 @@ export function getSquareType(position: number): SquareType {
 // ---------------------------------------------------------------------------
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
-  era: '2050',
+  era: DEFAULT_ERA,
   aiSocietyLevel: 'mid',
   economy: 'normal',
   disasterFrequency: 'normal',
   longevityMode: 'standard',
 };
+
+/**
+ * イベントが指定の時代で出現しうるかを判定する。
+ * 明示的な era タグがあればそれに従う（新規「現代編専用」イベント用）。
+ * タグが無い既存イベントは、futureTag（近未来フレーバーの自由記述タグ）や
+ * category が 'ai'/'space'（本質的に近未来限定のテーマ）であれば近未来編限定とみなし、
+ * それ以外は全時代共通として扱う。これにより既存イベントデータを書き換えずに
+ * 「現代編では近未来的な出来事が出ない」を実現している。
+ */
+function isEventAvailableForEra(event: GameEvent, era: EraId): boolean {
+  if (event.era) return event.era.includes(era);
+  if (era === 'present' && (event.futureTag || event.category === 'ai' || event.category === 'space')) return false;
+  return true;
+}
 
 /** 世界設定によるイベント出現の軽い補正。候補配列に該当イベントを重複追加/除外することで、出現しやすさを調整する。 */
 function applySettingsBias(events: GameEvent[], settings: GameSettings): GameEvent[] {
@@ -596,10 +612,14 @@ export function getEventForSquare(player: Player, stage: LifeStage, squareType: 
   const stageAllowedCategories = STAGE_CATEGORY_ALLOWLIST[stage];
   const preferredCategories = SQUARE_TYPE_CATEGORY_MAP[squareType].filter((c) => stageAllowedCategories.includes(c));
 
-  // 1段階目：マス種類が示すカテゴリ ∩ 年代で許可されたカテゴリ ∩ 年代(ageCategory)が完全一致 ∩ プレイヤー個人の適格性
+  // 1段階目：マス種類が示すカテゴリ ∩ 年代で許可されたカテゴリ ∩ 年代(ageCategory)が完全一致 ∩ プレイヤー個人の適格性 ∩ 時代
   const preferredCategoryList = preferredCategories.length > 0 ? preferredCategories : stageAllowedCategories;
   let pool = ALL_EVENTS.filter(
-    (e) => e.ageCategory === stage && preferredCategoryList.includes(e.category) && isEventEligibleForPlayer(e, player, age),
+    (e) =>
+      e.ageCategory === stage &&
+      preferredCategoryList.includes(e.category) &&
+      isEventEligibleForPlayer(e, player, age) &&
+      isEventAvailableForEra(e, settings.era),
   );
   pool = applySettingsBias(pool, settings);
   // 選んだ人生ルート（chosenRoutes）に応じて、関連カテゴリのイベントを少し出やすくする。
@@ -617,9 +637,13 @@ export function getEventForSquare(player: Player, stage: LifeStage, squareType: 
   pool = preferUnexperienced(pool, player);
   if (pool.length > 0) return pickRandomEvent(pool);
 
-  // 2段階目：マス種類の指定は無視し、そのステージで許可された全カテゴリ・年代一致・適格性のみで再抽選
+  // 2段階目：マス種類の指定は無視し、そのステージで許可された全カテゴリ・年代一致・適格性・時代のみで再抽選
   let stagePool = ALL_EVENTS.filter(
-    (e) => e.ageCategory === stage && stageAllowedCategories.includes(e.category) && isEventEligibleForPlayer(e, player, age),
+    (e) =>
+      e.ageCategory === stage &&
+      stageAllowedCategories.includes(e.category) &&
+      isEventEligibleForPlayer(e, player, age) &&
+      isEventAvailableForEra(e, settings.era),
   );
   stagePool = preferUnexperienced(stagePool, player);
   if (stagePool.length > 0) return pickRandomEvent(stagePool);
@@ -1238,7 +1262,14 @@ function newspaperHeadlinePriority(log: LifeLogEntry): number {
   );
 }
 
-export function generateNewspaperHeadlinePlaceholder(logs: LifeLogEntry[]): string {
+// 時代ごとの新聞の言い回し（トーン）。近未来編は既存の言い回しをそのまま維持し、
+// 現代編は生活感のある言葉に寄せている。将来時代を追加する際はここに1エントリ足すだけでよい。
+const NEWSPAPER_TONE_BY_ERA: Record<EraId, { positive: string; negative: string; neutral: string }> = {
+  present: { positive: '奮闘の10年でした', negative: '波乱の多い10年でした', neutral: '変化に富んだ10年でした' },
+  future: { positive: '飛躍の10年でした', negative: '試練の多い10年でした', neutral: '転機が重なった10年でした' },
+};
+
+export function generateNewspaperHeadlinePlaceholder(logs: LifeLogEntry[], era: EraId = DEFAULT_ERA): string {
   if (logs.length === 0) {
     return 'これといった出来事のない、穏やかな10年でした。';
   }
@@ -1246,12 +1277,13 @@ export function generateNewspaperHeadlinePlaceholder(logs: LifeLogEntry[]): stri
   const sorted = [...logs].sort((a, b) => newspaperHeadlinePriority(b) - newspaperHeadlinePriority(a));
   const topCategories = Array.from(new Set(sorted.slice(0, 2).map((log) => EVENT_CATEGORY_LABELS[log.category])));
   const netTotal = logs.reduce((sum, log) => sum + weightedNetEffect(log.effects), 0);
-  const tone = netTotal >= 15 ? '飛躍の10年でした' : netTotal <= -15 ? '試練の多い10年でした' : '転機が重なった10年でした';
+  const tones = NEWSPAPER_TONE_BY_ERA[era];
+  const tone = netTotal >= 15 ? tones.positive : netTotal <= -15 ? tones.negative : tones.neutral;
 
   return `${topCategories.join('と')}が重なった、${tone}`;
 }
 
-export function buildNewspaperSummaries(player: Player): DecadeSummary[] {
+export function buildNewspaperSummaries(player: Player, era: EraId = DEFAULT_ERA): DecadeSummary[] {
   const groups = new Map<number, LifeLogEntry[]>();
   player.lifeLogs.forEach((log) => {
     const decade = Math.floor(log.age / 10) * 10;
@@ -1264,7 +1296,7 @@ export function buildNewspaperSummaries(player: Player): DecadeSummary[] {
     .map(([decade, logs]) => ({
       decadeLabel: `${decade}代`,
       logs,
-      headline: generateNewspaperHeadlinePlaceholder(logs),
+      headline: generateNewspaperHeadlinePlaceholder(logs, era),
     }));
 }
 
