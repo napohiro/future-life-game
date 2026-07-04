@@ -26,6 +26,7 @@ import {
   ELDER_GRADUATION_START_AGE,
   appendLifeLog,
   applyEffectsToPlayer,
+  applyFlagsToPlayer,
   applyStatusEffectsToPlayer,
   createInitialGameState,
   deriveImportance,
@@ -58,7 +59,6 @@ interface PendingMove {
   finished: boolean;
   settings: GameSettings;
   roll: number;
-  chosenRoutes: string[];
 }
 
 function App() {
@@ -116,7 +116,6 @@ function App() {
     reachedBoardEnd: boolean,
     settings: GameSettings,
     roll: number,
-    chosenRoutes: string[],
   ) => {
     const playerId = playerSnapshot.id;
     const age = finalPosition;
@@ -149,7 +148,10 @@ function App() {
       return;
     }
 
-    const draw = drawEventForPosition(finalPosition, settings, chosenRoutes);
+    // イベント抽選には、移動後の年齢・人生フラグ・過去の履歴を反映した最終状態のプレイヤーを渡す。
+    // これにより、同じマスでもプレイヤーごとの人生に応じて違う候補から抽選される。
+    const finalizedPlayer: Player = { ...playerSnapshot, position: finalPosition, age: finalPosition, finished: reachedBoardEnd };
+    const draw = drawEventForPosition(finalizedPlayer, settings);
     setActiveDraw(draw);
     setGameState((prev) => ({
       ...prev,
@@ -191,7 +193,6 @@ function App() {
       finished,
       settings: gameState.settings,
       roll,
-      chosenRoutes: currentPlayer.chosenRoutes,
     };
 
     return roll;
@@ -204,7 +205,7 @@ function App() {
     pendingMoveRef.current = null;
     if (!pending) return;
 
-    const { playerId, playerName, playerSnapshot, targetPosition, finished, settings, roll, chosenRoutes } = pending;
+    const { playerId, playerName, playerSnapshot, targetPosition, finished, settings, roll } = pending;
 
     setMoveAnimation({ playerId, playerName, roll, stepIndex: 0, totalSteps: roll });
 
@@ -218,7 +219,7 @@ function App() {
         setMoveAnimation({ playerId, playerName, roll, stepIndex: roll, totalSteps: roll });
         // 移動が終わってからすぐイベントを出すのではなく、少し間を置いて落ち着かせる。
         setTimeout(() => {
-          finalizeMove(playerSnapshot, targetPosition, finished, settings, roll, chosenRoutes);
+          finalizeMove(playerSnapshot, targetPosition, finished, settings, roll);
         }, POST_MOVE_PAUSE_MS);
       } else {
         setPlayerPosition(playerId, current);
@@ -243,6 +244,7 @@ function App() {
             baseEffects: choice ? choice.effects : prev.activeEvent.effects,
             baseStatusEffects: choice ? choice.statusEffects : prev.activeEvent.statusEffects,
             baseEndsLifeChance: choice ? choice.endsLifeChance : prev.activeEvent.endsLifeChance,
+            baseGrantsFlags: choice ? choice.grantsFlags : prev.activeEvent.grantsFlags,
             choiceLabel: choice?.label,
           },
         };
@@ -250,12 +252,14 @@ function App() {
       const effects = choice ? choice.effects : prev.activeEvent.effects;
       const statusEffects = choice ? choice.statusEffects : prev.activeEvent.statusEffects;
       const endsLifeChance = choice ? choice.endsLifeChance : prev.activeEvent.endsLifeChance;
+      const grantsFlags = choice ? choice.grantsFlags : prev.activeEvent.grantsFlags;
       return {
         ...prev,
         pendingResult: {
           effects,
           statusEffects,
           endsLifeChance,
+          grantsFlags,
           choiceLabel: choice?.label,
           eventType: getEventType(prev.activeEvent),
         },
@@ -286,6 +290,7 @@ function App() {
           effects,
           statusEffects,
           endsLifeChance,
+          grantsFlags: pending.baseGrantsFlags,
           choiceLabel: pending.choiceLabel,
           eventType: getEventType(prev.activeEvent),
           fateOutcomeLabel: outcome.label,
@@ -311,13 +316,15 @@ function App() {
         if (p.id !== prev.activePlayerIdForEvent) return p;
         const withEffects = applyEffectsToPlayer(p, result.effects);
         const withStatusEffects = applyStatusEffectsToPlayer(withEffects, result.statusEffects);
+        // 留学経験・AIスキルなど、この出来事によって新たに得た人生フラグを積み上げる。
+        const withFlags = applyFlagsToPlayer(withStatusEffects, result.grantsFlags);
         // 巨大イベントマス（人生の節目）で起きた出来事は、重要度を最高ランクにして
         // 人生ログ・最終レポートの「ベストイベント」に残りやすくする。
-        const isMilestoneSquare = getBoardMilestone(withStatusEffects.position) !== undefined;
-        return appendLifeLog(withStatusEffects, {
+        const isMilestoneSquare = getBoardMilestone(withFlags.position) !== undefined;
+        return appendLifeLog(withFlags, {
           turn: prev.turnCount,
-          age: withStatusEffects.age,
-          position: withStatusEffects.position,
+          age: withFlags.age,
+          position: withFlags.position,
           eventTitle: event.title,
           eventDescription: event.logText,
           choiceLabel: result.choiceLabel,
@@ -326,6 +333,7 @@ function App() {
           category: event.category,
           importance: isMilestoneSquare || rolledEarlyEnding || isBigFateResult ? 'critical' : deriveImportance(event.rarity),
           eventType: result.eventType,
+          eventId: event.id,
           fateOutcomeLabel: result.fateOutcomeLabel,
           fateSeverity: result.fateSeverity,
         });
@@ -408,6 +416,7 @@ function App() {
           category: route.logCategory,
           importance: 'critical',
           eventType: 'turningPoint',
+          eventId: route.id,
         });
       });
       return { ...prev, players: updatedPlayers, pendingBranchChoice: null };
@@ -432,6 +441,7 @@ function App() {
           category: 'death',
           importance: 'critical',
           eventType: 'turningPoint',
+          eventId: reason.id,
         });
       });
 

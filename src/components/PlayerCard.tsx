@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { getRouteById } from '../data/branchRoutes';
 import type { Player, StatKey } from '../types/game';
 import {
+  PERSONALITY_TRAITS,
   STAT_ICONS,
   STAT_LABELS,
   STATUS_FIELD_ICONS,
@@ -79,6 +80,7 @@ function ChosenRouteList({ chosenRoutes }: { chosenRoutes: string[] }) {
 function PlayerCard({ player, index, isCurrent, compact = false }: PlayerCardProps) {
   const visual = getPlayerVisual(index);
   const [expanded, setExpanded] = useState(false);
+  const personality = PERSONALITY_TRAITS[player.personality];
 
   return (
     <div
@@ -97,6 +99,9 @@ function PlayerCard({ player, index, isCurrent, compact = false }: PlayerCardPro
             </span>
           )}
           {player.finished && <span className="player-card__finished-badge">🕊️ 卒業済み</span>}
+          <span className="player-card__personality-badge" title={personality.description}>
+            {personality.icon} {personality.label}
+          </span>
         </span>
         <span className="player-card__age">
           {getLifeStageName(player.age)}・{player.age}歳（マス {player.position}）

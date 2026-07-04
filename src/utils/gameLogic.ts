@@ -12,6 +12,7 @@ import type {
   LifeLogEntry,
   LifeStage,
   LogImportance,
+  PersonalityTrait,
   Player,
   PlayerSetupInput,
   Rarity,
@@ -131,6 +132,42 @@ export const EVENT_TYPE_ICONS: Record<EventType, string> = {
   turningPoint: '🌟',
   nearFuture: '🚀',
 };
+
+// ---------------------------------------------------------------------------
+// 個性・才能（ゲーム開始時にランダムで1つ付与。人生の方向性に少しだけ影響する）
+// ---------------------------------------------------------------------------
+
+interface PersonalityDefinition {
+  label: string;
+  icon: string;
+  description: string;
+  // 初期ステータスへのごく小さな補正（強すぎる能力差にならないよう1項目・小幅のみ）。
+  statBonus: StatEffects;
+}
+
+export const PERSONALITY_TRAITS: Record<PersonalityTrait, PersonalityDefinition> = {
+  curious: { label: '好奇心旺盛', icon: '🔍', description: '新しいことに目がない性格。', statBonus: { knowledge: 5 } },
+  steady: { label: 'コツコツ型', icon: '🐢', description: '地道な努力を積み重ねるのが得意。', statBonus: { mentalStrength: 5 } },
+  popular: { label: '人望がある', icon: '🌟', description: '自然と周りに人が集まる。', statBonus: { relationships: 5 } },
+  healthy: { label: '体が丈夫', icon: '💪', description: '生まれつき体が丈夫。', statBonus: { health: 5 } },
+  artistic: { label: '芸術センス', icon: '🎨', description: '感性豊かで表現が得意。', statBonus: { happiness: 5 } },
+  analytical: { label: '数字に強い', icon: '📊', description: '論理的に考えるのが得意。', statBonus: { luck: 5 } },
+  techLover: { label: '技術が好き', icon: '🤖', description: '新しい技術にすぐ馴染む。', statBonus: { aiAffinity: 5 } },
+  familyOriented: { label: '家族思い', icon: '👨‍👩‍👧', description: '家族との時間を大切にする。', statBonus: { relationships: 5 } },
+  competitive: { label: '勝負強い', icon: '🔥', description: 'ここぞという時に力を発揮する。', statBonus: { actionPower: 5 } },
+  cautious: { label: '慎重派', icon: '🛡️', description: '石橋を叩いて渡るタイプ。', statBonus: { trust: 5 } },
+};
+
+const PERSONALITY_TRAIT_KEYS = Object.keys(PERSONALITY_TRAITS) as PersonalityTrait[];
+
+export function pickRandomPersonality(): PersonalityTrait {
+  return PERSONALITY_TRAIT_KEYS[Math.floor(Math.random() * PERSONALITY_TRAIT_KEYS.length)];
+}
+
+/** 個性を人生フラグ表記にする（イベントのrequiredFlags/excludedFlagsで参照するため）。 */
+export function personalityFlag(trait: PersonalityTrait): string {
+  return `personality:${trait}`;
+}
 
 // プレイヤーごとの色・アイコン（盤面のコマやカードの縁取りに共通で使う）
 export interface PlayerVisual {
@@ -501,31 +538,73 @@ const SAFE_FALLBACK_EVENTS: Record<LifeStage, GameEvent[]> = {
   ],
 };
 
+// 数値スコアには影響させず、あくまで「候補に入るかどうか」だけを左右するクールダウン。
+// 結婚・離婚・転職・起業のような人生の大きな節目は、短期間に連続して起きないようにする。
+const CATEGORY_COOLDOWN_YEARS: Partial<Record<EventCategory, number>> = {
+  marriage: 5,
+  divorce: 6,
+  jobChange: 3,
+  startup: 4,
+};
+
 /**
- * マス種類・人生ステージ・世界設定から、抽選対象のイベント1件を選ぶ。
+ * イベントが、そのプレイヤーの現在の年齢・人生フラグ・過去の履歴から見て候補になり得るかを判定する。
+ * 同じマス・同じ年代でも、プレイヤーごとの人生フラグや経験（lifeLogs）が違えば結果も変わるため、
+ * これが「プレイヤーごとに異なるイベントが起こる」仕組みの中心になる。
+ */
+function isEventEligibleForPlayer(event: GameEvent, player: Player, age: number): boolean {
+  if (event.minAge !== undefined && age < event.minAge) return false;
+  if (event.maxAge !== undefined && age > event.maxAge) return false;
+  if (event.requiredFlags && !event.requiredFlags.every((flag) => player.lifeFlags.includes(flag))) return false;
+  if (event.excludedFlags && event.excludedFlags.some((flag) => player.lifeFlags.includes(flag))) return false;
+
+  if (event.oncePerGame && player.lifeLogs.some((log) => log.eventId === event.id)) return false;
+
+  if (event.cooldownYears !== undefined) {
+    const lastSameEvent = [...player.lifeLogs].reverse().find((log) => log.eventId === event.id);
+    if (lastSameEvent && age - lastSameEvent.age < event.cooldownYears) return false;
+  }
+
+  const categoryCooldown = CATEGORY_COOLDOWN_YEARS[event.category];
+  if (categoryCooldown !== undefined) {
+    const lastCategoryLog = [...player.lifeLogs].reverse().find((log) => log.category === event.category);
+    if (lastCategoryLog && age - lastCategoryLog.age < categoryCooldown) return false;
+  }
+
+  return true;
+}
+
+/** 候補群のうち、そのプレイヤーがまだ経験していないものがあれば優先する（完全な再体験を避ける）。 */
+function preferUnexperienced(pool: GameEvent[], player: Player): GameEvent[] {
+  const unexperienced = pool.filter((e) => !player.lifeLogs.some((log) => log.eventId === e.id));
+  return unexperienced.length > 0 ? unexperienced : pool;
+}
+
+/**
+ * マス種類・人生ステージ・世界設定・プレイヤー自身の状態から、抽選対象のイベント1件を選ぶ。
  * 固定イベントデータベースからの抽選ロジック本体。将来AI生成に差し替える際は、
  * この関数の呼び出し口（drawEventForPosition）をgenerateAIEventPlaceholder系に差し替えるだけでよい。
  *
  * 年代にふさわしくない出来事（幼少期の結婚・離婚・投資など）が絶対に出ないよう、
  * 必ず「そのステージで許可されたカテゴリ」かつ「イベント自身のageCategoryがそのステージ」の
  * 両方を満たすイベントだけを候補にする。ステージをまたいだフォールバックは行わない。
+ * さらに、年齢の厳密な範囲（minAge/maxAge）・人生フラグ・クールダウン・既経験の除外を通すことで、
+ * 同じマスに複数のプレイヤーが到達しても、それぞれの人生に応じて違う候補から抽選される。
  */
-export function getEventForSquare(
-  stage: LifeStage,
-  squareType: SquareType,
-  settings: GameSettings,
-  chosenRoutes: string[] = [],
-): GameEvent {
+export function getEventForSquare(player: Player, stage: LifeStage, squareType: SquareType, settings: GameSettings): GameEvent {
+  const age = player.age;
   const stageAllowedCategories = STAGE_CATEGORY_ALLOWLIST[stage];
   const preferredCategories = SQUARE_TYPE_CATEGORY_MAP[squareType].filter((c) => stageAllowedCategories.includes(c));
 
-  // 1段階目：マス種類が示すカテゴリ ∩ 年代で許可されたカテゴリ ∩ 年代(ageCategory)が完全一致
+  // 1段階目：マス種類が示すカテゴリ ∩ 年代で許可されたカテゴリ ∩ 年代(ageCategory)が完全一致 ∩ プレイヤー個人の適格性
   const preferredCategoryList = preferredCategories.length > 0 ? preferredCategories : stageAllowedCategories;
-  let pool = ALL_EVENTS.filter((e) => e.ageCategory === stage && preferredCategoryList.includes(e.category));
+  let pool = ALL_EVENTS.filter(
+    (e) => e.ageCategory === stage && preferredCategoryList.includes(e.category) && isEventEligibleForPlayer(e, player, age),
+  );
   pool = applySettingsBias(pool, settings);
   // 選んだ人生ルート（chosenRoutes）に応じて、関連カテゴリのイベントを少し出やすくする。
   // stage/categoryの厳密フィルタを通した後の候補内で重複追加するだけなので、年代不一致は絶対に起こらない。
-  pool = applyRouteBias(pool, getCategoryBoostsForRoutes(chosenRoutes));
+  pool = applyRouteBias(pool, getCategoryBoostsForRoutes(player.chosenRoutes));
 
   if (squareType === 'superRare') {
     const superRarePool = pool.filter((e) => e.rarity === 'superRare');
@@ -535,10 +614,14 @@ export function getEventForSquare(
     if (upgradedPool.length > 0) pool = upgradedPool;
   }
 
+  pool = preferUnexperienced(pool, player);
   if (pool.length > 0) return pickRandomEvent(pool);
 
-  // 2段階目：マス種類の指定は無視し、そのステージで許可された全カテゴリ・年代一致のみで再抽選
-  const stagePool = ALL_EVENTS.filter((e) => e.ageCategory === stage && stageAllowedCategories.includes(e.category));
+  // 2段階目：マス種類の指定は無視し、そのステージで許可された全カテゴリ・年代一致・適格性のみで再抽選
+  let stagePool = ALL_EVENTS.filter(
+    (e) => e.ageCategory === stage && stageAllowedCategories.includes(e.category) && isEventEligibleForPlayer(e, player, age),
+  );
+  stagePool = preferUnexperienced(stagePool, player);
   if (stagePool.length > 0) return pickRandomEvent(stagePool);
 
   // 3段階目：どうしても候補が無い場合の、年代にふさわしい安全な汎用イベント
@@ -551,11 +634,12 @@ export function getEventForSquare(
  * 将来、ここを非同期のLLM呼び出しに置き換えれば、呼び出し元（drawEventForPosition）は変更不要。
  */
 export async function generateAIEventPlaceholder(
+  player: Player,
   stage: LifeStage,
   squareType: SquareType,
   settings: GameSettings,
 ): Promise<GameEvent> {
-  return getEventForSquare(stage, squareType, settings);
+  return getEventForSquare(player, stage, squareType, settings);
 }
 
 export interface DrawnEvent {
@@ -564,10 +648,10 @@ export interface DrawnEvent {
   squareType: SquareType;
 }
 
-export function drawEventForPosition(position: number, settings: GameSettings, chosenRoutes: string[] = []): DrawnEvent {
-  const stage = getBoardStage(position);
-  const squareType = getSquareType(position);
-  const event = getEventForSquare(stage, squareType, settings, chosenRoutes);
+export function drawEventForPosition(player: Player, settings: GameSettings): DrawnEvent {
+  const stage = getBoardStage(player.position);
+  const squareType = getSquareType(player.position);
+  const event = getEventForSquare(player, stage, squareType, settings);
   return { event, stage, squareType };
 }
 
@@ -640,6 +724,8 @@ export function initializePlayers(inputs: PlayerSetupInput[]): Player[] {
     // 盤面は0〜100マス（1マス＝1歳）で人生全体（幼少期〜老後）を表すため、盤面上の「年齢」は
     // プレイヤーの実年齢ではなく、マス位置（＝人生の進み具合）と連動させる。
     // 実年齢はスタート補正（初期マス・初期経験値）の算出だけに使う。
+    const personality = pickRandomPersonality();
+
     const player: Player = {
       id: createId('player'),
       name: input.name.trim(),
@@ -666,8 +752,11 @@ export function initializePlayers(inputs: PlayerSetupInput[]): Player[] {
       annualIncome: INITIAL_ANNUAL_INCOME,
       romanceStatus: INITIAL_ROMANCE_STATUS,
       housingStatus: INITIAL_HOUSING_STATUS,
+      personality,
+      lifeFlags: [personalityFlag(personality)],
     };
-    return player;
+    // 個性による小さな初期補正（強すぎる能力差にならないよう、どの個性も1項目・+5のみ）。
+    return applyEffectsToPlayer(player, PERSONALITY_TRAITS[personality].statBonus);
   });
 }
 
@@ -729,6 +818,14 @@ export function applyStatusEffectsToPlayer(player: Player, statusEffects?: Statu
     );
   }
   return updated;
+}
+
+/** イベント（または選択）が付与する人生フラグを、重複なくプレイヤーに追加する。 */
+export function applyFlagsToPlayer(player: Player, grantsFlags?: string[]): Player {
+  if (!grantsFlags || grantsFlags.length === 0) return player;
+  const newFlags = grantsFlags.filter((flag) => !player.lifeFlags.includes(flag));
+  if (newFlags.length === 0) return player;
+  return { ...player, lifeFlags: [...player.lifeFlags, ...newFlags] };
 }
 
 const UNLUCKY_LEANING_CATEGORIES: EventCategory[] = [

@@ -145,6 +145,8 @@ export interface EventChoice {
   endsLifeChance?: number;
   // 設定されている場合、選択直後に結果を確定せず、運命ルーレットを表示してから結果を確定する。
   fateRoulette?: FateRoulette;
+  // この選択をすると付与される「人生フラグ」（留学経験・AIスキルなど）。以降のイベント抽選条件に使う。
+  grantsFlags?: string[];
 }
 
 export interface GameEvent {
@@ -160,6 +162,19 @@ export interface GameEvent {
   endsLifeChance?: number;
   // 選択肢を持たないイベント自体に運命ルーレットを設定する場合に使う。
   fateRoulette?: FateRoulette;
+  // 選択肢を持たないイベント自体が付与する人生フラグ。
+  grantsFlags?: string[];
+  // 年齢による厳密な絞り込み（未指定の場合はageCategoryの年代幅がそのまま適用される）。
+  // 例：幼少期(stage1)の中でも「読書にハマる」はminAge:6など、より自然な年齢に絞れる。
+  minAge?: number;
+  maxAge?: number;
+  // このイベントの候補条件。プレイヤーの人生フラグ（lifeFlags）を見て絞り込む。
+  requiredFlags?: string[]; // すべて満たしている場合のみ候補になる
+  excludedFlags?: string[]; // いずれか1つでも満たしていたら候補から除外
+  // 一生に一度しか発生しない（留学など）。
+  oncePerGame?: boolean;
+  // 同じイベントが再度候補になるまでに必要な年数（同一イベントIDでの間隔）。
+  cooldownYears?: number;
   // 人生ログにそのまま使う本文。「〇〇して、〇〇になった」のような一文。
   logText: string;
   rarity: Rarity;
@@ -187,6 +202,9 @@ export interface LifeLogEntry {
   // 運命ルーレットを経た結果の場合のみ設定される。
   fateOutcomeLabel?: string;
   fateSeverity?: FateSeverity;
+  // 発生元イベント（またはルート分岐・卒業理由）のID。oncePerGame・クールダウン判定や
+  // 「同じイベントの繰り返しを避ける」ためのプレイヤー個人の履歴照会に使う。
+  eventId: string;
 }
 
 export interface Player {
@@ -222,7 +240,25 @@ export interface Player {
   annualIncome: number;
   romanceStatus: string;
   housingStatus: string;
+  // ゲーム開始時にランダムで1つ付与される、小さな個性・才能（人生の方向性に少しだけ影響する）。
+  personality: PersonalityTrait;
+  // 留学経験・AIスキル・起業経験など、過去の重要な選択の積み重ねを表す「人生フラグ」。
+  // イベント抽選の候補条件（requiredFlags/excludedFlags）に使う。数値スコアには影響しない。
+  lifeFlags: string[];
 }
+
+// ゲーム開始時にランダムで1つ付与される、小さな個性・才能。
+export type PersonalityTrait =
+  | 'curious'
+  | 'steady'
+  | 'popular'
+  | 'healthy'
+  | 'artistic'
+  | 'analytical'
+  | 'techLover'
+  | 'familyOriented'
+  | 'competitive'
+  | 'cautious';
 
 // 卒業理由の1つ。老衰・病気・事故など、ステータスに応じて重み付きで選ばれる。
 export interface GraduationReason {
@@ -286,6 +322,7 @@ export interface PendingEventResult {
   endsLifeChance?: number;
   fateOutcomeLabel?: string;
   fateSeverity?: FateSeverity;
+  grantsFlags?: string[];
 }
 
 // 選択肢（または選択肢のないイベント自体）に運命ルーレットが設定されていた場合、
@@ -295,6 +332,7 @@ export interface PendingFateRoulette {
   baseEffects: StatEffects;
   baseStatusEffects?: StatusEffects;
   baseEndsLifeChance?: number;
+  baseGrantsFlags?: string[];
   choiceLabel?: string;
 }
 
