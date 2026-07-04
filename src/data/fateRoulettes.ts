@@ -120,3 +120,79 @@ export const PRESENT_TECH_FATE_ROULETTE: FateRoulette = {
     { id: 'backlash', label: '炎上・トラブルになった', severity: 'greatFailure', weight: 10, effects: { money: -15, trust: -10, mentalStrength: -10 } },
   ],
 };
+
+// ============================================================
+// 「稀な運イベント」（超レアマス限定）専用プリセット
+// ------------------------------------------------------------
+// 宝くじ・懸賞・臨時収入・不意の出費など、人生に時々起こる「運」寄りの
+// 出来事専用。高額当選が頻発しないよう、はずれ・小当たりの比重を大きくしている。
+// ============================================================
+
+// 宝くじ・懸賞。「1等:100万円」級の大当たりはごく低確率（5%前後）に抑え、
+// ほとんどは「はずれ」〜「小さな当選」に収まるようにしてある。
+export const LOTTERY_FATE_ROULETTE: FateRoulette = {
+  title: '宝くじの運命',
+  influenceStat: 'money',
+  outcomes: [
+    { id: 'first-prize', label: '1等：100万円', severity: 'greatSuccess', weight: 4, effects: { money: 100, happiness: 20, luck: 10 } },
+    { id: 'second-prize', label: '2等：20万円', severity: 'success', weight: 9, effects: { money: 20, happiness: 10, luck: 5 } },
+    { id: 'third-prize', label: '3等：5万円', severity: 'neutral', weight: 18, effects: { money: 5, happiness: 5 } },
+    { id: 'small-prize', label: '参加賞：1万円', severity: 'failure', weight: 24, effects: { money: 1, happiness: 2 } },
+    { id: 'miss', label: 'はずれ', severity: 'greatFailure', weight: 45, effects: {} },
+  ],
+};
+
+// 忘れていた口座・資産や思わぬ臨時収入。大きな下振れは基本的に無いプラス寄りのルーレット。
+export const WINDFALL_FATE_ROULETTE: FateRoulette = {
+  title: '臨時収入の運命',
+  influenceStat: 'money',
+  outcomes: [
+    { id: 'big-windfall', label: '思いがけない大きな臨時収入', severity: 'greatSuccess', weight: 5, effects: { money: 80, happiness: 15, luck: 10 } },
+    { id: 'good-windfall', label: 'まとまった臨時収入', severity: 'success', weight: 10, effects: { money: 30, happiness: 10 } },
+    { id: 'small-windfall', label: 'ちょっとした臨時収入', severity: 'neutral', weight: 25, effects: { money: 10, happiness: 5 } },
+    { id: 'tiny-find', label: '少額の忘れ物を発見', severity: 'failure', weight: 30, effects: { money: 3 } },
+    { id: 'nothing', label: '特に何も見つからなかった', severity: 'greatFailure', weight: 30, effects: {} },
+  ],
+};
+
+// 高額な修理費・出費。マイナス方向が中心だが、severity=greatSuccessは
+// 「大事に至らず軽い出費で済んだ」という“最良の結果”として扱う。
+export const UNEXPECTED_EXPENSE_FATE_ROULETTE: FateRoulette = {
+  title: '出費の運命',
+  influenceStat: 'money',
+  outcomes: [
+    { id: 'minor', label: '大事に至らず、軽い出費で済んだ', severity: 'greatSuccess', weight: 20, effects: { money: -5, mentalStrength: 5 } },
+    { id: 'expected', label: '想定内の出費で対応できた', severity: 'success', weight: 30, effects: { money: -15 } },
+    { id: 'moderate', label: 'そこそこの出費がかかった', severity: 'neutral', weight: 28, effects: { money: -30, mentalStrength: -5 } },
+    { id: 'high', label: '予想以上の高額な出費になった', severity: 'failure', weight: 15, effects: { money: -60, mentalStrength: -10 } },
+    { id: 'severe', label: '非常に高額な出費が重なった', severity: 'greatFailure', weight: 7, effects: { money: -100, mentalStrength: -15, happiness: -10 } },
+  ],
+};
+
+// 著名人・恩師との偶然の出会い。恋愛ではなく人脈・学びの広がりとして扱う
+// （RELATIONSHIP_FATE_ROULETTEは恋愛用のため流用しない）。
+export const ENCOUNTER_FATE_ROULETTE: FateRoulette = {
+  title: '出会いの運命',
+  influenceStat: 'trust',
+  outcomes: [
+    { id: 'life-changing', label: '人生を変える出会いになった', severity: 'greatSuccess', weight: 6, effects: { knowledge: 30, relationships: 15, socialContribution: 10 } },
+    { id: 'valuable-advice', label: '貴重なアドバイスをもらえた', severity: 'success', weight: 22, effects: { knowledge: 15, relationships: 10 } },
+    { id: 'brief-chat', label: '挨拶を交わした程度だった', severity: 'neutral', weight: 42, effects: { relationships: 5 } },
+    { id: 'mistaken', label: '人違いだった', severity: 'failure', weight: 22, effects: { happiness: -3 } },
+    { id: 'awkward', label: '気まずい思いをした', severity: 'greatFailure', weight: 8, effects: { happiness: -8, mentalStrength: -5 } },
+  ],
+};
+
+// 近未来編（2050年）専用の大型抽選。AI企業株・宇宙旅行・火星移住など、
+// 金額に加えexperience/aiAffinityも動く近未来らしい効果配分にしている。
+export const FUTURE_LOTTERY_FATE_ROULETTE: FateRoulette = {
+  title: '近未来抽選の運命',
+  influenceStat: 'aiAffinity',
+  outcomes: [
+    { id: 'special-selection', label: '特別当選：人生を変える体験', severity: 'greatSuccess', weight: 5, effects: { money: 150, experience: 30, aiAffinity: 15, happiness: 25, luck: 10 } },
+    { id: 'premium-selection', label: '上位当選：プレミアムコース', severity: 'success', weight: 9, effects: { money: 60, experience: 20, aiAffinity: 10, happiness: 15 } },
+    { id: 'standard-selection', label: '当選：標準コース', severity: 'neutral', weight: 18, effects: { money: 20, experience: 10, happiness: 10 } },
+    { id: 'runner-up', label: '補欠当選（小さな特典）', severity: 'failure', weight: 26, effects: { money: 5, happiness: 5 } },
+    { id: 'not-selected', label: '落選・不成立', severity: 'greatFailure', weight: 42, effects: {} },
+  ],
+};

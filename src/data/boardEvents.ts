@@ -5,6 +5,7 @@ import {
   RELATIONSHIP_FATE_ROULETTE,
   TECH_FATE_ROULETTE,
 } from './fateRoulettes';
+import { fortuneEvents } from './fortuneEvents';
 import { presentEvents } from './presentEvents';
 import type { GameEvent } from '../types/game';
 
@@ -191,6 +192,7 @@ const studentEvents: GameEvent[] = [
     ageCategory: 'stage2',
     category: 'student',
     squareType: 'study',
+    minAge: 17,
     effects: {},
     logText: '進路に悩んだ末、自分なりの答えを出した。',
     rarity: 'common',
@@ -221,6 +223,7 @@ const studentEvents: GameEvent[] = [
     ageCategory: 'stage2',
     category: 'work',
     squareType: 'chance',
+    minAge: 18,
     effects: {},
     logText: '空き時間を使って副業に挑戦した。',
     rarity: 'common',
@@ -236,6 +239,7 @@ const studentEvents: GameEvent[] = [
     ageCategory: 'stage2',
     category: 'challenge',
     squareType: 'chance',
+    minAge: 18,
     effects: { freedom: 15, money: -20, experience: 10 },
     logText: '一人暮らしを始め、自立への一歩を踏み出した。',
     rarity: 'common',
@@ -258,6 +262,7 @@ const studentEvents: GameEvent[] = [
     ageCategory: 'stage2',
     category: 'startup',
     squareType: 'work',
+    minAge: 19,
     effects: { money: -20, experience: 15, happiness: -5, mentalStrength: 5 },
     logText: '友人との事業計画が失敗し、悔しい思いをした。',
     rarity: 'common',
@@ -284,6 +289,7 @@ const studentEvents: GameEvent[] = [
     ageCategory: 'stage2',
     category: 'social',
     squareType: 'social',
+    minAge: 18,
     effects: { relationships: 15, happiness: 10 },
     logText: 'サークル活動に打ち込み、大切な仲間ができた。',
     rarity: 'common',
@@ -2084,6 +2090,10 @@ const stage6ExtraEvents: GameEvent[] = [
     ageCategory: 'stage6',
     category: 'elder',
     squareType: 'superRare',
+    // 盤面は最大position100（=100歳）までしか進まないため、minAge:100を指定することで
+    // 「実際に100歳になった時にしか出ない」ことを保証している（=文章と年齢の不一致を防ぐ）。
+    minAge: 100,
+    oncePerGame: true,
     effects: { happiness: 20, relationships: 15, socialContribution: 10 },
     logText: '100歳の誕生日を、多くの人に祝ってもらった。',
     rarity: 'superRare',
@@ -2346,6 +2356,7 @@ const nearFutureExpansionEvents: GameEvent[] = [
     ageCategory: 'stage2',
     category: 'love',
     squareType: 'love',
+    minAge: 18,
     effects: {},
     logText: '新しい出会いをきっかけに、これからの関係を考えた。',
     rarity: 'common',
@@ -3132,6 +3143,7 @@ export const ALL_EVENTS: GameEvent[] = [
   ...nearFutureExpansionEvents,
   ...lifePathEvents,
   ...presentEvents,
+  ...fortuneEvents,
   ...infantEvents,
   ...childEvents,
   ...studentEvents,

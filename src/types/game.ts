@@ -92,7 +92,8 @@ export type EventCategory =
   | 'smallChallenge'
   | 'smallPinch'
   | 'family'
-  | 'housing';
+  | 'housing'
+  | 'fortune';
 
 export type Rarity = 'common' | 'rare' | 'superRare';
 

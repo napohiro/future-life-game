@@ -97,6 +97,7 @@ export const EVENT_CATEGORY_LABELS: Record<EventCategory, string> = {
   smallChallenge: '小さな挑戦',
   smallPinch: '小さなピンチ',
   housing: '住居',
+  fortune: '幸運チャンス',
 };
 
 // 職業・年収・恋愛家族状況・住居（StatKeyとは別枠の「状態」ステータス）の表示用ラベル・アイコン。
@@ -495,17 +496,17 @@ const STAGE_CATEGORY_ALLOWLIST: Record<LifeStage, EventCategory[]> = {
   stage2: ['student', 'study', 'friend', 'club', 'path', 'partTime', 'hobby', 'health', 'love', 'challenge', 'social', 'startup', 'work', 'housing'],
   stage3: [
     'work', 'jobChange', 'love', 'marriage', 'divorce', 'startup', 'investment', 'study', 'health',
-    'family', 'childcare', 'hobby', 'social', 'challenge', 'accident', 'illness', 'disaster', 'fraud', 'ai', 'housing',
+    'family', 'childcare', 'hobby', 'social', 'challenge', 'accident', 'illness', 'disaster', 'fraud', 'ai', 'housing', 'fortune',
   ],
   stage4: [
     'work', 'jobChange', 'startup', 'investment', 'family', 'childcare', 'health', 'illness', 'care',
-    'social', 'ai', 'marriage', 'divorce', 'death', 'disaster', 'hobby', 'challenge', 'space', 'study', 'housing',
+    'social', 'ai', 'marriage', 'divorce', 'death', 'disaster', 'hobby', 'challenge', 'space', 'study', 'housing', 'fortune',
   ],
   stage5: [
     'elder', 'health', 'illness', 'family', 'hobby', 'social', 'care', 'ai', 'space', 'love', 'death',
-    'fraud', 'work', 'investment', 'accident', 'disaster', 'retirement', 'grandchild', 'housing',
+    'fraud', 'work', 'investment', 'accident', 'disaster', 'retirement', 'grandchild', 'housing', 'fortune',
   ],
-  stage6: ['elder', 'health', 'illness', 'family', 'care', 'death', 'ai', 'space', 'endOfLife', 'reflection'],
+  stage6: ['elder', 'health', 'illness', 'family', 'care', 'death', 'ai', 'space', 'endOfLife', 'reflection', 'fortune'],
 };
 
 function safeFallbackEvent(id: string, stage: LifeStage, category: EventCategory, title: string, logText: string, effects: StatEffects): GameEvent {
