@@ -1,6 +1,6 @@
 {
-  "name": "近未来人生ゲーム",
-  "short_name": "近未来人生ゲーム",
+  "name": "近未来★人生ゲーム",
+  "short_name": "近未来★人生ゲーム",
   "description": "2〜3人で遊べる、近未来を舞台にした人生ゲーム",
   "start_url": "/",
   "display": "standalone",
@@ -9,13 +9,13 @@
   "icons": [
     {
       "src": "/top.png",
-      "sizes": "1254x1254",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
       "src": "/top.png",
-      "sizes": "1254x1254",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }

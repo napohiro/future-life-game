@@ -8,7 +8,7 @@ function TitleScreen({ onStart, onShowHowToPlay }: TitleScreenProps) {
     <div className="screen title-screen">
       <div className="title-screen__badge">2050</div>
       <h1 className="title-screen__title">
-        近未来
+        近未来★
         <br />
         人生ゲーム
       </h1>
