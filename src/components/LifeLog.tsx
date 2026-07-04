@@ -1,6 +1,14 @@
 import { useState } from 'react';
-import type { LogImportance, Player, StatKey } from '../types/game';
-import { EVENT_CATEGORY_LABELS, STAT_ICONS, formatLifeLogHeadline, getPlayerVisual } from '../utils/gameLogic';
+import type { LogImportance, Player, StatEffects, StatKey, StatusEffects } from '../types/game';
+import {
+  EVENT_CATEGORY_LABELS,
+  EVENT_TYPE_ICONS,
+  EVENT_TYPE_LABELS,
+  STAT_ICONS,
+  STATUS_FIELD_ICONS,
+  formatLifeLogHeadline,
+  getPlayerVisual,
+} from '../utils/gameLogic';
 
 interface LifeLogProps {
   players: Player[];
@@ -13,9 +21,16 @@ const IMPORTANCE_LABEL: Record<LogImportance, string> = {
   critical: '🌟 人生の大事件',
 };
 
-function EffectBadges({ effects }: { effects: Partial<Record<StatKey, number>> }) {
+function EffectBadges({ effects, statusEffects }: { effects: StatEffects; statusEffects?: StatusEffects }) {
   const keys = (Object.keys(effects) as StatKey[]).filter((key) => effects[key]);
-  if (keys.length === 0) {
+  const hasStatusEffects =
+    statusEffects &&
+    (statusEffects.occupation !== undefined ||
+      statusEffects.romanceStatus !== undefined ||
+      statusEffects.housingStatus !== undefined ||
+      (statusEffects.annualIncomeDelta ?? 0) !== 0);
+
+  if (keys.length === 0 && !hasStatusEffects) {
     return <span className="life-log__effect-badge">変化なし</span>;
   }
   return (
@@ -32,6 +47,23 @@ function EffectBadges({ effects }: { effects: Partial<Record<StatKey, number>> }
           </span>
         );
       })}
+      {statusEffects?.occupation !== undefined && (
+        <span className="life-log__effect-badge">{STATUS_FIELD_ICONS.occupation} {statusEffects.occupation}</span>
+      )}
+      {statusEffects?.annualIncomeDelta !== undefined && statusEffects.annualIncomeDelta !== 0 && (
+        <span
+          className={`life-log__effect-badge ${statusEffects.annualIncomeDelta > 0 ? 'life-log__effect-badge--up' : 'life-log__effect-badge--down'}`}
+        >
+          {STATUS_FIELD_ICONS.annualIncome} {statusEffects.annualIncomeDelta > 0 ? '+' : ''}
+          {statusEffects.annualIncomeDelta}万円
+        </span>
+      )}
+      {statusEffects?.romanceStatus !== undefined && (
+        <span className="life-log__effect-badge">{STATUS_FIELD_ICONS.romanceStatus} {statusEffects.romanceStatus}</span>
+      )}
+      {statusEffects?.housingStatus !== undefined && (
+        <span className="life-log__effect-badge">{STATUS_FIELD_ICONS.housingStatus} {statusEffects.housingStatus}</span>
+      )}
     </>
   );
 }
@@ -77,6 +109,9 @@ function LifeLog({ players, onClose }: LifeLogProps) {
             <div key={log.id} className={`life-log__entry ${log.importance !== 'normal' ? 'life-log__entry--important' : ''}`}>
               <div className="life-log__entry-header">
                 <span className="life-log__category">{EVENT_CATEGORY_LABELS[log.category]}</span>
+                <span className="life-log__event-type">
+                  {EVENT_TYPE_ICONS[log.eventType]} {EVENT_TYPE_LABELS[log.eventType]}
+                </span>
                 {IMPORTANCE_LABEL[log.importance] && (
                   <span className="life-log__importance">{IMPORTANCE_LABEL[log.importance]}</span>
                 )}
@@ -85,7 +120,7 @@ function LifeLog({ players, onClose }: LifeLogProps) {
               <div className="life-log__description">{log.eventDescription}</div>
               {log.choiceLabel && <div className="life-log__choice">選択：{log.choiceLabel}</div>}
               <div className="life-log__effects">
-                <EffectBadges effects={log.effects} />
+                <EffectBadges effects={log.effects} statusEffects={log.statusEffects} />
               </div>
             </div>
           ))}

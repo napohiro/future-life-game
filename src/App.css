@@ -381,6 +381,16 @@
   text-overflow: ellipsis;
 }
 
+.game-board__turn-priority-stats {
+  display: flex;
+  gap: 8px;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #414a5c;
+  flex-wrap: wrap;
+}
+
 .game-board__top-actions {
   display: flex;
   gap: 6px;
@@ -1073,6 +1083,18 @@
   gap: 6px;
 }
 
+.player-card__status-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  background: #f7f9fd;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #414a5c;
+}
+
 .player-card__routes {
   display: flex;
   flex-direction: column;
@@ -1369,6 +1391,11 @@
   background: #fff2d1;
 }
 
+.modal__badge--type {
+  color: #5b4d8a;
+  background: #ece7f8;
+}
+
 .modal__title {
   font-size: 21px;
   font-weight: 800;
@@ -1517,6 +1544,11 @@
   font-weight: 600;
 }
 
+.modal__effect--status {
+  color: #2f6fed;
+  font-weight: 700;
+}
+
 .modal__effect-arrow {
   margin-right: 2px;
 }
@@ -1562,7 +1594,9 @@
 
 .life-log__entry-header {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
   font-size: 11px;
   color: #8891a5;
   font-weight: 600;
@@ -1574,9 +1608,17 @@
   padding: 2px 8px;
 }
 
+.life-log__event-type {
+  background: #ece7f8;
+  color: #5b4d8a;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
 .life-log__importance {
   color: #a86400;
   font-weight: 700;
+  margin-left: auto;
 }
 
 .life-log__headline {

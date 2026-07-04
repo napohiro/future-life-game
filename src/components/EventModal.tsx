@@ -1,5 +1,15 @@
 import type { EventChoice, GameEvent, PendingEventResult, SquareType, StatKey } from '../types/game';
-import { SQUARE_TYPE_META, STAT_ICONS, STAT_LABELS, getBoardMilestone } from '../utils/gameLogic';
+import {
+  EVENT_TYPE_ICONS,
+  EVENT_TYPE_LABELS,
+  SQUARE_TYPE_META,
+  STAT_ICONS,
+  STAT_LABELS,
+  STATUS_FIELD_ICONS,
+  STATUS_FIELD_LABELS,
+  getBoardMilestone,
+  getEventType,
+} from '../utils/gameLogic';
 
 interface EventModalProps {
   event: GameEvent;
@@ -46,6 +56,7 @@ function EventModal({ event, age, squareType, result, onChoose, onConfirm }: Eve
   const milestone = getBoardMilestone(age);
   const moodClass = milestone ? 'modal--milestone' : MOOD_CLASS[squareType] ?? '';
   const moodBanner = MOOD_BANNER[squareType];
+  const eventType = result ? result.eventType : getEventType(event);
 
   return (
     <div className="modal-overlay">
@@ -62,6 +73,9 @@ function EventModal({ event, age, squareType, result, onChoose, onConfirm }: Eve
 
             <div className="modal__badge-row">
               <div className="modal__badge">{age}歳・{squareMeta.icon} {squareMeta.label}マス</div>
+              <div className="modal__badge modal__badge--type">
+                {EVENT_TYPE_ICONS[eventType]} {EVENT_TYPE_LABELS[eventType]}
+              </div>
               {rarityBadge && <div className="modal__badge modal__badge--rare">{rarityBadge}</div>}
             </div>
             <h3 className="modal__title">{event.title}</h3>
@@ -88,7 +102,12 @@ function EventModal({ event, age, squareType, result, onChoose, onConfirm }: Eve
           </>
         ) : (
           <>
-            <div className="modal__badge">結果</div>
+            <div className="modal__badge-row">
+              <div className="modal__badge">結果</div>
+              <div className="modal__badge modal__badge--type">
+                {EVENT_TYPE_ICONS[eventType]} {EVENT_TYPE_LABELS[eventType]}
+              </div>
+            </div>
             <h3 className="modal__title">{event.title}</h3>
             {result.choiceLabel && <p className="modal__choice-label">選択：{result.choiceLabel}</p>}
 
@@ -104,7 +123,30 @@ function EventModal({ event, age, squareType, result, onChoose, onConfirm }: Eve
                   </li>
                 );
               })}
-              {Object.keys(result.effects).length === 0 && (
+              {result.statusEffects?.occupation !== undefined && (
+                <li className="modal__effect--status">
+                  {STATUS_FIELD_ICONS.occupation} {STATUS_FIELD_LABELS.occupation} → {result.statusEffects.occupation}
+                </li>
+              )}
+              {result.statusEffects?.annualIncomeDelta !== undefined && result.statusEffects.annualIncomeDelta !== 0 && (
+                <li className={result.statusEffects.annualIncomeDelta > 0 ? 'modal__effect--up' : 'modal__effect--down'}>
+                  <span className="modal__effect-arrow">{result.statusEffects.annualIncomeDelta > 0 ? '▲' : '▼'}</span>
+                  {STATUS_FIELD_ICONS.annualIncome} {STATUS_FIELD_LABELS.annualIncome}{' '}
+                  {result.statusEffects.annualIncomeDelta > 0 ? '+' : ''}
+                  {result.statusEffects.annualIncomeDelta}万円
+                </li>
+              )}
+              {result.statusEffects?.romanceStatus !== undefined && (
+                <li className="modal__effect--status">
+                  {STATUS_FIELD_ICONS.romanceStatus} {STATUS_FIELD_LABELS.romanceStatus} → {result.statusEffects.romanceStatus}
+                </li>
+              )}
+              {result.statusEffects?.housingStatus !== undefined && (
+                <li className="modal__effect--status">
+                  {STATUS_FIELD_ICONS.housingStatus} {STATUS_FIELD_LABELS.housingStatus} → {result.statusEffects.housingStatus}
+                </li>
+              )}
+              {Object.keys(result.effects).length === 0 && !result.statusEffects && (
                 <li className="modal__effect--none">ステータスの変化はありませんでした</li>
               )}
             </ul>

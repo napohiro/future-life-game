@@ -2,6 +2,7 @@ import { ALL_EVENTS, pickRandomEvent } from '../data/boardEvents';
 import { getCategoryBoostsForRoutes } from '../data/branchRoutes';
 import type {
   EventCategory,
+  EventType,
   GameEvent,
   GameSettings,
   GameState,
@@ -15,6 +16,7 @@ import type {
   SquareType,
   StatEffects,
   StatKey,
+  StatusEffects,
 } from '../types/game';
 import { STAT_KEYS } from '../types/game';
 
@@ -88,6 +90,43 @@ export const EVENT_CATEGORY_LABELS: Record<EventCategory, string> = {
   reflection: '人生回想',
   smallChallenge: '小さな挑戦',
   smallPinch: '小さなピンチ',
+  housing: '住居',
+};
+
+// 職業・年収・恋愛家族状況・住居（StatKeyとは別枠の「状態」ステータス）の表示用ラベル・アイコン。
+export const STATUS_FIELD_LABELS = {
+  occupation: '職業',
+  annualIncome: '年収',
+  romanceStatus: '恋愛・家族',
+  housingStatus: '住居',
+  assetRank: '資産ランク',
+} as const;
+
+export const STATUS_FIELD_ICONS = {
+  occupation: '💼',
+  annualIncome: '💴',
+  romanceStatus: '💞',
+  housingStatus: '🏠',
+  assetRank: '🏆',
+} as const;
+
+// イベントの性格（EventType）の表示ラベル・アイコン。結果モーダル・人生ログの控えめなバッジに使う。
+export const EVENT_TYPE_LABELS: Record<EventType, string> = {
+  choice: '選択イベント',
+  lucky: '幸運イベント',
+  unlucky: '不運イベント',
+  growth: '成長イベント',
+  turningPoint: '人生の転機',
+  nearFuture: '近未来イベント',
+};
+
+export const EVENT_TYPE_ICONS: Record<EventType, string> = {
+  choice: '🔀',
+  lucky: '🍀',
+  unlucky: '⚡',
+  growth: '🌱',
+  turningPoint: '🌟',
+  nearFuture: '🚀',
 };
 
 // プレイヤーごとの色・アイコン（盤面のコマやカードの縁取りに共通で使う）
@@ -260,12 +299,12 @@ const SQUARE_TYPE_CATEGORY_MAP: Record<SquareType, EventCategory[]> = {
   turningPoint: ['jobChange', 'marriage', 'divorce', 'death', 'startup', 'elder', 'path', 'retirement'],
   love: ['love', 'marriage', 'divorce'],
   work: ['work', 'jobChange', 'startup', 'partTime'],
-  family: ['family', 'childcare', 'care', 'marriage', 'grandchild'],
+  family: ['family', 'childcare', 'care', 'marriage', 'grandchild', 'housing'],
   health: ['health', 'illness', 'accident'],
   investment: ['investment', 'fraud'],
   study: ['study', 'child', 'student', 'club', 'path'],
   hobby: ['hobby'],
-  social: ['social', 'friend'],
+  social: ['social', 'friend', 'housing'],
   future: ['space', 'ai', 'disaster'],
   superRare: [],
 };
@@ -397,18 +436,18 @@ function applyRouteBias(events: GameEvent[], boostCategories: EventCategory[]): 
 // 投資・介護・老後・死亡・宇宙旅行等）は、そのステージでは絶対に選ばれない。
 const STAGE_CATEGORY_ALLOWLIST: Record<LifeStage, EventCategory[]> = {
   stage1: ['child', 'family', 'study', 'hobby', 'health', 'friend', 'smallChallenge', 'smallPinch'],
-  stage2: ['student', 'study', 'friend', 'club', 'path', 'partTime', 'hobby', 'health', 'love', 'challenge', 'social', 'startup', 'work'],
+  stage2: ['student', 'study', 'friend', 'club', 'path', 'partTime', 'hobby', 'health', 'love', 'challenge', 'social', 'startup', 'work', 'housing'],
   stage3: [
     'work', 'jobChange', 'love', 'marriage', 'divorce', 'startup', 'investment', 'study', 'health',
-    'family', 'childcare', 'hobby', 'social', 'challenge', 'accident', 'illness', 'disaster', 'fraud', 'ai',
+    'family', 'childcare', 'hobby', 'social', 'challenge', 'accident', 'illness', 'disaster', 'fraud', 'ai', 'housing',
   ],
   stage4: [
     'work', 'jobChange', 'startup', 'investment', 'family', 'childcare', 'health', 'illness', 'care',
-    'social', 'ai', 'marriage', 'divorce', 'death', 'disaster', 'hobby', 'challenge', 'space', 'study',
+    'social', 'ai', 'marriage', 'divorce', 'death', 'disaster', 'hobby', 'challenge', 'space', 'study', 'housing',
   ],
   stage5: [
     'elder', 'health', 'illness', 'family', 'hobby', 'social', 'care', 'ai', 'space', 'love', 'death',
-    'fraud', 'work', 'investment', 'accident', 'disaster', 'retirement', 'grandchild',
+    'fraud', 'work', 'investment', 'accident', 'disaster', 'retirement', 'grandchild', 'housing',
   ],
   stage6: ['elder', 'health', 'illness', 'family', 'care', 'death', 'ai', 'space', 'endOfLife', 'reflection'],
 };
@@ -551,6 +590,11 @@ const CLAMPED_STAT_KEYS: StatKey[] = [
 const INITIAL_STAT_VALUE = 50;
 const INITIAL_MONEY = 300; // 単位: 万円
 const INITIAL_EXPERIENCE = 0;
+const INITIAL_OCCUPATION = '学生';
+const INITIAL_ANNUAL_INCOME = 0; // 単位: 万円
+const INITIAL_ROMANCE_STATUS = '独身';
+const INITIAL_HOUSING_STATUS = '実家暮らし';
+const MAX_ANNUAL_INCOME = 3000; // 単位: 万円。極端な値で表示が壊れないよう上限を設ける
 
 // 年齢差によるスタート補正のパラメータ（将来チューニングしやすいよう定数化）
 // 最年長プレイヤーとの年齢差が大きい（=年下の）プレイヤーほど、
@@ -615,9 +659,22 @@ export function initializePlayers(inputs: PlayerSetupInput[]): Player[] {
       lifeLogs: [],
       finished: false,
       chosenRoutes: [],
+      occupation: INITIAL_OCCUPATION,
+      annualIncome: INITIAL_ANNUAL_INCOME,
+      romanceStatus: INITIAL_ROMANCE_STATUS,
+      housingStatus: INITIAL_HOUSING_STATUS,
     };
     return player;
   });
+}
+
+/** 所持金から資産ランクを判定する（表示専用の派生値。Playerには保存しない）。 */
+export function calculateAssetRank(money: number): string {
+  if (money < 100) return 'ランクD（節約生活）';
+  if (money < 500) return 'ランクC（一般市民）';
+  if (money < 1500) return 'ランクB（ゆとり世帯）';
+  if (money < 5000) return 'ランクA（富裕層）';
+  return 'ランクS（資産家）';
 }
 
 export function rollDice(): number {
@@ -650,6 +707,56 @@ export function applyEffectsToPlayer(player: Player, effects: StatEffects): Play
     updated[key] = clampStat(key, updated[key] + delta);
   });
   return updated;
+}
+
+/**
+ * 職業・年収・恋愛家族状況・住居の変化を適用する。数値ステータス（StatKey）とは別枠のため、
+ * calculateFinalScore・称号判定・卒業判定など既存のスコア計算には一切影響しない。
+ */
+export function applyStatusEffectsToPlayer(player: Player, statusEffects?: StatusEffects): Player {
+  if (!statusEffects) return player;
+  const updated: Player = { ...player };
+  if (statusEffects.occupation !== undefined) updated.occupation = statusEffects.occupation;
+  if (statusEffects.romanceStatus !== undefined) updated.romanceStatus = statusEffects.romanceStatus;
+  if (statusEffects.housingStatus !== undefined) updated.housingStatus = statusEffects.housingStatus;
+  if (statusEffects.annualIncomeDelta !== undefined) {
+    updated.annualIncome = Math.min(
+      MAX_ANNUAL_INCOME,
+      Math.max(0, updated.annualIncome + statusEffects.annualIncomeDelta),
+    );
+  }
+  return updated;
+}
+
+const UNLUCKY_LEANING_CATEGORIES: EventCategory[] = [
+  'illness',
+  'accident',
+  'disaster',
+  'fraud',
+  'divorce',
+  'death',
+  'smallPinch',
+  'care',
+];
+
+function sumEffectValues(effects: StatEffects): number {
+  return (Object.keys(effects) as StatKey[]).reduce((sum, key) => sum + (effects[key] ?? 0), 0);
+}
+
+/**
+ * イベントの「性格」（EventType）を判定する。明示的に指定されていればそれを優先し、
+ * 未指定の既存イベントは内容（選択肢の有無・マス種類・カテゴリ・効果の符号）から推測する。
+ */
+export function getEventType(event: GameEvent): EventType {
+  if (event.eventType) return event.eventType;
+  if (event.choices && event.choices.length > 0) return 'choice';
+  if (event.squareType === 'turningPoint') return 'turningPoint';
+  if (event.futureTag || event.category === 'ai' || event.category === 'space') return 'nearFuture';
+  if (UNLUCKY_LEANING_CATEGORIES.includes(event.category)) return 'unlucky';
+  const net = sumEffectValues(event.effects);
+  if (event.rarity !== 'common' && net >= 0) return 'lucky';
+  if (net < 0) return 'unlucky';
+  return 'growth';
 }
 
 export function deriveImportance(rarity: Rarity): LogImportance {
@@ -933,14 +1040,27 @@ export interface DecadeSummary {
  * 10年ごとの見出し生成（プレースホルダー）。
  * Ver.1.0では固定テンプレートで組み立てるが、将来はここをAI生成に差し替える想定。
  */
+// 転職・結婚・起業・大きな投資成功/失敗・家族の変化・重要な健康イベントなど「人生の転機」は、
+// 数値的な影響が小さくても見出しに選ばれやすいよう優先度を上げる。
+const EVENT_TYPE_HEADLINE_BONUS: Partial<Record<LifeLogEntry['eventType'], number>> = {
+  turningPoint: 20,
+  choice: 8,
+};
+
+function newspaperHeadlinePriority(log: LifeLogEntry): number {
+  return (
+    Math.abs(weightedNetEffect(log.effects)) +
+    IMPORTANCE_RANKING_BONUS[log.importance] +
+    (EVENT_TYPE_HEADLINE_BONUS[log.eventType] ?? 0)
+  );
+}
+
 export function generateNewspaperHeadlinePlaceholder(logs: LifeLogEntry[]): string {
   if (logs.length === 0) {
     return 'これといった出来事のない、穏やかな10年でした。';
   }
 
-  const sorted = [...logs].sort(
-    (a, b) => Math.abs(weightedNetEffect(b.effects)) - Math.abs(weightedNetEffect(a.effects)),
-  );
+  const sorted = [...logs].sort((a, b) => newspaperHeadlinePriority(b) - newspaperHeadlinePriority(a));
   const topCategories = Array.from(new Set(sorted.slice(0, 2).map((log) => EVENT_CATEGORY_LABELS[log.category])));
   const netTotal = logs.reduce((sum, log) => sum + weightedNetEffect(log.effects), 0);
   const tone = netTotal >= 15 ? '飛躍の10年でした' : netTotal <= -15 ? '試練の多い10年でした' : '転機が重なった10年でした';

@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { getRouteById } from '../data/branchRoutes';
 import type { Player, StatKey } from '../types/game';
-import { STAT_ICONS, STAT_LABELS, getLifeStageName, getPlayerVisual } from '../utils/gameLogic';
+import {
+  STAT_ICONS,
+  STAT_LABELS,
+  STATUS_FIELD_ICONS,
+  STATUS_FIELD_LABELS,
+  calculateAssetRank,
+  getLifeStageName,
+  getPlayerVisual,
+} from '../utils/gameLogic';
 
 interface PlayerCardProps {
   player: Player;
@@ -22,6 +30,31 @@ const DETAIL_CHIP_KEYS: StatKey[] = [
   'aiAffinity',
   'actionPower',
 ];
+
+/** 職業・年収・恋愛家族状況・住居・資産ランクなど、数値の増減ではなく「状態」を表すステータス一覧。
+ * 情報過多にならないよう、詳細表示（展開時）でのみ表示する。 */
+function StatusFieldList({ player }: { player: Player }) {
+  const assetRank = calculateAssetRank(player.money);
+  return (
+    <div className="player-card__status-fields">
+      <span className="player-card__status-field">
+        {STATUS_FIELD_ICONS.occupation} {STATUS_FIELD_LABELS.occupation}：{player.occupation}
+      </span>
+      <span className="player-card__status-field">
+        {STATUS_FIELD_ICONS.annualIncome} {STATUS_FIELD_LABELS.annualIncome}：{player.annualIncome}万円
+      </span>
+      <span className="player-card__status-field">
+        {STATUS_FIELD_ICONS.romanceStatus} {STATUS_FIELD_LABELS.romanceStatus}：{player.romanceStatus}
+      </span>
+      <span className="player-card__status-field">
+        {STATUS_FIELD_ICONS.housingStatus} {STATUS_FIELD_LABELS.housingStatus}：{player.housingStatus}
+      </span>
+      <span className="player-card__status-field">
+        {STATUS_FIELD_ICONS.assetRank} {STATUS_FIELD_LABELS.assetRank}：{assetRank}
+      </span>
+    </div>
+  );
+}
 
 function ChosenRouteList({ chosenRoutes }: { chosenRoutes: string[] }) {
   if (chosenRoutes.length === 0) return null;
@@ -95,6 +128,7 @@ function PlayerCard({ player, index, isCurrent, compact = false }: PlayerCardPro
                   </span>
                 ))}
               </div>
+              <StatusFieldList player={player} />
               <ChosenRouteList chosenRoutes={player.chosenRoutes} />
             </>
           )}
@@ -119,6 +153,7 @@ function PlayerCard({ player, index, isCurrent, compact = false }: PlayerCardPro
               </span>
             ))}
           </div>
+          <StatusFieldList player={player} />
           <ChosenRouteList chosenRoutes={player.chosenRoutes} />
         </div>
       )}

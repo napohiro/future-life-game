@@ -97,6 +97,11 @@ function GameBoard({
               <div className="game-board__turn-meta">
                 {getLifeStageName(currentPlayer.age)}・{currentPlayer.age}歳
               </div>
+              <div className="game-board__turn-priority-stats">
+                <span>💰{currentPlayer.money.toLocaleString()}万円</span>
+                <span>😊{currentPlayer.happiness}</span>
+                <span>❤️{currentPlayer.health}</span>
+              </div>
             </div>
           </div>
         ) : (

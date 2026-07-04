@@ -25,12 +25,14 @@ import {
   ELDER_GRADUATION_START_AGE,
   appendLifeLog,
   applyEffectsToPlayer,
+  applyStatusEffectsToPlayer,
   createInitialGameState,
   deriveImportance,
   drawEventForPosition,
   findNextActivePlayerIndex,
   forcedGraduationAtBoardEnd,
   getBoardMilestone,
+  getEventType,
   initializePlayers,
   isGameFinished,
   movePlayerPosition,
@@ -226,7 +228,11 @@ function App() {
     setGameState((prev) => {
       if (!prev.activeEvent) return prev;
       const effects = choice ? choice.effects : prev.activeEvent.effects;
-      return { ...prev, pendingResult: { effects, choiceLabel: choice?.label } };
+      const statusEffects = choice ? choice.statusEffects : prev.activeEvent.statusEffects;
+      return {
+        ...prev,
+        pendingResult: { effects, statusEffects, choiceLabel: choice?.label, eventType: getEventType(prev.activeEvent) },
+      };
     });
   };
 
@@ -239,19 +245,22 @@ function App() {
       const updatedPlayers = prev.players.map((p) => {
         if (p.id !== prev.activePlayerIdForEvent) return p;
         const withEffects = applyEffectsToPlayer(p, result.effects);
+        const withStatusEffects = applyStatusEffectsToPlayer(withEffects, result.statusEffects);
         // 巨大イベントマス（人生の節目）で起きた出来事は、重要度を最高ランクにして
         // 人生ログ・最終レポートの「ベストイベント」に残りやすくする。
-        const isMilestoneSquare = getBoardMilestone(withEffects.position) !== undefined;
-        return appendLifeLog(withEffects, {
+        const isMilestoneSquare = getBoardMilestone(withStatusEffects.position) !== undefined;
+        return appendLifeLog(withStatusEffects, {
           turn: prev.turnCount,
-          age: withEffects.age,
-          position: withEffects.position,
+          age: withStatusEffects.age,
+          position: withStatusEffects.position,
           eventTitle: event.title,
           eventDescription: event.logText,
           choiceLabel: result.choiceLabel,
           effects: result.effects,
+          statusEffects: result.statusEffects,
           category: event.category,
           importance: isMilestoneSquare ? 'critical' : deriveImportance(event.rarity),
+          eventType: result.eventType,
         });
       });
 
@@ -311,6 +320,7 @@ function App() {
           effects: route.effectsModifier ?? {},
           category: route.logCategory,
           importance: 'critical',
+          eventType: 'turningPoint',
         });
       });
       return { ...prev, players: updatedPlayers, pendingBranchChoice: null };
@@ -334,6 +344,7 @@ function App() {
           effects: {},
           category: 'death',
           importance: 'critical',
+          eventType: 'turningPoint',
         });
       });
 

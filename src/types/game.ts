@@ -91,16 +91,31 @@ export type EventCategory =
   | 'reflection'
   | 'smallChallenge'
   | 'smallPinch'
-  | 'family';
+  | 'family'
+  | 'housing';
 
 export type Rarity = 'common' | 'rare' | 'superRare';
 
 export type StatEffects = Partial<Record<StatKey, number>>;
 
+// イベントの性格を表す分類軸（EventCategoryとは別軸）。結果モーダル・人生ログの小さなラベル表示に使う。
+// 明示的に指定しない既存イベントは、utils/gameLogic.ts の deriveEventType() が内容から自動判定する。
+export type EventType = 'choice' | 'lucky' | 'unlucky' | 'growth' | 'turningPoint' | 'nearFuture';
+
+// 職業・年収・恋愛家族状況・住居など、数値の増減ではなく「状態そのもの」が変化する系のステータス。
+// 将来的に複数エンディングへ拡張しやすいよう、StatEffects（数値差分）とは独立したデータ構造にしてある。
+export interface StatusEffects {
+  occupation?: string;
+  annualIncomeDelta?: number;
+  romanceStatus?: string;
+  housingStatus?: string;
+}
+
 export interface EventChoice {
   id: string;
   label: string;
   effects: StatEffects;
+  statusEffects?: StatusEffects;
 }
 
 export interface GameEvent {
@@ -111,12 +126,14 @@ export interface GameEvent {
   category: EventCategory;
   squareType: SquareType;
   effects: StatEffects;
+  statusEffects?: StatusEffects;
   // 人生ログにそのまま使う本文。「〇〇して、〇〇になった」のような一文。
   logText: string;
   rarity: Rarity;
   choices?: EventChoice[];
   // 近未来イベント判定や、将来AIが生成タグ付けする際に使うフリータグ
   futureTag?: string;
+  eventType?: EventType;
 }
 
 export type LogImportance = 'normal' | 'high' | 'critical';
@@ -130,8 +147,10 @@ export interface LifeLogEntry {
   eventDescription: string;
   choiceLabel?: string;
   effects: StatEffects;
+  statusEffects?: StatusEffects;
   category: EventCategory;
   importance: LogImportance;
+  eventType: EventType;
 }
 
 export interface Player {
@@ -161,6 +180,12 @@ export interface Player {
   // 「人生の卒業」を迎えた年齢と理由（80歳以降、確率判定で決まる。固定ゴールではない）。
   graduationAge?: number;
   graduationReasonId?: string;
+  // 職業・年収・恋愛家族状況・住居。数値ステータス（StatKey）とは別枠で管理し、
+  // 現時点では最終スコア・卒業判定には影響させない（将来の複数エンディング拡張用の下地）。
+  occupation: string;
+  annualIncome: number;
+  romanceStatus: string;
+  housingStatus: string;
 }
 
 // 卒業理由の1つ。老衰・病気・事故など、ステータスに応じて重み付きで選ばれる。
@@ -219,7 +244,9 @@ export interface GameSettings {
 
 export interface PendingEventResult {
   effects: StatEffects;
+  statusEffects?: StatusEffects;
   choiceLabel?: string;
+  eventType: EventType;
 }
 
 export interface PendingBranchChoice {
