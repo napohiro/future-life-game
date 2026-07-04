@@ -374,17 +374,19 @@ function App() {
       // 既存の抽選・進行ロジックには一切手を加えず、追加のステップとして後付けしている。
       const movedPlayer = updatedPlayers.find((p) => p.id === prev.activePlayerIdForEvent);
       const branchPoint = movedPlayer ? getBranchPointForPosition(movedPlayer.position) : undefined;
+      // 時代限定ルート（era指定あり）は、今選んでいる時代と一致するものだけを選択肢に見せる。
+      const eraRoutes = branchPoint?.routes.filter((route) => !route.era || route.era.includes(prev.settings.era));
       const alreadyChosen = branchPoint
         ? branchPoint.routes.some((route) => movedPlayer!.chosenRoutes.includes(route.id))
         : true;
       const pendingBranchChoice =
-        branchPoint && !alreadyChosen
+        branchPoint && eraRoutes && !alreadyChosen
           ? {
               branchId: branchPoint.id,
               branchName: branchPoint.name,
               playerId: movedPlayer!.id,
               playerName: movedPlayer!.name,
-              routes: branchPoint.routes,
+              routes: eraRoutes,
             }
           : null;
 
@@ -410,7 +412,10 @@ function App() {
       const updatedPlayers = prev.players.map((p) => {
         if (p.id !== playerId) return p;
         const withEffects = route.effectsModifier ? applyEffectsToPlayer(p, route.effectsModifier) : p;
-        const withRoute = { ...withEffects, currentRoute: route.id, chosenRoutes: [...p.chosenRoutes, route.id] };
+        const withStatusEffects = route.statusEffectsModifier
+          ? applyStatusEffectsToPlayer(withEffects, route.statusEffectsModifier)
+          : withEffects;
+        const withRoute = { ...withStatusEffects, currentRoute: route.id, chosenRoutes: [...p.chosenRoutes, route.id] };
         // ルート選択も人生ログに残す。「〇歳：人生の分岐：〇〇」の形で、人生新聞にもそのまま反映される。
         return appendLifeLog(withRoute, {
           turn: prev.turnCount,
@@ -419,6 +424,7 @@ function App() {
           eventTitle: `${branchName}：${route.name}`,
           eventDescription: route.description,
           effects: route.effectsModifier ?? {},
+          statusEffects: route.statusEffectsModifier,
           category: route.logCategory,
           importance: 'critical',
           eventType: 'turningPoint',

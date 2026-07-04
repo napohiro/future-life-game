@@ -171,7 +171,7 @@ function GameBoard({
       <div className="board-scroll">
         <div className="board-canvas" style={{ height: canvasHeight }}>
           {stageBands.map((band) => (
-            <BoardStageSection key={band.stage} stage={band.stage} top={band.top} height={band.height} />
+            <BoardStageSection key={band.stage} stage={band.stage} top={band.top} height={band.height} era={era} />
           ))}
 
           <svg className="board-path-svg" viewBox={`0 0 100 ${canvasHeight}`} preserveAspectRatio="none">
@@ -248,18 +248,23 @@ function GameBoard({
         </div>
       </div>
 
-      <Roulette
-        disabled={rollDisabled || !currentPlayer || currentPlayer.finished}
-        lastRoll={lastRoll}
-        soundEnabled={soundEnabled}
-        onRoll={onRoll}
-        onRollSettled={onRollSettled}
-      />
-
       <div className="game-board__players">
         {players.map((player, index) => (
           <PlayerCard key={player.id} player={player} index={index} isCurrent={index === currentPlayerIndex} era={era} compact />
         ))}
+      </div>
+
+      {/* ルーレットは通常のドキュメントフローから外し、画面下部に固定表示する。
+          スクロール位置に関わらず常に操作でき、イベントモーダル（z-index高）表示中は
+          自動的にその下に隠れるため、重なりや誤操作の心配がない。 */}
+      <div className="game-board__roulette-dock">
+        <Roulette
+          disabled={rollDisabled || !currentPlayer || currentPlayer.finished}
+          lastRoll={lastRoll}
+          soundEnabled={soundEnabled}
+          onRoll={onRoll}
+          onRollSettled={onRollSettled}
+        />
       </div>
     </StageBackground>
   );

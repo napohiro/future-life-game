@@ -341,6 +341,25 @@
 .game-board {
   gap: 14px;
   transition: background 0.6s ease;
+  /* 画面下部に固定したルーレットドックの高さ分、最後まで隠れず読めるようにする。 */
+  padding-bottom: 220px;
+}
+
+.game-board__roulette-dock {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: 100%;
+  max-width: 480px;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, rgba(238, 243, 251, 0) 0%, #eef3fb 18%, #eef3fb 100%);
+  z-index: 40;
+  pointer-events: none;
+}
+
+.game-board__roulette-dock .roulette {
+  pointer-events: auto;
 }
 
 .game-board__era-strip {
@@ -1086,6 +1105,10 @@
 }
 
 @media (min-width: 640px) {
+  .game-board {
+    padding-bottom: 260px;
+  }
+
   .roulette {
     padding: 20px 26px 20px 20px;
   }

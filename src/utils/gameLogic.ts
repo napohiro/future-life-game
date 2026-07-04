@@ -307,8 +307,31 @@ export const BOARD_STAGE_THEMES: BoardStageTheme[] = [
   },
 ];
 
-export function getBoardStageTheme(stage: LifeStage): BoardStageTheme {
-  return BOARD_STAGE_THEMES.find((t) => t.id === stage) ?? BOARD_STAGE_THEMES[0];
+// stage3以降は、時代によって盤面の装飾アイコンを一部差し替える（現代編はスマホ・生活寄り、
+// 近未来編はAI・ロボット・宇宙寄り）。見た目だけの差分なので、指定しなければ元の装飾のまま。
+const STAGE_DECORATIONS_BY_ERA: Partial<Record<LifeStage, Record<EraId, string[]>>> = {
+  stage3: {
+    present: ['🚉', '🏢', '📱', '☕', '💼'],
+    future: ['🚉', '🏢', '🤖', '🏙️', '💼'],
+  },
+  stage4: {
+    present: ['🌇', '🏘️', '🏥', '👨‍👩‍👧', '💻'],
+    future: ['🌇', '🏘️', '🤖', '👨‍👩‍👧', '🚀'],
+  },
+  stage5: {
+    present: ['🌾', '🚜', '✈️', '🎣', '👵'],
+    future: ['🌌', '🤖', '✈️', '🎣', '👵'],
+  },
+  stage6: {
+    present: ['🏡', '🩺', '📔', '🏙️', '✨'],
+    future: ['🌌', '🤖', '🚀', '🧬', '✨'],
+  },
+};
+
+export function getBoardStageTheme(stage: LifeStage, era?: EraId): BoardStageTheme {
+  const theme = BOARD_STAGE_THEMES.find((t) => t.id === stage) ?? BOARD_STAGE_THEMES[0];
+  const eraDecorations = era ? STAGE_DECORATIONS_BY_ERA[stage]?.[era] : undefined;
+  return eraDecorations ? { ...theme, decorations: eraDecorations } : theme;
 }
 
 // ---------------------------------------------------------------------------
@@ -1293,7 +1316,9 @@ export function rankPlayers(players: Player[]): RankedPlayer[] {
 // ターンごとに確率判定を行い、ステータスに応じて選ばれた理由で「人生の卒業」を迎える。
 // 盤面の物理的な終端（position 100＝100歳）に達した場合も、その時点で強制的に卒業扱いにする。
 
-export const ELDER_GRADUATION_START_AGE = 80;
+// 50歳から「卒業（人生終了）」の周期判定が始まる。49歳以下は判定なし＝危険な選択をした場合の
+// endsLifeChance（個々のイベント）だけがリスク源になる（「0〜49歳は極めて低確率」という方針）。
+export const ELDER_GRADUATION_START_AGE = 50;
 
 export const GRADUATION_REASONS: GraduationReason[] = [
   {
@@ -1381,20 +1406,28 @@ export function pickEarlyEndingReason(category: EventCategory): GraduationReason
 // 80〜149歳を10歳刻みで区切った基礎卒業確率。150歳（盤面終端）は`forcedGraduationAtBoardEnd`で
 // 必ず卒業となるため、ここでは149歳までをカバーすれば十分。150歳までの70年分の道のりに
 // 引き伸ばしたことで、旧来（〜100歳・20年分）よりもかなり緩やかな傾きにしてある。
+// 50〜149歳を10歳刻みで区切った基礎卒業確率。150歳（盤面終端）は`forcedGraduationAtBoardEnd`で
+// 必ず卒業となるため、ここでは149歳までをカバーすれば十分。年齢が上がるほど自然にリスクが
+// 高まっていくよう、50代はごく僅か・140代にかけて急激に上がる曲線にしてある。
 const GRADUATION_BASE_CHANCE_BY_AGE: { maxAge: number; base: number }[] = [
-  { maxAge: 89, base: 0.02 },
-  { maxAge: 99, base: 0.035 },
-  { maxAge: 109, base: 0.05 },
-  { maxAge: 119, base: 0.08 },
-  { maxAge: 129, base: 0.13 },
-  { maxAge: 139, base: 0.2 },
-  { maxAge: Infinity, base: 0.3 }, // 140〜149歳
+  { maxAge: 59, base: 0.004 },
+  { maxAge: 69, base: 0.008 },
+  { maxAge: 79, base: 0.015 },
+  { maxAge: 89, base: 0.025 },
+  { maxAge: 99, base: 0.04 },
+  { maxAge: 109, base: 0.07 },
+  { maxAge: 119, base: 0.1 },
+  { maxAge: 129, base: 0.16 },
+  { maxAge: 139, base: 0.24 },
+  { maxAge: Infinity, base: 0.38 }, // 140〜149歳
 ];
 
 /**
- * 年代（80歳〜）とステータス・時代設定から、その回の「卒業確率」を計算する。
- * 健康・寿命モード（世界設定）・時代選択（近未来編は長寿医療の分だけ延命しやすい）という
- * 既存のレバーだけで、「健康管理や医療選択で長寿の可能性を高められる」を実現している。
+ * 年代（50歳〜）とステータス・資産・時代設定から、その回の「卒業確率」を計算する。
+ * 健康・資産・寿命モード（世界設定）・時代選択という既存のレバーの掛け算だけで、
+ * 「健康管理や医療選択・資産で長寿の可能性を高められる」を実現している。
+ * 100歳以降は時代による差をはっきり付け、現代編はかなり厳しく、近未来編の長寿医療で
+ * 生存可能性を上げられるようにしている。
  */
 function calculateGraduationChance(player: Player, age: number, settings: GameSettings): number {
   if (age < ELDER_GRADUATION_START_AGE) return 0;
@@ -1405,14 +1438,22 @@ function calculateGraduationChance(player: Player, age: number, settings: GameSe
   const healthFactor = 1 - (player.health - 50) / 150;
   let chance = base * Math.max(0.4, healthFactor);
 
+  // 資産が多いほど医療・介護へのアクセスが良く、僅かにリスクが下がる（逆に乏しいと僅かに上がる）。
+  // 効果は±15%程度に抑え、資産だけで安全になり過ぎないようにしている。
+  const moneyFactor = 1 - Math.max(-0.15, Math.min(0.15, (player.money - 300) / 4000));
+  chance *= moneyFactor;
+
   // 長寿モードでは卒業確率を少し下げる。
   if (settings.longevityMode === 'longevity') {
     chance *= 0.7;
   }
 
-  // 近未来編は長寿医療・再生医療等の恩恵で、同じ健康状態でも少しだけ延命しやすい。
-  if (settings.era === 'future') {
-    chance *= 0.8;
+  // 100歳未満は時代による差を軽めに、100歳以降は現代編と近未来編ではっきり差を付ける
+  // （現代編は長寿医療に限界がありかなり厳しく、近未来編は長寿治療・再生医療で伸ばせる）。
+  if (age >= 100) {
+    chance *= settings.era === 'future' ? 0.6 : 1.2;
+  } else if (settings.era === 'future') {
+    chance *= 0.85;
   }
 
   return Math.min(0.85, Math.max(0.015, chance));

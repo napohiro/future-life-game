@@ -1,10 +1,11 @@
-import type { LifeStage } from '../types/game';
+import type { EraId, LifeStage } from '../types/game';
 import { getBoardStageTheme } from '../utils/gameLogic';
 
 interface BoardStageSectionProps {
   stage: LifeStage;
   top: number;
   height: number;
+  era: EraId;
 }
 
 // 装飾絵文字を帯の中に薄く散らすための、決定的な（毎回同じ）疑似ランダム位置。
@@ -17,8 +18,8 @@ function scatterPosition(seed: number): { left: string; top: string } {
 }
 
 /** 盤面上に敷く「年代エリア」の帯。座標ベースのボード上に絶対配置で敷かれる背景層。 */
-function BoardStageSection({ stage, top, height }: BoardStageSectionProps) {
-  const theme = getBoardStageTheme(stage);
+function BoardStageSection({ stage, top, height, era }: BoardStageSectionProps) {
+  const theme = getBoardStageTheme(stage, era);
 
   return (
     <div className="board-stage-band" style={{ top, height, background: theme.gradient }}>

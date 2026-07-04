@@ -300,6 +300,10 @@ export interface BranchRoute {
   // このルートを選んだプレイヤーに対して、今後のイベント抽選で少し出やすくするカテゴリ。
   categoryBoost: EventCategory[];
   effectsModifier?: StatEffects;
+  // 選んだ瞬間に職業・住居などの状態ステータスを変える場合に使う（時代限定ルートの職業演出用）。
+  statusEffectsModifier?: StatusEffects;
+  // このルートが出現する時代を限定する場合に指定する（未指定は全時代共通）。
+  era?: EraId[];
 }
 
 export interface BranchPoint {
