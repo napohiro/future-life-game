@@ -23,7 +23,7 @@ const EXTRA_SLOWDOWN_SPINS = 1; // 減速中にあと何周してから止まる
 const STOPPED_BOUNCE_MS = 320;
 const RESULT_PAUSE_MS = 600; // バウンド後、さらに余韻を持たせる時間（合計で停止後 約0.9秒 でコマが動き出す）
 const TICK_SOUND_INTERVAL_MS = 110;
-const NUMBER_RADIUS_PX = 56;
+const NUMBER_RADIUS_PX = 46;
 
 /**
  * 人生ゲーム風の盤面型ルーレット。
@@ -153,17 +153,47 @@ function Roulette({ disabled, lastRoll, soundEnabled, onRoll, onRollSettled }: R
   };
 
   const isSettling = phase === 'slowing' || phase === 'stopped' || phase === 'resultPause';
-  const buttonLabel = phase === 'spinning' ? '👆 タップで止める！' : isSettling ? '止まります…' : '🎯 タップで回す！';
+  const isInteractive = !disabled && (phase === 'idle' || phase === 'spinning');
+  // 自分の番ではない等で disabled になっている間は控えめに沈ませる。
+  // slowing/stopped/resultPause は自分の操作で始まった演出の途中なので、あえて暗くしない。
+  const isWaitingForTurn = disabled && phase === 'idle';
+  const wheelAriaLabel =
+    phase === 'idle' ? 'タップしてルーレットを回す' : phase === 'spinning' ? 'タップしてルーレットを止める' : 'ルーレット（停止中）';
 
   return (
     <div className="roulette">
-      <div className="roulette-wheel-frame">
+      <div className="roulette__info">
+        <div className="roulette__result-row">
+          {resultNumber !== null && (phase === 'idle' || phase === 'stopped' || phase === 'resultPause') ? (
+            <span className="roulette__result-readout">
+              出た数字：<strong>{resultNumber}</strong>
+            </span>
+          ) : (
+            <span className="roulette__result-readout roulette__result-readout--placeholder">
+              {phase === 'spinning' ? 'タップで止まります' : phase === 'slowing' ? '止まります…' : 'ルーレットをタップしてね'}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        className={[
+          'roulette-wheel-frame',
+          phase === 'idle' ? 'roulette-wheel-frame--tappable' : '',
+          isWaitingForTurn ? 'roulette-wheel-frame--waiting' : '',
+        ].join(' ')}
+        onClick={handleClick}
+        disabled={disabled || isSettling}
+        aria-label={wheelAriaLabel}
+      >
         <div className="roulette-wheel-pointer" aria-hidden="true">
           ▼
         </div>
         <div
           className={[
             'roulette-wheel',
+            phase === 'idle' ? 'roulette-wheel--idle-glow' : '',
             phase === 'spinning' ? 'roulette-wheel--spinning-fast' : '',
             phase === 'slowing' ? 'roulette-wheel--slowing' : '',
             phase === 'stopped' ? 'roulette-wheel--bounce' : '',
@@ -181,27 +211,12 @@ function Roulette({ disabled, lastRoll, soundEnabled, onRoll, onRollSettled }: R
           ))}
         </div>
         <div className="roulette-wheel__hub">🎲</div>
-      </div>
 
-      <div className="roulette__result-row">
-        {resultNumber !== null && (phase === 'idle' || phase === 'stopped' || phase === 'resultPause') ? (
-          <span className="roulette__result-readout">
-            出た数字：<strong>{resultNumber}</strong>
-          </span>
-        ) : (
-          <span className="roulette__result-readout roulette__result-readout--placeholder">
-            {phase === 'spinning' ? 'タップで止まります' : phase === 'slowing' ? '止まります…' : 'ルーレットを回してね'}
+        {isInteractive && (
+          <span className="roulette-wheel__tap-hint" aria-hidden="true">
+            {phase === 'idle' ? 'タップして回す' : 'タップで止める'}
           </span>
         )}
-      </div>
-
-      <button
-        type="button"
-        className={`btn btn--primary btn--large roulette__button ${phase === 'spinning' ? 'roulette__button--spinning' : ''}`}
-        onClick={handleClick}
-        disabled={disabled || isSettling}
-      >
-        {buttonLabel}
       </button>
     </div>
   );

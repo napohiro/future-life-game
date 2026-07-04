@@ -717,22 +717,47 @@
 
 .roulette {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
   background: #fff;
   border-radius: 16px;
-  padding: 12px 16px;
+  padding: 14px 18px 14px 16px;
   box-shadow: 0 8px 20px rgba(31, 36, 48, 0.12);
+}
+
+.roulette__info {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .roulette-wheel-frame {
   position: relative;
-  width: 172px;
-  height: 172px;
+  width: 140px;
+  height: 140px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.roulette-wheel-frame:disabled {
+  cursor: default;
+}
+
+.roulette-wheel-frame--tappable {
+  cursor: pointer;
+}
+
+.roulette-wheel-frame--waiting {
+  opacity: 0.5;
 }
 
 .roulette-wheel-pointer {
@@ -740,7 +765,7 @@
   top: -6px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 26px;
+  font-size: 22px;
   color: #1f2430;
   z-index: 5;
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
@@ -748,8 +773,8 @@
 
 .roulette-wheel {
   position: relative;
-  width: 156px;
-  height: 156px;
+  width: 126px;
+  height: 126px;
   border-radius: 50%;
   background: conic-gradient(
     from -30deg,
@@ -760,9 +785,23 @@
     #8b5cf6 240deg 300deg,
     #f5c518 300deg 360deg
   );
-  border: 6px solid #fff;
+  border: 5px solid #fff;
   box-shadow: 0 8px 20px rgba(31, 36, 48, 0.25), inset 0 0 0 2px rgba(31, 36, 48, 0.12);
   transition: none;
+}
+
+.roulette-wheel--idle-glow {
+  animation: roulette-wheel-idle-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes roulette-wheel-idle-glow {
+  0%,
+  100% {
+    box-shadow: 0 8px 20px rgba(31, 36, 48, 0.25), inset 0 0 0 2px rgba(31, 36, 48, 0.12), 0 0 0 0 rgba(47, 111, 237, 0.35);
+  }
+  50% {
+    box-shadow: 0 8px 20px rgba(31, 36, 48, 0.25), inset 0 0 0 2px rgba(31, 36, 48, 0.12), 0 0 0 8px rgba(47, 111, 237, 0);
+  }
 }
 
 .roulette-wheel--spinning-fast {
@@ -794,10 +833,6 @@
   }
 }
 
-.roulette__button--spinning {
-  background: #1f2430;
-}
-
 .roulette-wheel__number {
   position: absolute;
   top: 50%;
@@ -807,7 +842,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
+  font-size: 21px;
   font-weight: 800;
   color: #fff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
@@ -818,23 +853,50 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #ffffff, #d9dfe8 70%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 16px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 0 0 2px rgba(31, 36, 48, 0.1);
   z-index: 4;
+}
+
+.roulette-wheel__tap-hint {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7488;
+  background: #fff;
+  padding: 2px 8px;
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(31, 36, 48, 0.15);
+  z-index: 6;
+  animation: roulette-tap-hint-fade 1.8s ease-in-out infinite;
+}
+
+@keyframes roulette-tap-hint-fade {
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .roulette__result-row {
   min-height: 22px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .roulette__result-readout {
@@ -851,10 +913,6 @@
 .roulette__result-readout--placeholder {
   color: #8891a5;
   font-weight: 600;
-}
-
-.roulette__button {
-  max-width: 320px;
 }
 
 /* ---------- player card ---------- */
