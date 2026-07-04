@@ -25,7 +25,7 @@ function TitleScreen({ onStart, onShowHowToPlay }: TitleScreenProps) {
       <button type="button" className="btn btn--ghost btn--large" onClick={onShowHowToPlay}>
         遊び方を見る
       </button>
-      <p className="title-screen__note">2〜3人であそべます</p>
+      <p className="title-screen__note">2〜4人であそべます</p>
     </div>
   );
 }

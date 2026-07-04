@@ -46,7 +46,7 @@ function PlayerSetup({ onStart, onBack }: PlayerSetupProps) {
       <div className="player-setup__count">
         <span className="player-setup__count-label">プレイ人数</span>
         <div className="segmented">
-          {[2, 3].map((count) => (
+          {[2, 3, 4].map((count) => (
             <button
               key={count}
               type="button"

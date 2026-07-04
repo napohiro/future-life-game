@@ -73,20 +73,29 @@ function GameBoard({
     <StageBackground stage={currentStage} className="screen game-board">
       <div
         className="game-board__top"
-        style={currentVisual ? { borderLeftColor: currentVisual.color } : undefined}
+        style={
+          currentVisual
+            ? {
+                borderLeftColor: currentVisual.color,
+                background: `linear-gradient(135deg, #fff 60%, ${currentVisual.colorSoft} 165%)`,
+              }
+            : undefined
+        }
       >
         {currentPlayer && !currentPlayer.finished ? (
           <div className="game-board__turn">
-            <span className="game-board__turn-avatar" style={{ background: currentVisual!.colorSoft }}>
-              {currentVisual!.icon}
+            <span className="game-board__turn-avatar-wrap" style={{ color: currentVisual!.color }}>
+              <span className="game-board__turn-avatar" style={{ background: currentVisual!.colorSoft }}>
+                {currentVisual!.icon}
+              </span>
             </span>
             <div className="game-board__turn-text">
+              <div className="game-board__turn-heading" style={{ color: currentVisual!.color }}>
+                ▶ 只今の順番
+              </div>
               <div className="game-board__turn-name">{currentPlayer.name}さん</div>
               <div className="game-board__turn-meta">
-                <span className="game-board__turn-badge">現在の番</span>
-                <span className="game-board__turn-stage">
-                  {getLifeStageName(currentPlayer.age)}・{currentPlayer.age}歳
-                </span>
+                {getLifeStageName(currentPlayer.age)}・{currentPlayer.age}歳
               </div>
             </div>
           </div>

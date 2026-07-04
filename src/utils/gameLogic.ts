@@ -101,6 +101,7 @@ const PLAYER_VISUALS: PlayerVisual[] = [
   { color: '#2f6fed', colorSoft: '#dbe9ff', icon: '🧑' },
   { color: '#ff6f91', colorSoft: '#ffe1e9', icon: '👩' },
   { color: '#22b07d', colorSoft: '#d7f5e6', icon: '🧑‍🦰' },
+  { color: '#8b5cf6', colorSoft: '#ece5fd', icon: '🧑‍🦱' },
 ];
 
 export function getPlayerVisual(index: number): PlayerVisual {

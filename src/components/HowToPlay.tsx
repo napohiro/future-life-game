@@ -3,7 +3,7 @@ interface HowToPlayProps {
 }
 
 const STEPS: { icon: string; text: string }[] = [
-  { icon: '👥', text: '2〜3人で遊びます。名前と誕生日を入力してスタート。' },
+  { icon: '👥', text: '2〜4人で遊びます。名前と誕生日を入力してスタート。' },
   { icon: '🎲', text: '順番にルーレットを回して、盤面のコマを進めます。' },
   { icon: '🎴', text: '止まったマスの種類に応じて、人生イベントが発生します。' },
   { icon: '🔀', text: '選択肢があるイベントでは、選んだ内容で人生が変わります。' },
