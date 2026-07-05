@@ -402,7 +402,7 @@
   border: 2px solid #e7ebf3;
   border-radius: 14px;
   cursor: pointer;
-  min-height: 108px;
+  min-height: 96px;
   transition: border-color 0.12s ease, transform 0.08s ease, background 0.12s ease;
 }
 
@@ -432,22 +432,15 @@
   color: #2f6fed;
 }
 
-/* キャラの見た目イメージの年齢帯。名前より目立ちすぎない太さ・彩度に抑えつつ、
-   文字サイズとバッジ形状で「一目で年齢層が分かる」十分なコントラストを確保する。 */
-.character-select-card__age {
-  font-size: 12px;
-  font-weight: 700;
-  color: #52596b;
-  background: #e7ebf3;
-  border-radius: 999px;
-  padding: 1px 9px;
-  line-height: 1.5;
-  white-space: nowrap;
+.character-select-card__description {
+  font-size: 10px;
+  color: #8891a5;
+  line-height: 1.35;
+  text-align: center;
 }
 
-.character-select-card--active .character-select-card__age {
-  color: #2f6fed;
-  background: #dbe9ff;
+.character-select-card--active .character-select-card__description {
+  color: #5a7fd4;
 }
 
 .character-select-card__check {
@@ -683,6 +676,50 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 「現在34歳」表示。名前の直下に、他の情報より少し目立つ大きさで現在の実年齢を表示する。
+   1マス進んで年齢が変わるたびに数字要素のkeyが変わり再マウントされるので、
+   turn-age-popアニメーションが自然に再生される（軽くポップする演出）。 */
+.game-board__turn-age {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.game-board__turn-age-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #8891a5;
+}
+
+.game-board__turn-age-value {
+  display: inline-block;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1f2430;
+  line-height: 1;
+  animation: game-board-turn-age-pop 0.35s ease;
+}
+
+.game-board__turn-age-unit {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2430;
+}
+
+@keyframes game-board-turn-age-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.28);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .game-board__turn-meta {

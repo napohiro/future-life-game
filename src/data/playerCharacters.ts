@@ -8,23 +8,24 @@
 export interface PlayerCharacter {
   id: string;
   label: string;
-  /** キャラクターの見た目イメージにあわせた年齢帯（例：`12〜18歳`）。ゲーム内の実年齢とは無関係の表示用情報。 */
-  ageRangeLabel: string;
+  /** キャラ選択カードに表示する、性格をひとことで表す短い説明文。 */
+  description: string;
   avatar: string;
   token: string;
 }
 
-// キャラクターの見た目イメージに合わせた「タイプ」と年齢帯。01〜04が男の子、05〜08が女の子で、
-// 同じ4タイプ（主人公・知的・活発・癒し系）がそれぞれ対になっている。
-const CHARACTER_PROFILES: { label: string; ageRangeLabel: string }[] = [
-  { label: '主人公タイプ', ageRangeLabel: '12〜18歳' },
-  { label: '知的タイプ', ageRangeLabel: '14〜20歳' },
-  { label: '活発タイプ', ageRangeLabel: '12〜18歳' },
-  { label: '癒し系タイプ', ageRangeLabel: '13〜19歳' },
-  { label: '主人公タイプ', ageRangeLabel: '12〜18歳' },
-  { label: '知的タイプ', ageRangeLabel: '14〜20歳' },
-  { label: '活発タイプ', ageRangeLabel: '12〜18歳' },
-  { label: '癒し系タイプ', ageRangeLabel: '13〜19歳' },
+// キャラクターの見た目イメージに合わせた「タイプ」と、ひとことの性格説明。01〜04が男の子、
+// 05〜08が女の子で、同じ4タイプ（主人公・知的・活発・癒し系）がそれぞれ対になっている。
+// 年齢は持たせない（全プレイヤーは0歳から始まり、盤面を1マス進むごとに実際の年齢が進む仕様）。
+const CHARACTER_PROFILES: { label: string; description: string }[] = [
+  { label: '主人公タイプ', description: 'まっすぐで前向きな性格' },
+  { label: '知的タイプ', description: '落ち着いていて物知り' },
+  { label: '活発タイプ', description: '元気いっぱいで行動派' },
+  { label: '癒し系タイプ', description: 'やさしくてマイペース' },
+  { label: '主人公タイプ', description: 'まっすぐで前向きな性格' },
+  { label: '知的タイプ', description: '落ち着いていて物知り' },
+  { label: '活発タイプ', description: '元気いっぱいで行動派' },
+  { label: '癒し系タイプ', description: 'やさしくてマイペース' },
 ];
 
 export const PLAYER_CHARACTERS: PlayerCharacter[] = Array.from({ length: 8 }, (_, i) => {
@@ -32,7 +33,7 @@ export const PLAYER_CHARACTERS: PlayerCharacter[] = Array.from({ length: 8 }, (_
   return {
     id,
     label: CHARACTER_PROFILES[i].label,
-    ageRangeLabel: CHARACTER_PROFILES[i].ageRangeLabel,
+    description: CHARACTER_PROFILES[i].description,
     avatar: `/assets/avatars/player-avatar-${id}.png`,
     token: `/assets/avatars/playertoken/player-token-${id}.png`,
   };

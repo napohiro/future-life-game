@@ -128,6 +128,13 @@ function GameBoard({
                 ▶ 只今の順番
               </div>
               <div className="game-board__turn-name">{currentPlayer.name}さん</div>
+              <div className="game-board__turn-age">
+                <span className="game-board__turn-age-label">現在</span>
+                <span key={currentPlayer.age} className="game-board__turn-age-value">
+                  {currentPlayer.age}
+                </span>
+                <span className="game-board__turn-age-unit">歳</span>
+              </div>
               <div className="game-board__turn-meta">
                 {getLifeStageName(currentPlayer.age)}・{currentPlayer.age}歳（
                 {era === 'showa' ? `${getGengoLabel(getCalendarYear(era, currentPlayer.age))}・` : ''}
