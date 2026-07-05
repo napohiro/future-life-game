@@ -1,16 +1,24 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getEraDefinition } from '../data/eras';
 import type { EraId, Player } from '../types/game';
 import { buildNewspaperSummaries, formatLifeLogHeadline, getPlayerVisual } from '../utils/gameLogic';
+import { playNewspaperExtraSound, vibrate } from '../utils/sound';
 
 interface NewspaperProps {
   players: Player[];
   era: EraId;
+  soundEnabled: boolean;
   onClose: () => void;
 }
 
-function Newspaper({ players, era, onClose }: NewspaperProps) {
+function Newspaper({ players, era, soundEnabled, onClose }: NewspaperProps) {
   const [selectedPlayerId, setSelectedPlayerId] = useState(players[0]?.id);
+
+  useEffect(() => {
+    if (soundEnabled) playNewspaperExtraSound();
+    vibrate(25);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const selectedPlayerIndex = players.findIndex((p) => p.id === selectedPlayerId);
   const selectedPlayer = players[selectedPlayerIndex] ?? players[0];
   const summaries = selectedPlayer ? buildNewspaperSummaries(selectedPlayer, era) : [];

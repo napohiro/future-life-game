@@ -1,7 +1,30 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FateOutcome } from '../types/game';
 import { FATE_SEVERITY_ICONS, FATE_SEVERITY_LABELS } from '../utils/gameLogic';
-import { playRouletteResultSound } from '../utils/sound';
+import {
+  playFailureSound,
+  playGreatFailureSound,
+  playGreatSuccessSound,
+  playSpinStartSound,
+  playSuccessSound,
+  vibrate,
+} from '../utils/sound';
+
+const SEVERITY_SOUND: Record<FateOutcome['severity'], () => void> = {
+  greatSuccess: playGreatSuccessSound,
+  success: playSuccessSound,
+  neutral: playSuccessSound,
+  failure: playFailureSound,
+  greatFailure: playGreatFailureSound,
+};
+
+const SEVERITY_VIBRATION: Record<FateOutcome['severity'], number | number[]> = {
+  greatSuccess: [40, 40, 40, 40, 80],
+  success: [30, 30, 40],
+  neutral: 25,
+  failure: [40, 40, 40],
+  greatFailure: [30, 60, 30, 60, 120],
+};
 
 interface FateRouletteProps {
   title: string;
@@ -101,7 +124,8 @@ function FateRoulette({ title, outcomes, soundEnabled, onSpin, onSettled }: Fate
   const finishStop = (result: FateOutcome) => {
     setPhase('stopped');
     setOutcome(result);
-    if (soundEnabled) playRouletteResultSound();
+    if (soundEnabled) SEVERITY_SOUND[result.severity]();
+    vibrate(SEVERITY_VIBRATION[result.severity]);
 
     bounceTimeoutRef.current = setTimeout(() => {
       onSettled(result);
@@ -111,6 +135,7 @@ function FateRoulette({ title, outcomes, soundEnabled, onSpin, onSettled }: Fate
   const startSpin = () => {
     setPhase('spinning');
     setOutcome(null);
+    if (soundEnabled) playSpinStartSound();
 
     spinIntervalRef.current = setInterval(() => {
       rotationRef.current += SPIN_SPEED_DEG_PER_TICK;

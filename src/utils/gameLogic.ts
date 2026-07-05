@@ -1330,6 +1330,19 @@ export function buildNewspaperSummaries(player: Player, era: EraId = DEFAULT_ERA
     }));
 }
 
+/** 最終結果画面用に、人生新聞の中から最も出来事が濃かった10年の見出しを1つだけ選んで返す。 */
+export function getRepresentativeNewspaperHeadline(player: Player, era: EraId = DEFAULT_ERA): string | null {
+  const summaries = buildNewspaperSummaries(player, era);
+  if (summaries.length === 0) return null;
+
+  const scored = summaries.map((summary) => ({
+    summary,
+    score: summary.logs.reduce((sum, log) => sum + IMPORTANCE_RANKING_BONUS[log.importance], 0),
+  }));
+  const best = scored.reduce((a, b) => (b.score >= a.score ? b : a));
+  return `${best.summary.decadeLabel}：「${best.summary.headline}」`;
+}
+
 export interface RankedPlayer {
   player: Player;
   score: number;

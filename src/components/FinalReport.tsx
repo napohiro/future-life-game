@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { getRouteById } from '../data/branchRoutes';
-import type { Player, StatKey } from '../types/game';
+import type { EraId, Player, StatKey } from '../types/game';
 import {
   STAT_ICONS,
   STAT_LABELS,
+  STATUS_FIELD_ICONS,
+  STATUS_FIELD_LABELS,
   calculateLifeType,
   calculateSecondLifeScore,
   calculateTitle,
@@ -15,21 +18,31 @@ import {
   getBestLifeLogs,
   getGraduationReason,
   getPlayerVisual,
+  getRepresentativeNewspaperHeadline,
   getWorstLifeLogs,
   rankPlayers,
 } from '../utils/gameLogic';
+import { playFinalResultSound, vibrate } from '../utils/sound';
 
 interface FinalReportProps {
   players: Player[];
+  era: EraId;
+  soundEnabled: boolean;
   onRestart: () => void;
 }
 
 const RANK_MEDALS = ['🥇', '🥈', '🥉'];
 
-const REPORT_STAT_KEYS: StatKey[] = ['money', 'happiness', 'health', 'relationships', 'socialContribution', 'aiAffinity'];
+const REPORT_STAT_KEYS: StatKey[] = ['money', 'happiness', 'health', 'trust', 'relationships', 'socialContribution', 'aiAffinity'];
 
-function FinalReport({ players, onRestart }: FinalReportProps) {
+function FinalReport({ players, era, soundEnabled, onRestart }: FinalReportProps) {
   const ranked = rankPlayers(players);
+
+  useEffect(() => {
+    if (soundEnabled) playFinalResultSound();
+    vibrate([40, 60, 40, 60, 80]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="screen final-report">
@@ -57,6 +70,7 @@ function FinalReport({ players, onRestart }: FinalReportProps) {
           const finalChapter = graduationReason
             ? generateFinalChapter(player, lastEvent ? formatLifeLogHeadline(lastEvent) : undefined)
             : null;
+          const representativeHeadline = getRepresentativeNewspaperHeadline(player, era);
 
           return (
             <div
@@ -81,6 +95,23 @@ function FinalReport({ players, onRestart }: FinalReportProps) {
               </div>
 
               <p className="final-report__headline">{summary}</p>
+
+              <div className="final-report__life-facts">
+                <span className="final-report__life-fact">🎂 最終年齢：{player.age}歳</span>
+                <span className="final-report__life-fact">
+                  {STATUS_FIELD_ICONS.occupation} {STATUS_FIELD_LABELS.occupation}：{player.occupation}
+                </span>
+                <span className="final-report__life-fact">
+                  {STATUS_FIELD_ICONS.romanceStatus} {STATUS_FIELD_LABELS.romanceStatus}：{player.romanceStatus}
+                </span>
+                <span className="final-report__life-fact">
+                  {STATUS_FIELD_ICONS.housingStatus} {STATUS_FIELD_LABELS.housingStatus}：{player.housingStatus}
+                </span>
+              </div>
+
+              {representativeHeadline && (
+                <p className="final-report__newspaper-headline">📰 {representativeHeadline}</p>
+              )}
 
               {graduationReason && (
                 <div className="final-report__event-block final-report__event-block--graduation">

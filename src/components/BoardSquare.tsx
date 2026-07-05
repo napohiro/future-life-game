@@ -87,7 +87,7 @@ const BoardSquare = forwardRef<HTMLDivElement, BoardSquareProps>(function BoardS
       <span className="board-square__index">{position}</span>
       {isBranch && <span className="board-square__branch-mark">🔀</span>}
       {milestone && <span className="board-square__giant-label">{milestone.title}</span>}
-      <div className="board-square__tokens">
+      <div className="board-square__tokens" data-count={occupants.length}>
         {occupants.map(({ player, playerIndex, isCurrent }) => (
           <PlayerToken key={player.id} playerIndex={playerIndex} name={player.name} isCurrent={isCurrent} stage={stage} />
         ))}

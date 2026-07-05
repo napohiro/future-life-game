@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { playRouletteResultSound, playRouletteTickSound } from '../utils/sound';
+import { playRouletteResultSound, playRouletteTickSound, playSpinStartSound, vibrate } from '../utils/sound';
 
 interface RouletteProps {
   disabled: boolean;
   lastRoll: number | null;
+  currentAge: number;
   soundEnabled: boolean;
   onRoll: () => number;
   onRollSettled: () => void;
@@ -33,12 +34,17 @@ const NUMBER_RADIUS_PX = 38;
  * 減速は「今の回転速度から、速度が時間に対して一定の割合で0まで下がる」物理計算で行うため、
  * 回転中の速度から減速開始の瞬間に速度が変わらず、そこから単調に遅くなって自然に止まる。
  */
-function Roulette({ disabled, lastRoll, soundEnabled, onRoll, onRollSettled }: RouletteProps) {
+function Roulette({ disabled, lastRoll, currentAge, soundEnabled, onRoll, onRollSettled }: RouletteProps) {
   const [rotation, setRotation] = useState(0);
   const [phase, setPhase] = useState<SpinPhase>('idle');
   const [resultNumber, setResultNumber] = useState<number | null>(lastRoll);
+  const [startAge, setStartAge] = useState<number | null>(null);
 
   const rotationRef = useRef(0);
+  // 減速開始（＝出目が確定した瞬間）の年齢を覚えておき、以降の移動アニメーション中に
+  // currentAge が変化しても「進む年数→到達年齢」の表示がぶれないようにする。
+  const currentAgeRef = useRef(currentAge);
+  currentAgeRef.current = currentAge;
   const spinIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tickSoundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoStopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -74,6 +80,7 @@ function Roulette({ disabled, lastRoll, soundEnabled, onRoll, onRollSettled }: R
 
     setPhase('slowing');
     const result = onRoll();
+    setStartAge(currentAgeRef.current);
 
     // 盤面は「数字k(1〜6)の中心が角度(k-1)*60度」の配置。針は常に真上(0度)にあるので、
     // 結果の数字の中心が0度に来るように、減速で進む距離を決める。
@@ -114,6 +121,7 @@ function Roulette({ disabled, lastRoll, soundEnabled, onRoll, onRollSettled }: R
     setPhase('stopped');
     setResultNumber(result);
     if (soundEnabled) playRouletteResultSound();
+    vibrate(30);
 
     bounceTimeoutRef.current = setTimeout(() => {
       setPhase('resultPause');
@@ -127,6 +135,9 @@ function Roulette({ disabled, lastRoll, soundEnabled, onRoll, onRollSettled }: R
   const startSpin = () => {
     setPhase('spinning');
     setResultNumber(null);
+    setStartAge(null);
+    if (soundEnabled) playSpinStartSound();
+    vibrate(20);
 
     spinIntervalRef.current = setInterval(() => {
       rotationRef.current += SPIN_SPEED_DEG_PER_TICK;
@@ -166,7 +177,15 @@ function Roulette({ disabled, lastRoll, soundEnabled, onRoll, onRollSettled }: R
         <div className="roulette__result-row">
           {resultNumber !== null && (phase === 'idle' || phase === 'stopped' || phase === 'resultPause') ? (
             <span className="roulette__result-readout">
-              出た数字：<strong>{resultNumber}</strong>
+              {startAge !== null ? (
+                <>
+                  <strong>{resultNumber}</strong>年進む → <strong>{startAge + resultNumber}歳</strong>へ
+                </>
+              ) : (
+                <>
+                  出た数字：<strong>{resultNumber}</strong>
+                </>
+              )}
             </span>
           ) : (
             <span className="roulette__result-readout roulette__result-readout--placeholder">

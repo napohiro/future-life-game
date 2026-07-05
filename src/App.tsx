@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import { getBranchPointForPosition } from './data/branchRoutes';
 import EraSelect from './components/EraSelect';
@@ -12,6 +12,7 @@ import Newspaper from './components/Newspaper';
 import PlayerSetup from './components/PlayerSetup';
 import RouteChoiceModal from './components/RouteChoiceModal';
 import TitleScreen from './components/TitleScreen';
+import TurnAnnouncement from './components/TurnAnnouncement';
 import WorldSettings from './components/WorldSettings';
 import type {
   BranchRoute,
@@ -69,9 +70,35 @@ function App() {
   const [activeDraw, setActiveDraw] = useState<DrawnEvent | null>(null);
   const [moveAnimation, setMoveAnimation] = useState<MoveAnimationState | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [turnAnnouncementPlayerId, setTurnAnnouncementPlayerId] = useState<string | null>(null);
   // ルーレットが結果を出してから「止まりきって余韻を終える」までの間、移動内容を保持しておく置き場。
   // ルーレット側が完全に停止・静止するまで、コマは実際には動かさない。
   const pendingMoveRef = useRef<PendingMove | null>(null);
+  // スマホ1台を回して遊ぶ想定のため、手番が切り替わるたびに一度だけ「次のばん」演出を出す。
+  // 同じ手番(currentPlayerIndex + turnCount の組)には二度出さないよう、直近に出した組を覚えておく。
+  const lastAnnouncedTurnKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (gameState.phase !== 'playing') return;
+    if (gameState.activeEvent || gameState.pendingBranchChoice || gameState.pendingGraduation) return;
+    if (moveAnimation) return;
+    const player = gameState.players[gameState.currentPlayerIndex];
+    if (!player || player.finished) return;
+
+    const turnKey = `${gameState.currentPlayerIndex}-${gameState.turnCount}`;
+    if (lastAnnouncedTurnKeyRef.current === turnKey) return;
+    lastAnnouncedTurnKeyRef.current = turnKey;
+    setTurnAnnouncementPlayerId(player.id);
+  }, [
+    gameState.phase,
+    gameState.currentPlayerIndex,
+    gameState.turnCount,
+    gameState.activeEvent,
+    gameState.pendingBranchChoice,
+    gameState.pendingGraduation,
+    gameState.players,
+    moveAnimation,
+  ]);
 
   const handleGoToEraSelect = () => {
     setGameState((prev) => ({ ...prev, phase: 'eraSelect' }));
@@ -90,8 +117,12 @@ function App() {
     setActiveDraw(null);
     setMoveAnimation(null);
     pendingMoveRef.current = null;
+    lastAnnouncedTurnKeyRef.current = null;
+    setTurnAnnouncementPlayerId(null);
     setGameState(createInitialGameState());
   };
+
+  const handleDismissTurnAnnouncement = () => setTurnAnnouncementPlayerId(null);
 
   const handlePlayersReady = (inputs: PlayerSetupInput[]) => {
     setPendingPlayerInputs(inputs);
@@ -519,7 +550,8 @@ function App() {
               gameState.activeEvent !== null ||
               gameState.pendingBranchChoice !== null ||
               gameState.pendingGraduation !== null ||
-              moveAnimation !== null
+              moveAnimation !== null ||
+              turnAnnouncementPlayerId !== null
             }
             moveAnimation={moveAnimation}
             soundEnabled={soundEnabled}
@@ -529,6 +561,21 @@ function App() {
             onShowLifeLog={handleShowLifeLog}
             onShowNewspaper={handleShowNewspaper}
           />
+          {turnAnnouncementPlayerId &&
+            (() => {
+              const announcedIndex = gameState.players.findIndex((p) => p.id === turnAnnouncementPlayerId);
+              const announcedPlayer = gameState.players[announcedIndex];
+              if (!announcedPlayer) return null;
+              return (
+                <TurnAnnouncement
+                  player={announcedPlayer}
+                  playerIndex={announcedIndex}
+                  playerCount={gameState.players.length}
+                  era={gameState.settings.era}
+                  onDismiss={handleDismissTurnAnnouncement}
+                />
+              );
+            })()}
           {gameState.activeEvent && activeDraw && (
             <EventModal
               event={gameState.activeEvent}
@@ -550,6 +597,7 @@ function App() {
             <GraduationModal
               pendingGraduation={gameState.pendingGraduation}
               player={gameState.players.find((p) => p.id === gameState.pendingGraduation!.playerId)!}
+              soundEnabled={soundEnabled}
               onAcknowledge={handleAcknowledgeGraduation}
             />
           )}
@@ -557,13 +605,23 @@ function App() {
             <LifeLog players={gameState.players} era={gameState.settings.era} onClose={handleCloseLifeLog} />
           )}
           {gameState.showNewspaper && (
-            <Newspaper players={gameState.players} era={gameState.settings.era} onClose={handleCloseNewspaper} />
+            <Newspaper
+              players={gameState.players}
+              era={gameState.settings.era}
+              soundEnabled={soundEnabled}
+              onClose={handleCloseNewspaper}
+            />
           )}
         </>
       )}
 
       {gameState.phase === 'finished' && (
-        <FinalReport players={gameState.players} onRestart={handleBackToTitle} />
+        <FinalReport
+          players={gameState.players}
+          era={gameState.settings.era}
+          soundEnabled={soundEnabled}
+          onRestart={handleBackToTitle}
+        />
       )}
     </div>
   );

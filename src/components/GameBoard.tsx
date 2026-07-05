@@ -9,7 +9,14 @@ import {
   generateDirectionArrows,
   generateStagePath,
 } from '../utils/boardPath';
-import { getBoardMilestone, getBoardStage, getLifeStageName, getPlayerVisual, getSquareType } from '../utils/gameLogic';
+import {
+  getBoardMilestone,
+  getBoardStage,
+  getBoardStageTheme,
+  getLifeStageName,
+  getPlayerVisual,
+  getSquareType,
+} from '../utils/gameLogic';
 import BoardSquare from './BoardSquare';
 import BoardStageSection from './BoardStageSection';
 import PlayerCard from './PlayerCard';
@@ -60,6 +67,7 @@ function GameBoard({
 
   const currentVisual = currentPlayer ? getPlayerVisual(currentPlayerIndex) : null;
   const currentStage = currentPlayer ? getBoardStage(currentPlayer.position) : 'stage1';
+  const currentStageTheme = getBoardStageTheme(currentStage, era);
 
   // 老後・近未来エリア（80歳〜）は固定ゴールではないため、進んだ分だけ道が見える「霧マップ」にする。
   // 全プレイヤーのうち最も先へ進んだ位置を基準に、そこから数マス先までだけを見せる。
@@ -76,6 +84,9 @@ function GameBoard({
   return (
     <StageBackground stage={currentStage} className="screen game-board">
       <div className="game-board__era-strip">
+        <span className="game-board__stage-pill">
+          {currentStageTheme.decorations[0]} {currentStageTheme.title}｜{currentStageTheme.ageRangeLabel}
+        </span>
         <span className={`game-board__era-pill game-board__era-pill--${era}`}>
           {eraDefinition.icon} {eraDefinition.year}年｜{eraDefinition.name}
         </span>
@@ -108,6 +119,7 @@ function GameBoard({
                 {era === 'showa' ? `${getGengoLabel(getCalendarYear(era, currentPlayer.age))}・` : ''}
                 {getCalendarYear(era, currentPlayer.age)}年）
               </div>
+              <div className="game-board__turn-occupation">💼 {currentPlayer.occupation}</div>
               <div className="game-board__turn-priority-stats">
                 <span>💰{currentPlayer.money.toLocaleString()}万円</span>
                 <span>😊{currentPlayer.happiness}</span>
@@ -263,6 +275,7 @@ function GameBoard({
         <Roulette
           disabled={rollDisabled || !currentPlayer || currentPlayer.finished}
           lastRoll={lastRoll}
+          currentAge={currentPlayer?.age ?? 0}
           soundEnabled={soundEnabled}
           onRoll={onRoll}
           onRollSettled={onRollSettled}
