@@ -1,6 +1,7 @@
 import { ALL_EVENTS, pickRandomEvent } from '../data/boardEvents';
 import { getCategoryBoostsForRoutes } from '../data/branchRoutes';
 import { DEFAULT_ERA } from '../data/eras';
+import { getBaseDeathChance } from '../data/lifespanSettings';
 import { DEFAULT_CHARACTER_ID } from '../data/playerCharacters';
 import type {
   EraId,
@@ -15,6 +16,7 @@ import type {
   LifeLogEntry,
   LifeStage,
   LogImportance,
+  PendingEventResult,
   PersonalityTrait,
   Player,
   PlayerSetupInput,
@@ -848,6 +850,7 @@ export function initializePlayers(inputs: PlayerSetupInput[]): Player[] {
       personality,
       lifeFlags: [personalityFlag(personality)],
       characterId: input.characterId ?? DEFAULT_CHARACTER_ID,
+      lifespanImmunityTurns: 0,
     };
     // 個性による小さな初期補正（強すぎる能力差にならないよう、どの個性も1項目・+5のみ）。
     return applyEffectsToPlayer(player, PERSONALITY_TRAITS[personality].statBonus);
@@ -1405,10 +1408,6 @@ export function rankPlayers(players: Player[]): RankedPlayer[] {
 // ターンごとに確率判定を行い、ステータスに応じて選ばれた理由で「人生の卒業」を迎える。
 // 盤面の物理的な終端（position 150＝150歳）に達した場合も、その時点で強制的に卒業扱いにする。
 
-// 50歳から「卒業（人生終了）」の周期判定が始まる。49歳以下は判定なし＝危険な選択をした場合の
-// endsLifeChance（個々のイベント）だけがリスク源になる（「0〜49歳は極めて低確率」という方針）。
-export const ELDER_GRADUATION_START_AGE = 50;
-
 export const GRADUATION_REASONS: GraduationReason[] = [
   {
     id: 'natural',
@@ -1452,6 +1451,14 @@ export const GRADUATION_REASONS: GraduationReason[] = [
     title: '最終章',
     body: '長いセカンドライフを楽しみ、穏やかに卒業しました。',
   },
+  // 寿命システム（時代ごとの寿命リスク開始年齢以降のルーレット判定）で人生の終幕を迎えた場合の理由。
+  // 唐突・陰鬱にならないよう、人生を振り返るような上品な言葉を選んでいる。
+  {
+    id: 'lifespanEnd',
+    label: '自分らしい人生の終幕',
+    title: '人生の終幕',
+    body: '選択と出会いを重ねた人生は、ここでひとつの物語を終えます。',
+  },
   // 80歳未満でも、低確率で起こりうる「人生終了」イベント用の理由。
   // 理不尽で嫌な印象にならないよう、老後の卒業と同じく静かで品のある言葉を選んでいる。
   {
@@ -1492,55 +1499,7 @@ export function pickEarlyEndingReason(category: EventCategory): GraduationReason
   return getGraduationReason('earlyAccident');
 }
 
-// 時代ごとの基礎卒業確率カーブ（50〜149歳を10歳刻みで区切る）。150歳（盤面終端）は
-// `forcedGraduationAtBoardEnd`で必ず卒業となるため、ここでは149歳までをカバーすれば十分。
-// 3つの時代で「人生の長さ・ゲームの長さ」がはっきり変わるよう、傾きを大きく変えてある
-// （乱数シミュレーションで、昭和編は中央値70代半ば・現代編は90代半ば・近未来編は110代終盤に
-// 決着するよう調整済み）。
-// - 昭和編：60〜80代中心のショートゲーム。100歳以上は極めて稀、120歳以上はほぼ伝説級。
-// - 現代編：80〜100代中心のミドルゲーム。120歳以上は非常に稀、123歳以上は特別演出級。
-// - 近未来編：100〜120代中心のロングゲーム。123歳以上の人類最高齢更新ルートも一定数発生し、
-//   150歳到達は極めて稀な伝説ルートとして残す。
-const GRADUATION_BASE_CHANCE_BY_ERA: Record<EraId, { maxAge: number; base: number }[]> = {
-  showa: [
-    { maxAge: 59, base: 0.03 },
-    { maxAge: 69, base: 0.09 },
-    { maxAge: 79, base: 0.18 },
-    { maxAge: 89, base: 0.32 },
-    { maxAge: 99, base: 0.5 },
-    { maxAge: 109, base: 0.55 },
-    { maxAge: 119, base: 0.72 },
-    { maxAge: 129, base: 0.85 },
-    { maxAge: 139, base: 0.9 },
-    { maxAge: Infinity, base: 0.93 },
-  ],
-  present: [
-    { maxAge: 59, base: 0.006 },
-    { maxAge: 69, base: 0.012 },
-    { maxAge: 79, base: 0.03 },
-    { maxAge: 89, base: 0.08 },
-    { maxAge: 99, base: 0.15 },
-    { maxAge: 109, base: 0.22 },
-    { maxAge: 119, base: 0.42 },
-    { maxAge: 129, base: 0.7 },
-    { maxAge: 139, base: 0.85 },
-    { maxAge: Infinity, base: 0.92 },
-  ],
-  future: [
-    { maxAge: 59, base: 0.002 },
-    { maxAge: 69, base: 0.004 },
-    { maxAge: 79, base: 0.008 },
-    { maxAge: 89, base: 0.015 },
-    { maxAge: 99, base: 0.028 },
-    { maxAge: 109, base: 0.06 },
-    { maxAge: 119, base: 0.13 },
-    { maxAge: 129, base: 0.35 },
-    { maxAge: 139, base: 0.55 },
-    { maxAge: Infinity, base: 0.75 },
-  ],
-};
-
-// 危険な出来事（病気・事故・災害）の経験回数が多いほど、僅かに卒業確率を押し上げる
+// 危険な出来事（病気・事故・災害）の経験回数が多いほど、僅かに寿命確率を押し上げる
 // （「積み重なった人生の負荷」を表現する。1件あたりの影響は小さく、上限を設けて理不尽にしない）。
 const DANGEROUS_HISTORY_CATEGORIES: EventCategory[] = ['illness', 'accident', 'disaster'];
 const DANGEROUS_HISTORY_MAX_BONUS = 0.25;
@@ -1550,21 +1509,27 @@ function calculateDangerousHistoryFactor(player: Player): number {
   return 1 + Math.min(DANGEROUS_HISTORY_MAX_BONUS, count * 0.02);
 }
 
+// 健康ステータス（0〜100想定）による寿命確率の補正。
+// 「健康状態が高い：半分にする／低い：1.5倍にする」を、health=70で×0.5・health=30で×1.5と
+// なる直線でなめらかに繋ぐ（その間は比例的に変化する）。
+function calculateHealthLifespanFactor(health: number): number {
+  const factor = 1.5 - (health - 30) / 40;
+  return Math.min(1.5, Math.max(0.5, factor));
+}
+
 /**
- * 年代（50歳〜）とステータス・資産・家族関係・治療選択・危険な出来事歴・時代設定から、
- * その回の「卒業確率」を計算する。時代ごとに基礎カーブそのものが異なるうえ、健康・資産・
- * 家族の支え・長寿治療の選択・過去の危険な出来事という複数のレバーの掛け算で、
+ * 寿命リスク開始年齢・年代帯別の基礎確率（data/lifespanSettings.ts）に、健康・資産・家族関係・
+ * 治療選択・危険な出来事歴・時代設定という複数のレバーで補正をかけ、その回（ターン）の
+ * 「寿命を迎える確率」を計算する。寿命リスク開始年齢以下、または寿命免除ターン中は必ず0を返す。
  * 「努力や選択で少しは寿命を延ばせた」と感じられる余地を残しつつ、長寿を保証はしない。
  */
-function calculateGraduationChance(player: Player, age: number, settings: GameSettings): number {
-  if (age < ELDER_GRADUATION_START_AGE) return 0;
+export function calculateLifespanDeathChance(player: Player, settings: GameSettings): number {
+  if (player.lifespanImmunityTurns > 0) return 0;
 
-  const curve = GRADUATION_BASE_CHANCE_BY_ERA[settings.era];
-  const base = (curve.find((b) => age <= b.maxAge) ?? curve[curve.length - 1]).base;
+  const base = getBaseDeathChance(settings.era, player.age);
+  if (base <= 0) return 0;
 
-  // 健康が高いほど確率は下がり、低いほど上がる（50を基準に±）。
-  const healthFactor = 1 - (player.health - 50) / 150;
-  let chance = base * Math.max(0.4, healthFactor);
+  let chance = base * calculateHealthLifespanFactor(player.health);
 
   // 資産が多いほど医療・介護へのアクセスが良く、僅かにリスクが下がる（逆に乏しいと僅かに上がる）。
   // 効果は±15%程度に抑え、資産だけで安全になり過ぎないようにしている。
@@ -1578,7 +1543,7 @@ function calculateGraduationChance(player: Player, age: number, settings: GameSe
   // 病気・事故・災害を多く経験してきた人生ほど、僅かに負荷が積み重なっている。
   chance *= calculateDangerousHistoryFactor(player);
 
-  // 長寿治療・再生医療・身体拡張を受け入れてきた場合、その後の卒業確率を少し下げる
+  // 長寿治療・再生医療・身体拡張を受け入れてきた場合、その後の寿命確率を少し下げる
   // （近未来編の「長寿治療を選ぶかどうか」という選択を、以降の生存確率にも反映する）。
   if (player.lifeFlags.includes('longevityTreatment')) {
     chance *= 0.82;
@@ -1588,12 +1553,12 @@ function calculateGraduationChance(player: Player, age: number, settings: GameSe
     chance *= 0.7;
   }
 
-  // 長寿モード（世界設定）では卒業確率を少し下げる。
+  // 長寿モード（世界設定）では寿命確率を少し下げる。
   if (settings.longevityMode === 'longevity') {
     chance *= 0.7;
   }
 
-  return Math.min(0.95, Math.max(0.01, chance));
+  return Math.min(0.9, Math.max(0.01, chance));
 }
 
 /** 卒業理由を、プレイヤーのステータスに応じた重み付きランダムで選ぶ。 */
@@ -1606,6 +1571,7 @@ function pickGraduationReason(player: Player, age: number): GraduationReason {
     family: player.relationships / 25,
     challenge: player.actionPower / 30 + player.experience / 150,
     longevity: age >= 100 ? 2 + player.health / 30 : 0.1,
+    lifespanEnd: 1.5 + player.happiness / 50 + player.relationships / 50,
   };
 
   const total = Object.values(weights).reduce((sum, w) => sum + w, 0);
@@ -1617,14 +1583,33 @@ function pickGraduationReason(player: Player, age: number): GraduationReason {
   return GRADUATION_REASONS[GRADUATION_REASONS.length - 1];
 }
 
+/** 寿命判定で人生の終幕を迎えた場合の理由を、プレイヤーのステータスに応じて選ぶ。 */
+export function pickLifespanEndReason(player: Player): GraduationReason {
+  return pickGraduationReason(player, player.age);
+}
+
+// 健康・延命に関するプラスイベントを起点に、寿命免除を付与するターン数。
+const HEALTH_EVENT_IMMUNITY_TURNS = 1;
+const TREATMENT_SUCCESS_IMMUNITY_TURNS = 3;
+const HEALTH_BOOST_THRESHOLD = 8;
+
 /**
- * 80歳以降、ターンごとに呼び出す卒業判定。卒業しない場合はnullを返す。
- * 完全なランダムではなく、健康・幸福度・人間関係・運などのステータスを反映する。
+ * 直前に確定したイベント結果が「健康・延命関連のプラスイベント」に該当する場合、
+ * 次のターン以降いくつ寿命判定を免除するかを返す（該当しなければ0）。
+ * 健康診断・生活習慣改善・長寿治療の成功など、health効果が大きくプラスだったターンや、
+ * 長寿治療フラグを新たに獲得したターンを対象にする。
  */
-export function rollGraduationCheck(player: Player, age: number, settings: GameSettings): GraduationReason | null {
-  const chance = calculateGraduationChance(player, age, settings);
-  if (Math.random() >= chance) return null;
-  return pickGraduationReason(player, age);
+export function computeLifespanImmunityGrant(event: GameEvent, result: PendingEventResult): number {
+  const healthGain = result.effects.health ?? 0;
+  const grantedTreatmentFlag = result.grantsFlags?.includes('longevityTreatment') ?? false;
+  const isGoodOutcome = result.fateSeverity === undefined || result.fateSeverity === 'greatSuccess' || result.fateSeverity === 'success';
+
+  if (grantedTreatmentFlag && isGoodOutcome) return TREATMENT_SUCCESS_IMMUNITY_TURNS;
+  if ((event.category === 'health' || event.category === 'illness') && healthGain >= HEALTH_BOOST_THRESHOLD) {
+    return HEALTH_EVENT_IMMUNITY_TURNS;
+  }
+  if (healthGain >= HEALTH_BOOST_THRESHOLD * 2) return HEALTH_EVENT_IMMUNITY_TURNS;
+  return 0;
 }
 
 /** 盤面の物理的な終端（150歳）に達したときの、強制的な卒業理由。 */

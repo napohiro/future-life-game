@@ -269,6 +269,9 @@ export interface Player {
   // プレイヤー設定画面で選んだキャラクター（data/playerCharacters.ts の id）。
   // 顔アイコン（選択画面・各種カード）とゲーム盤コマの画像は、必ずこのidから決定する。
   characterId: string;
+  // 健康・延命系のプラスイベントを経験した直後などに付与される、寿命判定の免除ターン数。
+  // ターンが進むごとに1ずつ減り、0より大きい間は寿命判定そのものをスキップする。
+  lifespanImmunityTurns: number;
 }
 
 // ゲーム開始時にランダムで1つ付与される、小さな個性・才能。

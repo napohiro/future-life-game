@@ -26,11 +26,12 @@ import type {
   PlayerSetupInput,
 } from './types/game';
 import {
-  ELDER_GRADUATION_START_AGE,
   appendLifeLog,
   applyEffectsToPlayer,
   applyFlagsToPlayer,
   applyStatusEffectsToPlayer,
+  calculateLifespanDeathChance,
+  computeLifespanImmunityGrant,
   createInitialGameState,
   deriveImportance,
   drawEventForPosition,
@@ -45,8 +46,8 @@ import {
   movePlayerPosition,
   pickEarlyEndingReason,
   pickFateOutcome,
+  pickLifespanEndReason,
   rollDice,
-  rollGraduationCheck,
 } from './utils/gameLogic';
 import type { DrawnEvent } from './utils/gameLogic';
 import { playMoveStepSound } from './utils/sound';
@@ -62,6 +63,9 @@ interface PendingMove {
   finished: boolean;
   settings: GameSettings;
   roll: number;
+  // 寿命システムのルーレット判定で「寿命を迎える」枠に止まった場合はtrue。
+  // その場合は移動アニメーションを行わず、直接pendingGraduationへ進む。
+  isLifespanEnd: boolean;
 }
 
 function App() {
@@ -122,6 +126,17 @@ function App() {
     setGameState(createInitialGameState());
   };
 
+  // 最終結果画面から、時代選択からやり直したい場合のショートカット（タイトル画面を経由しない）。
+  const handlePlayDifferentEra = () => {
+    setPendingPlayerInputs(null);
+    setActiveDraw(null);
+    setMoveAnimation(null);
+    pendingMoveRef.current = null;
+    lastAnnouncedTurnKeyRef.current = null;
+    setTurnAnnouncementPlayerId(null);
+    setGameState({ ...createInitialGameState(), phase: 'eraSelect' });
+  };
+
   const handleDismissTurnAnnouncement = () => setTurnAnnouncementPlayerId(null);
 
   const handlePlayersReady = (inputs: PlayerSetupInput[]) => {
@@ -157,13 +172,10 @@ function App() {
     const playerId = playerSnapshot.id;
     const age = finalPosition;
 
-    // 80歳以降は、ターンごとに（ステータスを反映した）卒業判定を行う。盤面の物理的な終端に
-    // 達した場合も、まだ卒業していなければそこで強制的に卒業とする（老後は固定ゴールではないが、
+    // 寿命判定そのものはルーレット側（handleRoll）で既に済んでいるため、ここでは盤面の
+    // 物理的な終端（150歳）に達した場合の強制卒業だけを扱う（老後は固定ゴールではないが、
     // 盤面のマス数には限りがあるための安全策）。
-    let graduationReason = age >= ELDER_GRADUATION_START_AGE ? rollGraduationCheck(playerSnapshot, age, settings) : null;
-    if (!graduationReason && reachedBoardEnd) {
-      graduationReason = forcedGraduationAtBoardEnd(playerSnapshot);
-    }
+    const graduationReason = reachedBoardEnd ? forcedGraduationAtBoardEnd(playerSnapshot) : null;
 
     if (graduationReason) {
       setActiveDraw(null);
@@ -185,15 +197,26 @@ function App() {
       return;
     }
 
+    // 寿命免除ターンは、生き延びたこのターン分を消費して1減らす（0未満にはしない）。
+    const nextImmunityTurns = Math.max(0, playerSnapshot.lifespanImmunityTurns - 1);
+
     // イベント抽選には、移動後の年齢・人生フラグ・過去の履歴を反映した最終状態のプレイヤーを渡す。
     // これにより、同じマスでもプレイヤーごとの人生に応じて違う候補から抽選される。
-    const finalizedPlayer: Player = { ...playerSnapshot, position: finalPosition, age: finalPosition, finished: reachedBoardEnd };
+    const finalizedPlayer: Player = {
+      ...playerSnapshot,
+      position: finalPosition,
+      age: finalPosition,
+      finished: reachedBoardEnd,
+      lifespanImmunityTurns: nextImmunityTurns,
+    };
     const draw = drawEventForPosition(finalizedPlayer, settings);
     setActiveDraw(draw);
     setGameState((prev) => ({
       ...prev,
       players: prev.players.map((p) =>
-        p.id === playerId ? { ...p, position: finalPosition, age: finalPosition, finished: reachedBoardEnd } : p,
+        p.id === playerId
+          ? { ...p, position: finalPosition, age: finalPosition, finished: reachedBoardEnd, lifespanImmunityTurns: nextImmunityTurns }
+          : p,
       ),
       lastRoll: roll,
       turnCount: prev.turnCount + 1,
@@ -204,10 +227,10 @@ function App() {
     setMoveAnimation(null);
   };
 
-  // ルーレットが数字を確定させるために呼ぶ。ここでは結果を計算して保持するだけで、
-  // コマは動かさない（ルーレットが完全に停止し、余韻を終えてから handleRollSettled で動かす）。
-  const handleRoll = (): number => {
-    const roll = rollDice();
+  // ルーレットが数字（または「寿命を迎える」枠）を確定させるために呼ぶ。
+  // ここでは結果を計算して保持するだけで、コマは動かさない
+  // （ルーレットが完全に停止し、余韻を終えてから handleRollSettled で動かす）。
+  const handleRoll = (): number | 'death' => {
     const currentPlayer = gameState.players[gameState.currentPlayerIndex];
     if (
       !currentPlayer ||
@@ -217,9 +240,27 @@ function App() {
       gameState.pendingGraduation ||
       moveAnimation
     ) {
-      return roll;
+      return rollDice();
     }
 
+    // 寿命システム：時代ごとの寿命リスク開始年齢を超えている場合、通常ルーレットに
+    // 「寿命を迎える」枠が加わる。ここで実際に当たったかどうかを1回だけ判定する。
+    const deathChance = calculateLifespanDeathChance(currentPlayer, gameState.settings);
+    if (deathChance > 0 && Math.random() < deathChance) {
+      pendingMoveRef.current = {
+        playerId: currentPlayer.id,
+        playerName: currentPlayer.name,
+        playerSnapshot: currentPlayer,
+        targetPosition: currentPlayer.position,
+        finished: false,
+        settings: gameState.settings,
+        roll: 0,
+        isLifespanEnd: true,
+      };
+      return 'death';
+    }
+
+    const roll = rollDice();
     const { position: targetPosition, finished } = movePlayerPosition(currentPlayer.position, roll, gameState.boardSize);
 
     pendingMoveRef.current = {
@@ -230,6 +271,7 @@ function App() {
       finished,
       settings: gameState.settings,
       roll,
+      isLifespanEnd: false,
     };
 
     return roll;
@@ -241,6 +283,28 @@ function App() {
     const pending = pendingMoveRef.current;
     pendingMoveRef.current = null;
     if (!pending) return;
+
+    if (pending.isLifespanEnd) {
+      // 寿命を迎えた場合は移動せず、その場で人生の終幕（既存のpendingGraduation演出）へ進む。
+      const { playerId, playerName, playerSnapshot } = pending;
+      const reason = pickLifespanEndReason(playerSnapshot);
+      setActiveDraw(null);
+      setGameState((prev) => ({
+        ...prev,
+        players: prev.players.map((p) =>
+          p.id === playerId
+            ? { ...p, finished: true, graduationAge: playerSnapshot.age, graduationReasonId: reason.id }
+            : p,
+        ),
+        turnCount: prev.turnCount + 1,
+        activeEvent: null,
+        activePlayerIdForEvent: null,
+        pendingResult: null,
+        pendingGraduation: { playerId, playerName, age: playerSnapshot.age, reason },
+      }));
+      setMoveAnimation(null);
+      return;
+    }
 
     const { playerId, playerName, playerSnapshot, targetPosition, finished, settings, roll } = pending;
 
@@ -355,10 +419,17 @@ function App() {
         const withStatusEffects = applyStatusEffectsToPlayer(withEffects, result.statusEffects);
         // 留学経験・AIスキルなど、この出来事によって新たに得た人生フラグを積み上げる。
         const withFlags = applyFlagsToPlayer(withStatusEffects, result.grantsFlags);
+        // 健康診断・生活習慣改善・延命治療の成功など「健康・延命関連のプラスイベント」だった場合、
+        // 次のターン以降しばらく寿命判定を免除する（既存の免除ターンより短ければ据え置く）。
+        const immunityGrant = computeLifespanImmunityGrant(event, result);
+        const withImmunity =
+          immunityGrant > 0
+            ? { ...withFlags, lifespanImmunityTurns: Math.max(withFlags.lifespanImmunityTurns, immunityGrant) }
+            : withFlags;
         // 巨大イベントマス（人生の節目）で起きた出来事は、重要度を最高ランクにして
         // 人生ログ・最終レポートの「ベストイベント」に残りやすくする。
-        const isMilestoneSquare = getBoardMilestone(withFlags.position) !== undefined;
-        return appendLifeLog(withFlags, {
+        const isMilestoneSquare = getBoardMilestone(withImmunity.position) !== undefined;
+        return appendLifeLog(withImmunity, {
           turn: prev.turnCount,
           age: withFlags.age,
           position: withFlags.position,
@@ -511,6 +582,11 @@ function App() {
   const handleCloseNewspaper = () => setGameState((prev) => ({ ...prev, showNewspaper: false }));
   const handleToggleSound = () => setSoundEnabled((prev) => !prev);
 
+  const currentPlayerForBoard = gameState.players[gameState.currentPlayerIndex];
+  const currentDeathChance = currentPlayerForBoard
+    ? calculateLifespanDeathChance(currentPlayerForBoard, gameState.settings)
+    : 0;
+
   return (
     <div className="app-shell">
       {gameState.phase === 'title' && (
@@ -555,6 +631,7 @@ function App() {
             }
             moveAnimation={moveAnimation}
             soundEnabled={soundEnabled}
+            deathChance={currentDeathChance}
             onRoll={handleRoll}
             onRollSettled={handleRollSettled}
             onToggleSound={handleToggleSound}
@@ -621,6 +698,7 @@ function App() {
           era={gameState.settings.era}
           soundEnabled={soundEnabled}
           onRestart={handleBackToTitle}
+          onPlayDifferentEra={handlePlayDifferentEra}
         />
       )}
     </div>

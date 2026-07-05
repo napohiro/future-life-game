@@ -38,7 +38,10 @@ interface GameBoardProps {
   rollDisabled: boolean;
   moveAnimation: MoveAnimationState | null;
   soundEnabled: boolean;
-  onRoll: () => number;
+  // 現在のプレイヤーが今回のターンで「寿命を迎える」確率（0〜1）。寿命リスク開始年齢以下や
+  // 免除ターン中は0になり、ルーレットに寿命枠は表示されない。
+  deathChance: number;
+  onRoll: () => number | 'death';
   onRollSettled: () => void;
   onToggleSound: () => void;
   onShowLifeLog: () => void;
@@ -54,6 +57,7 @@ function GameBoard({
   rollDisabled,
   moveAnimation,
   soundEnabled,
+  deathChance,
   onRoll,
   onRollSettled,
   onToggleSound,
@@ -291,6 +295,7 @@ function GameBoard({
           disabled={rollDisabled || !currentPlayer || currentPlayer.finished}
           lastRoll={lastRoll}
           currentAge={currentPlayer?.age ?? 0}
+          deathChance={deathChance}
           soundEnabled={soundEnabled}
           onRoll={onRoll}
           onRollSettled={onRollSettled}

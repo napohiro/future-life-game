@@ -30,13 +30,14 @@ interface FinalReportProps {
   era: EraId;
   soundEnabled: boolean;
   onRestart: () => void;
+  onPlayDifferentEra: () => void;
 }
 
 const RANK_MEDALS = ['🥇', '🥈', '🥉'];
 
 const REPORT_STAT_KEYS: StatKey[] = ['money', 'happiness', 'health', 'trust', 'relationships', 'socialContribution', 'aiAffinity'];
 
-function FinalReport({ players, era, soundEnabled, onRestart }: FinalReportProps) {
+function FinalReport({ players, era, soundEnabled, onRestart, onPlayDifferentEra }: FinalReportProps) {
   const ranked = rankPlayers(players);
 
   useEffect(() => {
@@ -203,9 +204,14 @@ function FinalReport({ players, era, soundEnabled, onRestart }: FinalReportProps
         })}
       </div>
 
-      <button type="button" className="btn btn--primary btn--large" onClick={onRestart}>
-        もう一度あそぶ
-      </button>
+      <div className="final-report__actions">
+        <button type="button" className="btn btn--ghost btn--large" onClick={onPlayDifferentEra}>
+          別の時代で遊ぶ
+        </button>
+        <button type="button" className="btn btn--primary btn--large" onClick={onRestart}>
+          もう一度あそぶ
+        </button>
+      </div>
     </div>
   );
 }

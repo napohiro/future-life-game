@@ -1250,6 +1250,13 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
+/* 寿命リスク開始年齢を超えた後だけ現れる「寿命を迎える」枠。控えめな鳩のアイコンにし、
+   数字マスより少し小さくして威圧感を出さないようにする。 */
+.roulette-wheel__number--death {
+  font-size: 15px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
 .roulette-wheel__hub {
   position: absolute;
   top: 50%;
@@ -1315,6 +1322,13 @@
 .roulette__result-readout--placeholder {
   color: #8891a5;
   font-weight: 600;
+}
+
+/* 寿命の枠に止まった直後の、静かで上品な読み上げ文言。 */
+.roulette__result-readout--death {
+  color: #5b5a72;
+  font-weight: 700;
+  font-size: 15px;
 }
 
 @media (min-width: 640px) {
@@ -2171,6 +2185,19 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.final-report__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.final-report__actions .btn--primary {
+  flex: 2;
+}
+
+.final-report__actions .btn--ghost {
+  flex: 1;
 }
 
 .final-report__card {
