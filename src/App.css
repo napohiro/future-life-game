@@ -173,18 +173,24 @@
 }
 
 .era-select__card {
-  background: #fff;
+  position: relative;
+  overflow: hidden;
+  background-color: #1a1f2e;
+  background-size: cover;
+  background-position: center;
   border: 2px solid #e7ebf3;
   border-radius: 16px;
   padding: 16px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: flex-end;
   gap: 6px;
+  min-height: 140px;
   text-align: left;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(31, 36, 48, 0.06);
-  transition: border-color 0.15s ease, transform 0.08s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
 }
 
 .era-select__card:active {
@@ -193,35 +199,54 @@
 
 .era-select__card--active {
   border-color: #2f6fed;
-  background: linear-gradient(135deg, #fff 60%, #dbe9ff 165%);
+  box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.35), 0 4px 14px rgba(47, 111, 237, 0.25);
 }
 
-/* 昭和編カードだけ、温かいセピー・クリーム基調の配色にして現代編・近未来編と見分けやすくする */
-.era-select__card--showa {
-  background: #fdf6e9;
-  border-color: #e3cfa3;
-}
-
+/* 時代ごとに縁取りの色を変え、選択中カードの雰囲気にも差を出す */
 .era-select__card--showa.era-select__card--active {
-  border-color: #b5651d;
-  background: linear-gradient(135deg, #fdf6e9 60%, #f3dfb8 165%);
+  border-color: #e3a23c;
+  box-shadow: 0 0 0 3px rgba(227, 162, 60, 0.35), 0 4px 14px rgba(150, 100, 30, 0.25);
+}
+
+.era-select__card--future.era-select__card--active {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.35), 0 4px 14px rgba(139, 92, 246, 0.25);
+}
+
+/* 背景画像の上でも文字が沈まないよう、下から暗くなるグラデーションを重ねる
+   （画像の魅力が消えない程度に、上部は薄く・文字が乗る下部だけ濃くする）。 */
+.era-select__card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 12, 20, 0.12) 0%, rgba(8, 10, 18, 0.38) 55%, rgba(6, 8, 14, 0.75) 100%);
+  z-index: 0;
+}
+
+.era-select__icon,
+.era-select__name,
+.era-select__description {
+  position: relative;
+  z-index: 1;
 }
 
 .era-select__icon {
   font-size: 28px;
   line-height: 1;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
 }
 
 .era-select__name {
   font-size: 17px;
   font-weight: 700;
-  color: #1f2430;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.65);
 }
 
 .era-select__description {
   font-size: 13px;
-  color: #666f84;
+  color: rgba(255, 255, 255, 0.92);
   line-height: 1.5;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
 }
 
 /* ---------- player setup ---------- */
@@ -424,10 +449,24 @@
 /* ---------- game board ---------- */
 
 .game-board {
+  position: relative;
   gap: 14px;
   transition: background 0.6s ease;
   /* 画面下部に固定したルーレットドックの高さ分、最後まで隠れず読めるようにする。 */
   padding-bottom: 220px;
+}
+
+/* 時代ごとの世界観を伝える背景写真。文字・マス・コマの視認性を最優先するため、
+   ごく薄く・ぼかして「雰囲気」だけを添える程度に留める（z-index:-1で必ず最背面に固定）。 */
+.game-board__era-backdrop {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.14;
+  filter: blur(1.5px);
+  z-index: -1;
+  pointer-events: none;
 }
 
 .game-board__roulette-dock {
@@ -893,6 +932,14 @@
   margin-top: 4px;
 }
 
+.board-square__giant-icon--image {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
 .board-square__giant-label {
   position: absolute;
   bottom: -15px;
@@ -955,6 +1002,13 @@
 .board-square__icon {
   font-size: 12px;
   line-height: 1;
+}
+
+.board-square__icon--image {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .board-square__index {
@@ -1032,7 +1086,8 @@
   height: 100%;
   object-fit: contain;
   display: block;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+  /* ごく薄い白い縁取り＋控えめな影で、背景画像やマスの色に紛れないようにする（派手な装飾は避ける）。 */
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.9)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
 
 .token--current {

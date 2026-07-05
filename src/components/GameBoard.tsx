@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { BRANCH_POINTS, getBranchPointForPosition } from '../data/branchRoutes';
 import { getCalendarYear, getEraDefinition, getGengoLabel } from '../data/eras';
 import { getPlayerCharacter } from '../data/playerCharacters';
+import { ERA_BACKGROUND_IMAGES } from '../data/uiAssets';
 import type { EraId, MoveAnimationState, Player } from '../types/game';
 import {
   buildSmoothPathD,
@@ -87,6 +88,11 @@ function GameBoard({
 
   return (
     <StageBackground stage={currentStage} className="screen game-board">
+      <div
+        className="game-board__era-backdrop"
+        style={{ backgroundImage: `url(${ERA_BACKGROUND_IMAGES[era]})` }}
+        aria-hidden="true"
+      />
       <div className="game-board__era-strip">
         <span className="game-board__stage-pill">
           {currentStageTheme.decorations[0]} {currentStageTheme.title}｜{currentStageTheme.ageRangeLabel}

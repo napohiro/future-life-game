@@ -1,7 +1,9 @@
 import { forwardRef } from 'react';
+import { MILESTONE_ICON_IMAGES, SQUARE_TYPE_ICON_IMAGES } from '../data/uiAssets';
 import type { LifeStage, Player, SquareType } from '../types/game';
 import { SQUARE_TYPE_META, getLifeStageMeta } from '../utils/gameLogic';
 import PlayerToken from './PlayerToken';
+import SquareIcon from './SquareIcon';
 
 export interface SquareOccupant {
   player: Player;
@@ -80,9 +82,9 @@ const BoardSquare = forwardRef<HTMLDivElement, BoardSquareProps>(function BoardS
       title={titleParts.join('・')}
     >
       {milestone ? (
-        <span className="board-square__giant-icon">{milestone.icon}</span>
+        <SquareIcon src={MILESTONE_ICON_IMAGES[position]} emoji={milestone.icon} className="board-square__giant-icon" />
       ) : (
-        squareMeta.icon && <span className="board-square__icon">{squareMeta.icon}</span>
+        <SquareIcon src={SQUARE_TYPE_ICON_IMAGES[squareType]} emoji={squareMeta.icon} className="board-square__icon" />
       )}
       <span className="board-square__index">{position}</span>
       {isBranch && <span className="board-square__branch-mark">🔀</span>}

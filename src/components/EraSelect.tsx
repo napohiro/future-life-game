@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ERA_DEFINITIONS, DEFAULT_ERA } from '../data/eras';
+import { ERA_BACKGROUND_IMAGES } from '../data/uiAssets';
 import type { EraId } from '../types/game';
 
 interface EraSelectProps {
@@ -24,8 +25,10 @@ function EraSelect({ initialEra = DEFAULT_ERA, onStart, onBack }: EraSelectProps
               key={era.id}
               type="button"
               className={`era-select__card era-select__card--${era.id} ${active ? 'era-select__card--active' : ''}`}
+              style={{ backgroundImage: `url(${ERA_BACKGROUND_IMAGES[era.id]})` }}
               onClick={() => setSelectedEra(era.id)}
             >
+              <span className="era-select__card-overlay" aria-hidden="true" />
               <span className="era-select__icon">{era.icon}</span>
               <span className="era-select__name">
                 {era.name}｜{era.year}年
