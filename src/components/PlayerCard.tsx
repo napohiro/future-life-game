@@ -10,6 +10,7 @@ import {
   STATUS_FIELD_ICONS,
   STATUS_FIELD_LABELS,
   calculateAssetRank,
+  getDisplayOccupation,
   getLifeStageName,
   getLongevityBadge,
   getPlayerVisual,
@@ -43,7 +44,8 @@ function StatusFieldList({ player }: { player: Player }) {
   return (
     <div className="player-card__status-fields">
       <span className="player-card__status-field">
-        {STATUS_FIELD_ICONS.occupation} {STATUS_FIELD_LABELS.occupation}：{player.occupation}
+        {STATUS_FIELD_ICONS.occupation} {STATUS_FIELD_LABELS.occupation}：
+        {getDisplayOccupation(player.age, player.occupation)}
       </span>
       <span className="player-card__status-field">
         {STATUS_FIELD_ICONS.annualIncome} {STATUS_FIELD_LABELS.annualIncome}：{player.annualIncome}万円

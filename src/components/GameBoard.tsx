@@ -15,6 +15,7 @@ import {
 import {
   getBoardMilestone,
   getBoardStage,
+  getDisplayOccupation,
   getLifeStageName,
   getLongevityBadge,
   getPlayerVisual,
@@ -35,7 +36,6 @@ interface GameBoardProps {
   currentPlayerIndex: number;
   boardSize: number;
   era: EraId;
-  lastRoll: number | null;
   rollDisabled: boolean;
   moveAnimation: MoveAnimationState | null;
   soundEnabled: boolean;
@@ -54,7 +54,6 @@ function GameBoard({
   currentPlayerIndex,
   boardSize,
   era,
-  lastRoll,
   rollDisabled,
   moveAnimation,
   soundEnabled,
@@ -158,7 +157,9 @@ function GameBoard({
                   </span>
                 )}
               </div>
-              <div className="game-board__turn-occupation">💼 {currentPlayer.occupation}</div>
+              <div className="game-board__turn-occupation">
+                💼 {getDisplayOccupation(currentPlayer.age, currentPlayer.occupation)}
+              </div>
               <div className="game-board__turn-priority-stats">
                 <span>💰{currentPlayer.money.toLocaleString()}万円</span>
                 <span>😊{currentPlayer.happiness}</span>
@@ -330,9 +331,13 @@ function GameBoard({
           スクロール位置に関わらず常に操作でき、イベントモーダル（z-index高）表示中は
           自動的にその下に隠れるため、重なりや誤操作の心配がない。 */}
       <div className="game-board__roulette-dock">
+        {/* keyに現在の手番プレイヤーIDを使うことで、手番が次のプレイヤーに切り替わるたびに
+            Rouletteを再マウントし、前のプレイヤーの結果表示（「3年進む→7歳へ」等）や
+            回転角度・強調表示を初期状態にリセットする。同じプレイヤーが続けて振る分には
+            再マウントされないため、直前の結果はそのまま見え続ける（意図した挙動）。 */}
         <Roulette
+          key={currentPlayer?.id ?? 'none'}
           disabled={rollDisabled || !currentPlayer || currentPlayer.finished}
-          lastRoll={lastRoll}
           currentAge={currentPlayer?.age ?? 0}
           deathChance={deathChance}
           soundEnabled={soundEnabled}

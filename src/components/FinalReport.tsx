@@ -11,6 +11,7 @@ import {
   calculateSecondLifeScore,
   calculateTitle,
   formatLifeLogHeadline,
+  getDisplayOccupation,
   generateFinalChapter,
   generateGraduationSummary,
   generateLifeSummaryPlaceholder,
@@ -102,7 +103,8 @@ function FinalReport({ players, era, soundEnabled, onRestart, onPlayDifferentEra
               <div className="final-report__life-facts">
                 <span className="final-report__life-fact">🎂 最終年齢：{player.age}歳</span>
                 <span className="final-report__life-fact">
-                  {STATUS_FIELD_ICONS.occupation} {STATUS_FIELD_LABELS.occupation}：{player.occupation}
+                  {STATUS_FIELD_ICONS.occupation} {STATUS_FIELD_LABELS.occupation}：
+                  {getDisplayOccupation(player.age, player.occupation)}
                 </span>
                 <span className="final-report__life-fact">
                   {STATUS_FIELD_ICONS.romanceStatus} {STATUS_FIELD_LABELS.romanceStatus}：{player.romanceStatus}

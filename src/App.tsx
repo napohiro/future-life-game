@@ -632,7 +632,6 @@ function App() {
             currentPlayerIndex={gameState.currentPlayerIndex}
             boardSize={gameState.boardSize}
             era={gameState.settings.era}
-            lastRoll={gameState.lastRoll}
             rollDisabled={
               gameState.activeEvent !== null ||
               gameState.pendingBranchChoice !== null ||

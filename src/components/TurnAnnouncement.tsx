@@ -1,7 +1,7 @@
 import { getCalendarYear, getGengoLabel } from '../data/eras';
 import { getPlayerCharacter } from '../data/playerCharacters';
 import type { EraId, Player } from '../types/game';
-import { STAT_ICONS, getLifeStageName, getLongevityBadge, getPlayerVisual } from '../utils/gameLogic';
+import { STAT_ICONS, getDisplayOccupation, getLifeStageName, getLongevityBadge, getPlayerVisual } from '../utils/gameLogic';
 
 interface TurnAnnouncementProps {
   player: Player;
@@ -48,7 +48,7 @@ function TurnAnnouncement({ player, playerIndex, playerCount, era, onDismiss }: 
               </span>
             )}
           </span>
-          <span className="turn-announce-card__fact">{player.occupation}</span>
+          <span className="turn-announce-card__fact">{getDisplayOccupation(player.age, player.occupation)}</span>
         </div>
 
         <div className="turn-announce-card__stats">

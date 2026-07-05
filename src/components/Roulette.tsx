@@ -3,7 +3,6 @@ import { playRouletteResultSound, playRouletteTickSound, playSpinStartSound, vib
 
 interface RouletteProps {
   disabled: boolean;
-  lastRoll: number | null;
   currentAge: number;
   // 現在のプレイヤーの「寿命を迎える」確率（0〜1）。0の場合は寿命枠を表示しない
   // （寿命リスク開始年齢に達していない、または寿命免除ターン中）。
@@ -69,10 +68,12 @@ function buildSegments(deathChance: number): WheelSegment[] {
  * 寿命リスク開始年齢を超えると、盤面に「寿命を迎える」枠が加わる（年齢とともに少しずつ大きくなる）。
  * 寿命枠に止まった場合は、通常の移動アニメーションを行わず、人生の終幕演出（親コンポーネント側）へ進む。
  */
-function Roulette({ disabled, lastRoll, currentAge, deathChance, soundEnabled, onRoll, onRollSettled }: RouletteProps) {
+function Roulette({ disabled, currentAge, deathChance, soundEnabled, onRoll, onRollSettled }: RouletteProps) {
   const [rotation, setRotation] = useState(0);
   const [phase, setPhase] = useState<SpinPhase>('idle');
-  const [result, setResult] = useState<number | 'death' | null>(lastRoll);
+  // 手番プレイヤーが切り替わるたびにこのコンポーネントごとkeyで再マウントされるため、
+  // 初期値は常にnull（前のプレイヤーの結果を引き継がない）。
+  const [result, setResult] = useState<number | 'death' | null>(null);
   const [startAge, setStartAge] = useState<number | null>(null);
 
   const segments = useMemo(() => buildSegments(deathChance), [deathChance]);

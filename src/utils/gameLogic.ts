@@ -222,6 +222,15 @@ export function getLifeStageName(age: number): string {
   return findLifeStageMeta(age).name;
 }
 
+/** 表示用の肩書き。データ上のoccupation（生成時は「学生」）はそのままに、
+ * 0〜6歳だけは見た目として不自然な「学生」表示を避け、年齢に応じた表示に差し替える。
+ * 7歳以降は既存のplayer.occupationをそのまま表示する（イベントによる変化にも影響しない）。 */
+export function getDisplayOccupation(age: number, occupation: string): string {
+  if (age <= 0) return '誕生';
+  if (age <= 6) return '幼児';
+  return occupation;
+}
+
 /** マス位置から人生ステージを判定する（盤面は0〜100マス＝0〜100歳と1対1で対応する）。 */
 export function getBoardStage(position: number): LifeStage {
   return findLifeStageMeta(position).id;
