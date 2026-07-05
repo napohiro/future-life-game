@@ -896,7 +896,7 @@
   background-repeat: repeat-y;
   background-size: 100% auto;
   background-position: top center;
-  opacity: 0.42;
+  opacity: 0.26;
   pointer-events: none;
 }
 
@@ -922,15 +922,15 @@
 }
 
 .board-canvas__era-overlay--showa {
-  background: linear-gradient(165deg, rgba(255, 235, 195, 0.5) 0%, rgba(180, 120, 55, 0.46) 100%);
+  background: linear-gradient(165deg, rgba(255, 235, 195, 0.4) 0%, rgba(180, 120, 55, 0.36) 100%);
 }
 
 .board-canvas__era-overlay--present {
-  background: linear-gradient(165deg, rgba(4, 10, 26, 0.48) 0%, rgba(10, 22, 48, 0.6) 100%);
+  background: linear-gradient(165deg, rgba(4, 10, 26, 0.4) 0%, rgba(10, 22, 48, 0.5) 100%);
 }
 
 .board-canvas__era-overlay--future {
-  background: linear-gradient(165deg, rgba(20, 10, 45, 0.4) 0%, rgba(8, 18, 40, 0.56) 100%);
+  background: linear-gradient(165deg, rgba(20, 10, 45, 0.32) 0%, rgba(8, 18, 40, 0.46) 100%);
 }
 
 /* ---------- 年代エリア（BoardStageSection） ---------- */
@@ -943,22 +943,48 @@
   z-index: 0;
 }
 
+/* 年代エリアの見出し帯。squareやsvgより明確に手前（z-index）に置き、スクロール中も
+   sticky経由で上側に見え続ける。帯風に横並びで表示し、マスや装飾の背後に隠れないようにする。 */
 .board-stage-band__label {
   position: sticky;
-  top: 4px;
-  display: inline-flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 4px 0 0 8px;
-  padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.72);
-  border-radius: 10px;
-  backdrop-filter: blur(2px);
+  top: 8px;
+  z-index: 5;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: calc(100% - 24px);
+  margin: 6px auto 0;
+  padding: 6px 16px;
+  background: rgba(255, 253, 246, 0.9);
+  border: 1px solid rgba(31, 36, 48, 0.08);
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 3px 10px rgba(31, 36, 48, 0.14);
+  white-space: nowrap;
+}
+
+/* 現在プレイヤーがいる年代エリアだけ、はっきり分かるように強調する。 */
+.board-stage-band__label--current {
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(47, 111, 237, 0.45);
+  box-shadow: 0 0 0 2px rgba(47, 111, 237, 0.3), 0 4px 14px rgba(47, 111, 237, 0.28);
+}
+
+.board-stage-band__current-tag {
+  font-size: 10px;
+  font-weight: 800;
+  color: #2f6fed;
+  background: #e7effe;
+  border-radius: 999px;
+  padding: 1px 7px;
+  white-space: nowrap;
 }
 
 .board-stage-band__decorations {
-  font-size: 13px;
-  letter-spacing: 1px;
+  font-size: 15px;
+  line-height: 1;
 }
 
 .board-stage-band__title {
@@ -968,7 +994,7 @@
 }
 
 .board-stage-band__age {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   color: #6b7280;
 }

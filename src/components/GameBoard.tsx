@@ -218,7 +218,14 @@ function GameBoard({
           <div className={`board-canvas__era-overlay board-canvas__era-overlay--${era}`} aria-hidden="true" />
 
           {stageBands.map((band) => (
-            <BoardStageSection key={band.stage} stage={band.stage} top={band.top} height={band.height} era={era} />
+            <BoardStageSection
+              key={band.stage}
+              stage={band.stage}
+              top={band.top}
+              height={band.height}
+              era={era}
+              isCurrent={band.stage === currentStage}
+            />
           ))}
 
           <svg className="board-path-svg" viewBox={`0 0 100 ${canvasHeight}`} preserveAspectRatio="none">
