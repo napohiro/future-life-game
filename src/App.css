@@ -943,68 +943,131 @@
   z-index: 0;
 }
 
-/* 年代エリアの見出し帯。squareやsvgより明確に手前（z-index）に置き、スクロール中も
-   sticky経由で上側に見え続ける。帯風に横並びで表示し、マスや装飾の背後に隠れないようにする。 */
-.board-stage-band__label {
-  position: sticky;
-  top: 8px;
-  z-index: 5;
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 6px;
-  width: fit-content;
-  max-width: calc(100% - 24px);
-  margin: 6px auto 0;
-  padding: 6px 16px;
-  background: rgba(255, 253, 246, 0.9);
-  border: 1px solid rgba(31, 36, 48, 0.08);
-  border-radius: 999px;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 3px 10px rgba(31, 36, 48, 0.14);
-  white-space: nowrap;
-}
-
-/* 現在プレイヤーがいる年代エリアだけ、はっきり分かるように強調する。 */
-.board-stage-band__label--current {
-  background: rgba(255, 255, 255, 0.97);
-  border-color: rgba(47, 111, 237, 0.45);
-  box-shadow: 0 0 0 2px rgba(47, 111, 237, 0.3), 0 4px 14px rgba(47, 111, 237, 0.28);
-}
-
-.board-stage-band__current-tag {
-  font-size: 10px;
-  font-weight: 800;
-  color: #2f6fed;
-  background: #e7effe;
-  border-radius: 999px;
-  padding: 1px 7px;
-  white-space: nowrap;
-}
-
-.board-stage-band__decorations {
-  font-size: 15px;
-  line-height: 1;
-}
-
-.board-stage-band__title {
-  font-size: 13px;
-  font-weight: 800;
-  color: #33394a;
-}
-
-.board-stage-band__age {
-  font-size: 11px;
-  font-weight: 700;
-  color: #6b7280;
-}
-
 .board-stage-band__scatter {
   position: absolute;
   font-size: 22px;
   opacity: 0.22;
   pointer-events: none;
   z-index: 0;
+}
+
+/* ---------- 年代エリアカード（BoardAreaCard） ---------- */
+/* 各エリアの開始マスの少し上に浮かべる見出しカード。squares・svg・分岐ノードより
+   明確に手前（z-index）に置き、マスや装飾の背後に隠れないようにする。マス目そのものは
+   隠さず、上側にだけ自然に重なるよう、カード下端をマスの少し上で揃えている。 */
+.board-area-card {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  z-index: 6;
+  width: min(70%, 270px);
+  pointer-events: none;
+}
+
+/* 縦の行間隔が最も詰まる区間（青春・学生エリア→若者・社会人前半エリア等）でも
+   隣のカードと視覚的にくっついて見えないよう、1行にできるだけ収めて高さを
+   最小限にし、影のにじみも小さく抑えている。長い見出しは年齢帯だけ折り返す。 */
+.board-area-card__body {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  column-gap: 6px;
+  row-gap: 0;
+  padding: 5px 13px;
+  background: rgba(255, 253, 247, 0.94);
+  border: 1px solid rgba(31, 36, 48, 0.1);
+  border-left-width: 4px;
+  border-radius: 11px;
+  box-shadow: 0 3px 8px rgba(31, 36, 48, 0.15);
+  backdrop-filter: blur(4px);
+  text-align: center;
+}
+
+.board-area-card--showa .board-area-card__body {
+  border-left-color: #b5651d;
+}
+
+.board-area-card--present .board-area-card__body {
+  border-left-color: #2f6fed;
+}
+
+.board-area-card--future .board-area-card__body {
+  border-left-color: #8b5cf6;
+}
+
+/* 現在プレイヤーがいるエリアだけ、はっきり分かるように強調する。 */
+.board-area-card--current .board-area-card__body {
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 0 0 2px rgba(47, 111, 237, 0.32), 0 8px 18px rgba(47, 111, 237, 0.26);
+}
+
+.board-area-card__current-tag {
+  position: absolute;
+  top: -9px;
+  left: 10px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  background: #2f6fed;
+  border-radius: 999px;
+  padding: 2px 8px;
+  box-shadow: 0 2px 6px rgba(47, 111, 237, 0.4);
+  white-space: nowrap;
+}
+
+.board-area-card__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.board-area-card__icon {
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.board-area-card__title {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #33394a;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.board-area-card__age {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #7a8299;
+  white-space: nowrap;
+}
+
+.board-area-card__pointer {
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  background: rgba(255, 253, 247, 0.94);
+  border-right: 1px solid rgba(31, 36, 48, 0.1);
+  border-bottom: 1px solid rgba(31, 36, 48, 0.1);
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 0 0 3px 0;
+}
+
+@media (min-width: 421px) {
+  .board-area-card {
+    width: min(46%, 280px);
+  }
+
+  .board-area-card__title {
+    font-size: 13px;
+  }
 }
 
 /* ---------- 道（SVG）・矢印 ---------- */

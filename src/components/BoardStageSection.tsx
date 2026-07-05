@@ -6,8 +6,6 @@ interface BoardStageSectionProps {
   top: number;
   height: number;
   era: EraId;
-  /** 現在プレイヤーがいる年代エリアかどうか。見出しを強調表示するために使う。 */
-  isCurrent?: boolean;
 }
 
 // 装飾絵文字を帯の中に薄く散らすための、決定的な（毎回同じ）疑似ランダム位置。
@@ -19,8 +17,9 @@ function scatterPosition(seed: number): { left: string; top: string } {
   return { left: `${left}%`, top: `${top}%` };
 }
 
-/** 盤面上に敷く「年代エリア」の帯。座標ベースのボード上に絶対配置で敷かれる背景層。 */
-function BoardStageSection({ stage, top, height, era, isCurrent }: BoardStageSectionProps) {
+/** 盤面上に敷く「年代エリア」の帯。座標ベースのボード上に絶対配置で敷かれる背景層。
+ * エリア名の見出し表示は、より細かい9区分に対応するBoardAreaCard（GameBoard側）が担う。 */
+function BoardStageSection({ stage, top, height, era }: BoardStageSectionProps) {
   const theme = getBoardStageTheme(stage, era);
 
   return (
@@ -35,14 +34,6 @@ function BoardStageSection({ stage, top, height, era, isCurrent }: BoardStageSec
           {decoration}
         </span>
       ))}
-      <div className={`board-stage-band__label ${isCurrent ? 'board-stage-band__label--current' : ''}`}>
-        {isCurrent && <span className="board-stage-band__current-tag">📍現在地</span>}
-        <span className="board-stage-band__decorations" aria-hidden="true">
-          {theme.decorations[0]}
-        </span>
-        <span className="board-stage-band__title">{theme.title}</span>
-        <span className="board-stage-band__age">{theme.ageRangeLabel}</span>
-      </div>
     </div>
   );
 }

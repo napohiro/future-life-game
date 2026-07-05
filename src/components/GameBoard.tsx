@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import { BOARD_AREA_CARDS, getCurrentBoardArea } from '../data/boardAreas';
 import { BRANCH_POINTS, getBranchPointForPosition } from '../data/branchRoutes';
 import { getCalendarYear, getEraDefinition, getGengoLabel } from '../data/eras';
 import { getPlayerCharacter } from '../data/playerCharacters';
@@ -14,12 +15,12 @@ import {
 import {
   getBoardMilestone,
   getBoardStage,
-  getBoardStageTheme,
   getLifeStageName,
   getLongevityBadge,
   getPlayerVisual,
   getSquareType,
 } from '../utils/gameLogic';
+import BoardAreaCard from './BoardAreaCard';
 import BoardSquare from './BoardSquare';
 import BoardStageSection from './BoardStageSection';
 import PlayerCard from './PlayerCard';
@@ -75,7 +76,7 @@ function GameBoard({
   const currentVisual = currentPlayer ? getPlayerVisual(currentPlayerIndex) : null;
   const currentCharacter = currentPlayer ? getPlayerCharacter(currentPlayer.characterId) : null;
   const currentStage = currentPlayer ? getBoardStage(currentPlayer.position) : 'stage1';
-  const currentStageTheme = getBoardStageTheme(currentStage, era);
+  const currentArea = getCurrentBoardArea(currentPlayer?.age ?? 0);
   const currentLongevityBadge = currentPlayer ? getLongevityBadge(currentPlayer.age, era) : null;
 
   // 老後・近未来エリア（80歳〜）は固定ゴールではないため、進んだ分だけ道が見える「霧マップ」にする。
@@ -90,6 +91,18 @@ function GameBoard({
   const directionArrows = useMemo(() => generateDirectionArrows(boardPoints), [boardPoints]);
   const canvasHeight = useMemo(() => Math.max(...boardPoints.map((p) => p.y)) + 90, [boardPoints]);
 
+  // 各エリアカードは「開始年齢＝盤面position」のマスのy座標を基準に、その少し上へ配置する。
+  // マス（38px角、中心がpoint.y）の上端より少し上にカードの下端が来るよう、定数分だけ引き上げる。
+  const AREA_CARD_Y_OFFSET = 25;
+  const areaCardPlacements = useMemo(
+    () =>
+      BOARD_AREA_CARDS.map((areaCard) => {
+        const anchor = boardPoints.find((p) => p.position === areaCard.startAge);
+        return anchor ? { areaCard, y: anchor.y - AREA_CARD_Y_OFFSET } : null;
+      }).filter((placement): placement is { areaCard: (typeof BOARD_AREA_CARDS)[number]; y: number } => placement !== null),
+    [boardPoints],
+  );
+
   return (
     <StageBackground stage={currentStage} className="screen game-board">
       <div
@@ -99,7 +112,7 @@ function GameBoard({
       />
       <div className="game-board__era-strip">
         <span className="game-board__stage-pill">
-          {currentStageTheme.decorations[0]} {currentStageTheme.title}｜{currentStageTheme.ageRangeLabel}
+          {currentArea.icon} {currentArea.title}｜{currentArea.ageLabel}
         </span>
         <span className={`game-board__era-pill game-board__era-pill--${era}`}>
           {eraDefinition.icon} {eraDefinition.year}年｜{eraDefinition.name}
@@ -218,14 +231,7 @@ function GameBoard({
           <div className={`board-canvas__era-overlay board-canvas__era-overlay--${era}`} aria-hidden="true" />
 
           {stageBands.map((band) => (
-            <BoardStageSection
-              key={band.stage}
-              stage={band.stage}
-              top={band.top}
-              height={band.height}
-              era={era}
-              isCurrent={band.stage === currentStage}
-            />
+            <BoardStageSection key={band.stage} stage={band.stage} top={band.top} height={band.height} era={era} />
           ))}
 
           <svg className="board-path-svg" viewBox={`0 0 100 ${canvasHeight}`} preserveAspectRatio="none">
@@ -299,6 +305,18 @@ function GameBoard({
               </div>
             )),
           )}
+
+          {areaCardPlacements.map(({ areaCard, y }) => (
+            <BoardAreaCard
+              key={areaCard.id}
+              title={areaCard.title}
+              ageLabel={areaCard.ageLabel}
+              icon={areaCard.icon}
+              y={y}
+              era={era}
+              isCurrent={areaCard.id === currentArea.id}
+            />
+          ))}
         </div>
       </div>
 
