@@ -72,7 +72,8 @@ function EventModal({
   const squareMeta = SQUARE_TYPE_META[squareType];
   const rarityBadge = RARITY_BADGE[event.rarity];
   const milestone = getBoardMilestone(age);
-  const moodClass = milestone ? 'modal--milestone' : MOOD_CLASS[squareType] ?? '';
+  const isMemoryCard = event.category === 'memory';
+  const moodClass = isMemoryCard ? 'modal--memory-card' : milestone ? 'modal--milestone' : MOOD_CLASS[squareType] ?? '';
   const moodBanner = MOOD_BANNER[squareType];
   const eventType = result ? result.eventType : getEventType(event);
 
@@ -81,7 +82,9 @@ function EventModal({
       <div className={`modal ${moodClass}`}>
         {result === null ? (
           <>
-            {milestone ? (
+            {isMemoryCard ? (
+              <div className="modal__mood-banner modal__mood-banner--memory-card">📼 思い出カード</div>
+            ) : milestone ? (
               <div className="modal__mood-banner modal__mood-banner--milestone">
                 🎉 人生の節目：{milestone.title}
               </div>
@@ -89,15 +92,18 @@ function EventModal({
               moodBanner && <div className={`modal__mood-banner ${moodBanner.className}`}>{moodBanner.text}</div>
             )}
 
-            <div className="modal__badge-row">
-              <div className="modal__badge">{age}歳・{squareMeta.icon} {squareMeta.label}マス</div>
-              <div className="modal__badge modal__badge--type">
-                {EVENT_TYPE_ICONS[eventType]} {EVENT_TYPE_LABELS[eventType]}
+            {!isMemoryCard && (
+              <div className="modal__badge-row">
+                <div className="modal__badge">{age}歳・{squareMeta.icon} {squareMeta.label}マス</div>
+                <div className="modal__badge modal__badge--type">
+                  {EVENT_TYPE_ICONS[eventType]} {EVENT_TYPE_LABELS[eventType]}
+                </div>
+                {rarityBadge && <div className="modal__badge modal__badge--rare">{rarityBadge}</div>}
               </div>
-              {rarityBadge && <div className="modal__badge modal__badge--rare">{rarityBadge}</div>}
-            </div>
+            )}
             <h3 className="modal__title">{event.title}</h3>
             <p className="modal__description">{event.description}</p>
+            {isMemoryCard && event.memoryQuote && <p className="modal__memory-quote">「{event.memoryQuote}」</p>}
 
             {pendingFate ? (
               <FateRoulette

@@ -18,7 +18,7 @@ function Newspaper({ players, era, onClose }: NewspaperProps) {
 
   return (
     <div className="modal-overlay">
-      <div className="modal modal--tall">
+      <div className={`modal modal--tall ${era === 'showa' ? 'modal--newspaper-showa' : ''}`}>
         <div className="modal__header">
           <h3 className="modal__title">🗞️ 人生新聞プレビュー（{eraDefinition.name}・{eraDefinition.year}年）</h3>
           <button type="button" className="btn btn--ghost btn--small" onClick={onClose}>

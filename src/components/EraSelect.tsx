@@ -23,7 +23,7 @@ function EraSelect({ initialEra = DEFAULT_ERA, onStart, onBack }: EraSelectProps
             <button
               key={era.id}
               type="button"
-              className={`era-select__card ${active ? 'era-select__card--active' : ''}`}
+              className={`era-select__card era-select__card--${era.id} ${active ? 'era-select__card--active' : ''}`}
               onClick={() => setSelectedEra(era.id)}
             >
               <span className="era-select__icon">{era.icon}</span>

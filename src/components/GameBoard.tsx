@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { BRANCH_POINTS, getBranchPointForPosition } from '../data/branchRoutes';
-import { getCalendarYear, getEraDefinition } from '../data/eras';
+import { getCalendarYear, getEraDefinition, getGengoLabel } from '../data/eras';
 import type { EraId, MoveAnimationState, Player } from '../types/game';
 import {
   buildSmoothPathD,
@@ -76,7 +76,7 @@ function GameBoard({
   return (
     <StageBackground stage={currentStage} className="screen game-board">
       <div className="game-board__era-strip">
-        <span className="game-board__era-pill">
+        <span className={`game-board__era-pill game-board__era-pill--${era}`}>
           {eraDefinition.icon} {eraDefinition.year}年｜{eraDefinition.name}
         </span>
       </div>
@@ -104,7 +104,9 @@ function GameBoard({
               </div>
               <div className="game-board__turn-name">{currentPlayer.name}さん</div>
               <div className="game-board__turn-meta">
-                {getLifeStageName(currentPlayer.age)}・{currentPlayer.age}歳（{getCalendarYear(era, currentPlayer.age)}年）
+                {getLifeStageName(currentPlayer.age)}・{currentPlayer.age}歳（
+                {era === 'showa' ? `${getGengoLabel(getCalendarYear(era, currentPlayer.age))}・` : ''}
+                {getCalendarYear(era, currentPlayer.age)}年）
               </div>
               <div className="game-board__turn-priority-stats">
                 <span>💰{currentPlayer.money.toLocaleString()}万円</span>

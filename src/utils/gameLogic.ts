@@ -98,6 +98,7 @@ export const EVENT_CATEGORY_LABELS: Record<EventCategory, string> = {
   smallPinch: '小さなピンチ',
   housing: '住居',
   fortune: '幸運チャンス',
+  memory: '思い出',
 };
 
 // 職業・年収・恋愛家族状況・住居（StatKeyとは別枠の「状態」ステータス）の表示用ラベル・アイコン。
@@ -310,21 +311,35 @@ export const BOARD_STAGE_THEMES: BoardStageTheme[] = [
 // stage3以降は、時代によって盤面の装飾アイコンを一部差し替える（現代編はスマホ・生活寄り、
 // 近未来編はAI・ロボット・宇宙寄り）。見た目だけの差分なので、指定しなければ元の装飾のまま。
 const STAGE_DECORATIONS_BY_ERA: Partial<Record<LifeStage, Record<EraId, string[]>>> = {
+  stage1: {
+    present: ['👶', '🏠', '🧸', '🎈', '📺'],
+    future: ['👶', '🏠', '🧸', '🎈', '🤖'],
+    showa: ['🏠', '🧸', '🚲', '🍡', '📻'],
+  },
+  stage2: {
+    present: ['🏫', '📱', '⚽', '🎒', '📚'],
+    future: ['🏫', '🤖', '⚽', '🎒', '📚'],
+    showa: ['🏫', '📻', '⚾', '🎒', '🚲'],
+  },
   stage3: {
     present: ['🚉', '🏢', '📱', '☕', '💼'],
     future: ['🚉', '🏢', '🤖', '🏙️', '💼'],
+    showa: ['🚉', '🏭', '☎️', '🏪', '💼'],
   },
   stage4: {
     present: ['🌇', '🏘️', '🏥', '👨‍👩‍👧', '💻'],
     future: ['🌇', '🏘️', '🤖', '👨‍👩‍👧', '🚀'],
+    showa: ['🏘️', '📺', '🚗', '👨‍👩‍👧', '🏢'],
   },
   stage5: {
     present: ['🌾', '🚜', '✈️', '🎣', '👵'],
     future: ['🌌', '🤖', '✈️', '🎣', '👵'],
+    showa: ['🌾', '📷', '🍵', '🎣', '👵'],
   },
   stage6: {
     present: ['🏡', '🩺', '📔', '🏙️', '✨'],
     future: ['🌌', '🤖', '🚀', '🧬', '✨'],
+    showa: ['🏡', '🩺', '📔', '🎎', '✨'],
   },
 };
 
@@ -469,17 +484,36 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   longevityMode: 'standard',
 };
 
+// 昭和編は明示的な era タグを持たない既存イベント（現代編・近未来編どちらでも出た汎用プールの一部）に、
+// スマホ・SNS・AI・ネット等の“今どき”表現がそのまま紛れ込むと年代がちぐはぐになる。全件を洗い出して
+// era タグを付け直す代わりに、タイトル・説明・ログ文にこれらの語が含まれる場合だけ候補から除外する
+// 軽量なセーフティネットとして扱う（present/futureの挙動には一切影響しない）。
+const SHOWA_ANACHRONISTIC_KEYWORDS = [
+  'スマホ', 'スマートフォン', 'SNS', 'インターネット', 'ネット', 'アプリ', 'オンライン',
+  'AI', '人工知能', 'ロボット', 'VR', 'ドローン', 'タブレット', '動画配信', 'マッチングアプリ',
+  '暗号資産', '仮想通貨', 'NISA', '宇宙旅行', '火星', '衛星', 'リモートワーク', 'テレワーク',
+];
+
+function isShowaAnachronistic(event: GameEvent): boolean {
+  const text = `${event.title}${event.description}${event.logText}`;
+  return SHOWA_ANACHRONISTIC_KEYWORDS.some((word) => text.includes(word));
+}
+
 /**
  * イベントが指定の時代で出現しうるかを判定する。
- * 明示的な era タグがあればそれに従う（新規「現代編専用」イベント用）。
+ * 明示的な era タグがあればそれに従う（新規「現代編専用」「昭和編専用」イベント用）。
  * タグが無い既存イベントは、futureTag（近未来フレーバーの自由記述タグ）や
  * category が 'ai'/'space'（本質的に近未来限定のテーマ）であれば近未来編限定とみなし、
  * それ以外は全時代共通として扱う。これにより既存イベントデータを書き換えずに
- * 「現代編では近未来的な出来事が出ない」を実現している。
+ * 「現代編・昭和編では近未来的な出来事が出ない」を実現している。
+ * 昭和編はさらに、タグなし汎用イベントの中の“今どき”表現も除外する（isShowaAnachronistic）。
  */
 function isEventAvailableForEra(event: GameEvent, era: EraId): boolean {
   if (event.era) return event.era.includes(era);
-  if (era === 'present' && (event.futureTag || event.category === 'ai' || event.category === 'space')) return false;
+  if ((era === 'present' || era === 'showa') && (event.futureTag || event.category === 'ai' || event.category === 'space')) {
+    return false;
+  }
+  if (era === 'showa' && isShowaAnachronistic(event)) return false;
   return true;
 }
 
@@ -518,21 +552,21 @@ function applyRouteBias(events: GameEvent[], boostCategories: EventCategory[]): 
 // 年代ごとに出してよいイベントカテゴリ。ここに無いカテゴリ（恋愛・結婚・離婚・仕事・転職・起業・
 // 投資・介護・老後・死亡・宇宙旅行等）は、そのステージでは絶対に選ばれない。
 const STAGE_CATEGORY_ALLOWLIST: Record<LifeStage, EventCategory[]> = {
-  stage1: ['child', 'family', 'study', 'hobby', 'health', 'friend', 'smallChallenge', 'smallPinch'],
-  stage2: ['student', 'study', 'friend', 'club', 'path', 'partTime', 'hobby', 'health', 'love', 'challenge', 'social', 'startup', 'work', 'housing'],
+  stage1: ['child', 'family', 'study', 'hobby', 'health', 'friend', 'smallChallenge', 'smallPinch', 'memory'],
+  stage2: ['student', 'study', 'friend', 'club', 'path', 'partTime', 'hobby', 'health', 'love', 'challenge', 'social', 'startup', 'work', 'housing', 'memory'],
   stage3: [
     'work', 'jobChange', 'love', 'marriage', 'divorce', 'startup', 'investment', 'study', 'health',
-    'family', 'childcare', 'hobby', 'social', 'challenge', 'accident', 'illness', 'disaster', 'fraud', 'ai', 'housing', 'fortune',
+    'family', 'childcare', 'hobby', 'social', 'challenge', 'accident', 'illness', 'disaster', 'fraud', 'ai', 'housing', 'fortune', 'memory',
   ],
   stage4: [
     'work', 'jobChange', 'startup', 'investment', 'family', 'childcare', 'health', 'illness', 'care',
-    'social', 'ai', 'marriage', 'divorce', 'death', 'disaster', 'hobby', 'challenge', 'space', 'study', 'housing', 'fortune',
+    'social', 'ai', 'marriage', 'divorce', 'death', 'disaster', 'hobby', 'challenge', 'space', 'study', 'housing', 'fortune', 'memory',
   ],
   stage5: [
     'elder', 'health', 'illness', 'family', 'hobby', 'social', 'care', 'ai', 'space', 'love', 'death',
-    'fraud', 'work', 'investment', 'accident', 'disaster', 'retirement', 'grandchild', 'housing', 'fortune',
+    'fraud', 'work', 'investment', 'accident', 'disaster', 'retirement', 'grandchild', 'housing', 'fortune', 'memory',
   ],
-  stage6: ['elder', 'health', 'illness', 'family', 'care', 'death', 'ai', 'space', 'endOfLife', 'reflection', 'fortune'],
+  stage6: ['elder', 'health', 'illness', 'family', 'care', 'death', 'ai', 'space', 'endOfLife', 'reflection', 'fortune', 'memory'],
 };
 
 function safeFallbackEvent(id: string, stage: LifeStage, category: EventCategory, title: string, logText: string, effects: StatEffects): GameEvent {
@@ -1262,6 +1296,7 @@ function newspaperHeadlinePriority(log: LifeLogEntry): number {
 const NEWSPAPER_TONE_BY_ERA: Record<EraId, { positive: string; negative: string; neutral: string }> = {
   present: { positive: '奮闘の10年でした', negative: '波乱の多い10年でした', neutral: '変化に富んだ10年でした' },
   future: { positive: '飛躍の10年でした', negative: '試練の多い10年でした', neutral: '転機が重なった10年でした' },
+  showa: { positive: '汗と笑顔が輝いた10年でした', negative: '苦労の絶えない10年でした', neutral: '移り変わりの多い10年でした' },
 };
 
 export function generateNewspaperHeadlinePlaceholder(logs: LifeLogEntry[], era: EraId = DEFAULT_ERA): string {

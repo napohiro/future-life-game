@@ -93,13 +93,14 @@ export type EventCategory =
   | 'smallPinch'
   | 'family'
   | 'housing'
-  | 'fortune';
+  | 'fortune'
+  | 'memory';
 
 export type Rarity = 'common' | 'rare' | 'superRare';
 
-// 時代設定のID。将来「昭和編」「バブル編」等を追加する際は、この型に値を足し、
+// 時代設定のID。将来「バブル編」等を追加する際は、この型に値を足し、
 // data/eras.ts の ERA_DEFINITIONS に定義を1件追加するだけでよい構造にしてある。
-export type EraId = 'present' | 'future';
+export type EraId = 'present' | 'future' | 'showa';
 
 // 時代1つ分の定義（時代選択画面・世界設定バッジ・ゲーム画面上部表示で共通利用）。
 export interface EraDefinition {
@@ -200,6 +201,9 @@ export interface GameEvent {
   // 未指定の場合は全時代共通（既存イベントは原則これ）。近未来編限定の判定は futureTag / category(ai, space)
   // から自動判定するため、既存イベントにこのフィールドを付与し直す必要はない。
   era?: EraId[];
+  // 昭和編専用の「思い出カード」（category: 'memory'）で使う、当時を思い出す一言コメント。
+  // 通常イベントとは別枠の低確率演出で、人生の勝敗にはほぼ影響しない懐かしさ重視の要素。
+  memoryQuote?: string;
 }
 
 export type LogImportance = 'normal' | 'high' | 'critical';

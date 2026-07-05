@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { getRouteById } from '../data/branchRoutes';
-import { getCalendarYear } from '../data/eras';
+import { getCalendarYear, getGengoLabel } from '../data/eras';
 import type { EraId, Player, StatKey } from '../types/game';
 import {
   PERSONALITY_TRAITS,
@@ -106,7 +106,9 @@ function PlayerCard({ player, index, isCurrent, era, compact = false }: PlayerCa
           </span>
         </span>
         <span className="player-card__age">
-          {getLifeStageName(player.age)}・{player.age}歳（{getCalendarYear(era, player.age)}年）
+          {getLifeStageName(player.age)}・{player.age}歳（
+          {era === 'showa' ? `${getGengoLabel(getCalendarYear(era, player.age))}・` : ''}
+          {getCalendarYear(era, player.age)}年）
         </span>
       </div>
 

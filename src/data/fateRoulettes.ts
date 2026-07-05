@@ -218,3 +218,62 @@ export const FUTURE_LOTTERY_FATE_ROULETTE: FateRoulette = {
     { id: 'not-selected', label: '落選・不成立', severity: 'greatFailure', weight: 42, effects: {} },
   ],
 };
+
+// ============================================================
+// 昭和編（1948年スタート）専用プリセット
+// ------------------------------------------------------------
+// 商店街の福引き・慰安旅行・宝くじなど、その年代の生活感に合った控えめな金額にしてある。
+// 現代編・近未来編のような高額当選（100万円級）やAI株・宇宙旅行の類は出さない。
+// ============================================================
+
+// 商店街の福引き・年末くじ・懸賞など。1等でも数万円程度に抑えた、昭和の生活感に合う小さな運試し。
+export const SHOWA_LOTTERY_FATE_ROULETTE: FateRoulette = {
+  title: '福引き・懸賞の運命',
+  influenceStat: 'money',
+  outcomes: [
+    { id: 'first-prize', label: '1等：豪華景品と現金5万円', severity: 'greatSuccess', weight: 5, effects: { money: 5, happiness: 15, luck: 8 } },
+    { id: 'second-prize', label: '2等：商品券1万円分', severity: 'success', weight: 15, effects: { money: 1, happiness: 8 } },
+    { id: 'third-prize', label: '3等：日用品の詰め合わせ', severity: 'neutral', weight: 30, effects: { happiness: 5 } },
+    { id: 'small-prize', label: '4等：ちり紙・マッチ等の参加賞', severity: 'failure', weight: 30, effects: { happiness: 2 } },
+    { id: 'miss', label: 'はずれ', severity: 'greatFailure', weight: 20, effects: {} },
+  ],
+};
+
+// 職場の慰安旅行抽選・親戚からの援助・家電当選キャンペーンなど。控えめな臨時の喜び。
+export const SHOWA_WINDFALL_FATE_ROULETTE: FateRoulette = {
+  title: '思わぬ援助の運命',
+  influenceStat: 'money',
+  outcomes: [
+    { id: 'big-help', label: '親戚からまとまった援助を受けた', severity: 'greatSuccess', weight: 8, effects: { money: 10, happiness: 12, relationships: 8 } },
+    { id: 'good-help', label: '家電購入の抽選に当選した', severity: 'success', weight: 18, effects: { money: 3, happiness: 8 } },
+    { id: 'small-help', label: '慰安旅行の幹事に選ばれた', severity: 'neutral', weight: 32, effects: { happiness: 5, relationships: 5 } },
+    { id: 'tiny-help', label: 'ちょっとした差し入れをもらった', severity: 'failure', weight: 27, effects: { happiness: 3 } },
+    { id: 'nothing', label: '特に何もなかった', severity: 'greatFailure', weight: 15, effects: {} },
+  ],
+};
+
+// バブル期の土地・株の投資話。好況を反映してやや値が張るが、現代編・近未来編ほどの極端さは持たせていない。
+export const SHOWA_BUBBLE_INVESTMENT_FATE_ROULETTE: FateRoulette = {
+  title: 'バブル期投資の運命',
+  influenceStat: 'money',
+  outcomes: [
+    { id: 'land-boom', label: '土地・株が大きく値上がりした', severity: 'greatSuccess', weight: 8, effects: { money: 30, happiness: 12 } },
+    { id: 'modest-gain', label: 'まずまずの利益が出た', severity: 'success', weight: 22, effects: { money: 12, happiness: 5 } },
+    { id: 'flat', label: '大きな変化はなかった', severity: 'neutral', weight: 30, effects: {} },
+    { id: 'loss', label: '値下がりして損をした', severity: 'failure', weight: 25, effects: { money: -20, mentalStrength: -5 } },
+    { id: 'bubble-burst', label: 'バブル崩壊で大きく資産を失った', severity: 'greatFailure', weight: 15, effects: { money: -35, mentalStrength: -10, happiness: -5 } },
+  ],
+};
+
+// 不景気による急な収入減・出費増。昭和の暮らしに合わせて、金額は控えめに抑えている。
+export const SHOWA_ECONOMY_DOWNTURN_FATE_ROULETTE: FateRoulette = {
+  title: '景気変動の運命',
+  influenceStat: 'money',
+  outcomes: [
+    { id: 'minor', label: '影響は軽微で済んだ', severity: 'greatSuccess', weight: 22, effects: { mentalStrength: 5 } },
+    { id: 'manage', label: '節約でなんとか乗り切った', severity: 'success', weight: 28, effects: { money: -5 } },
+    { id: 'moderate', label: 'ボーナスが減額された', severity: 'neutral', weight: 26, effects: { money: -10, mentalStrength: -3 } },
+    { id: 'high', label: '残業代がなくなり家計が苦しくなった', severity: 'failure', weight: 16, effects: { money: -18, mentalStrength: -8 } },
+    { id: 'severe', label: '勤め先の業績悪化で収入が大きく減った', severity: 'greatFailure', weight: 8, effects: { money: -28, mentalStrength: -12, happiness: -8 } },
+  ],
+};
