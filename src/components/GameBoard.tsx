@@ -203,6 +203,13 @@ function GameBoard({
 
       <div className="board-scroll">
         <div className="board-canvas" style={{ height: canvasHeight }}>
+          <div
+            className={`board-canvas__era-backdrop board-canvas__era-backdrop--${era}`}
+            style={{ backgroundImage: `url(${ERA_BACKGROUND_IMAGES[era]})` }}
+            aria-hidden="true"
+          />
+          <div className={`board-canvas__era-overlay board-canvas__era-overlay--${era}`} aria-hidden="true" />
+
           {stageBands.map((band) => (
             <BoardStageSection key={band.stage} stage={band.stage} top={band.top} height={band.height} era={era} />
           ))}

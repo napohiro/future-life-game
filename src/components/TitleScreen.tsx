@@ -7,7 +7,7 @@ interface TitleScreenProps {
   onShowReleaseNotes: () => void;
 }
 
-const BUTTON_REVEAL_DELAY_MS = 2000;
+const BUTTON_REVEAL_DELAY_MS = 1500;
 
 /**
  * ファーストビュー（FV.png）を全画面表示し、世界観を邪魔しないよう

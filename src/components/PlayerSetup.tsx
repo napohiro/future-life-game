@@ -126,6 +126,7 @@ function PlayerSetup({ onStart, onBack }: PlayerSetupProps) {
                       draggable={false}
                     />
                     <span className="character-select-card__label">{character.label}</span>
+                    <span className="character-select-card__age">{character.ageRangeLabel}</span>
                   </button>
                 );
               })}

@@ -287,47 +287,49 @@ export interface BoardStageTheme {
 
 // 盤面を年代ステージごとの「世界」として見せるためのテーマ（背景グラデーション・装飾・見出し）。
 // BoardStageSection コンポーネントがステージ単位でこのテーマをまとめて適用する。
+// gradientは半透明（alpha 0.5）にしてあり、下に敷かれる時代別背景（game-board__era-backdrop等）が
+// ほんのり透けて見えるようにしている（マス自体は不透明色なので視認性には影響しない）。
 export const BOARD_STAGE_THEMES: BoardStageTheme[] = [
   {
     id: 'stage1',
     title: '幼少期エリア',
     ageRangeLabel: '0〜12歳',
-    gradient: 'linear-gradient(135deg, #d9f5df 0%, #d8ecfb 100%)',
+    gradient: 'linear-gradient(135deg, rgba(217,245,223,0.5) 0%, rgba(216,236,251,0.5) 100%)',
     decorations: ['🌳', '🏡', '🛝', '🦋', '☀️'],
   },
   {
     id: 'stage2',
     title: '学生時代エリア',
     ageRangeLabel: '13〜22歳',
-    gradient: 'linear-gradient(135deg, #ffe0ec 0%, #dbe9ff 100%)',
+    gradient: 'linear-gradient(135deg, rgba(255,224,236,0.5) 0%, rgba(219,233,255,0.5) 100%)',
     decorations: ['🌸', '🏫', '📚', '⚽', '🎒'],
   },
   {
     id: 'stage3',
     title: '若者・社会人前半エリア',
     ageRangeLabel: '23〜39歳',
-    gradient: 'linear-gradient(135deg, #d6f3f7 0%, #e7ebee 100%)',
+    gradient: 'linear-gradient(135deg, rgba(214,243,247,0.5) 0%, rgba(231,235,238,0.5) 100%)',
     decorations: ['🚉', '🏢', '☕', '🏙️', '💼'],
   },
   {
     id: 'stage4',
     title: '人生の転機エリア',
     ageRangeLabel: '40〜59歳',
-    gradient: 'linear-gradient(135deg, #ffdfb8 0%, #ffe9d6 100%)',
+    gradient: 'linear-gradient(135deg, rgba(255,223,184,0.5) 0%, rgba(255,233,214,0.5) 100%)',
     decorations: ['🌇', '🏘️', '🏥', '👨‍👩‍👧', '🔀'],
   },
   {
     id: 'stage5',
     title: 'セカンドライフエリア',
     ageRangeLabel: '60〜79歳',
-    gradient: 'linear-gradient(135deg, #eaf2c8 0%, #e3f3da 100%)',
+    gradient: 'linear-gradient(135deg, rgba(234,242,200,0.5) 0%, rgba(227,243,218,0.5) 100%)',
     decorations: ['🌾', '🚜', '✈️', '🎣', '👵'],
   },
   {
     id: 'stage6',
     title: '老後・近未来エリア',
     ageRangeLabel: '80歳〜',
-    gradient: 'linear-gradient(135deg, #e6dcf7 0%, #d9e4fb 100%)',
+    gradient: 'linear-gradient(135deg, rgba(230,220,247,0.5) 0%, rgba(217,228,251,0.5) 100%)',
     decorations: ['🌌', '🤖', '🚀', '🏙️', '✨'],
   },
 ];

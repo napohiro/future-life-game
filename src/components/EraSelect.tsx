@@ -29,7 +29,6 @@ function EraSelect({ initialEra = DEFAULT_ERA, onStart, onBack }: EraSelectProps
               onClick={() => setSelectedEra(era.id)}
             >
               <span className="era-select__card-overlay" aria-hidden="true" />
-              <span className="era-select__icon">{era.icon}</span>
               <span className="era-select__name">
                 {era.name}｜{era.year}年
               </span>

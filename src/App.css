@@ -97,7 +97,11 @@
 }
 
 .title-screen__actions {
-  position: relative;
+  position: absolute;
+  left: 50%;
+  /* FV画像の主役感を保つため、開始ボタン群は画面下寄りに配置する。
+     safe-area分の余白は確保しつつ、9vh（8〜12vhの目安の中間）だけ従来より下げている。 */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + max(9vh, 56px));
   z-index: 1;
   width: 100%;
   max-width: 420px;
@@ -105,16 +109,16 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 0 24px calc(env(safe-area-inset-bottom, 0px) + 34px);
+  padding: 0 24px;
   opacity: 0;
-  transform: translateY(12px);
+  transform: translate(-50%, 12px);
   pointer-events: none;
   transition: opacity 0.8s ease, transform 0.8s ease;
 }
 
 .title-screen__actions--visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translate(-50%, 0);
   pointer-events: auto;
 }
 
@@ -158,13 +162,15 @@
 }
 
 .title-screen__meta {
-  position: relative;
+  position: absolute;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  transform: translateX(-50%);
   z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
 }
 
 .title-screen__version {
@@ -254,17 +260,10 @@
   z-index: 0;
 }
 
-.era-select__icon,
 .era-select__name,
 .era-select__description {
   position: relative;
   z-index: 1;
-}
-
-.era-select__icon {
-  font-size: 28px;
-  line-height: 1;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
 }
 
 .era-select__name {
@@ -403,7 +402,7 @@
   border: 2px solid #e7ebf3;
   border-radius: 14px;
   cursor: pointer;
-  min-height: 88px;
+  min-height: 108px;
   transition: border-color 0.12s ease, transform 0.08s ease, background 0.12s ease;
 }
 
@@ -431,6 +430,24 @@
 
 .character-select-card--active .character-select-card__label {
   color: #2f6fed;
+}
+
+/* キャラの見た目イメージの年齢帯。名前より目立ちすぎない太さ・彩度に抑えつつ、
+   文字サイズとバッジ形状で「一目で年齢層が分かる」十分なコントラストを確保する。 */
+.character-select-card__age {
+  font-size: 12px;
+  font-weight: 700;
+  color: #52596b;
+  background: #e7ebf3;
+  border-radius: 999px;
+  padding: 1px 9px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.character-select-card--active .character-select-card__age {
+  color: #2f6fed;
+  background: #dbe9ff;
 }
 
 .character-select-card__check {
@@ -815,7 +832,7 @@
 }
 
 .board-scroll {
-  background: #fff;
+  background: transparent;
   border-radius: 16px;
   padding: 10px;
   max-height: 50svh;
@@ -826,6 +843,57 @@
 .board-canvas {
   position: relative;
   width: 100%;
+  /* z-indexを明示してスタッキングコンテキストを確立する。これが無いと、内部の
+     era-backdrop（z-index:-2）等がboard-canvasの中だけでなくページ全体の背面に
+     回り込んでしまい、見えなくなる。 */
+  z-index: 0;
+}
+
+/* ---------- 盤面の時代別背景演出 ---------- */
+/* マスの背後に、選んだ時代の世界観画像を控えめに敷く。マス・道・コマ・文字は常に
+   この上（z-index:auto〜正の値）に描画されるため、視認性・操作性には影響しない。 */
+.board-canvas__era-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-repeat: repeat-y;
+  background-size: 100% auto;
+  background-position: top center;
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.board-canvas__era-backdrop--showa {
+  filter: sepia(0.4) saturate(1.05) contrast(0.95) blur(1px);
+}
+
+.board-canvas__era-backdrop--present {
+  filter: saturate(1.15) contrast(1.1) brightness(0.6) hue-rotate(-6deg) blur(1px);
+}
+
+.board-canvas__era-backdrop--future {
+  filter: saturate(1.2) contrast(1.05) blur(1px);
+}
+
+/* 背景の上にもう一段、時代の色調（暖色のセピア／黒青のネオン／紫青のサイバー）を重ねて、
+   マスの文字やアイコンとのコントラストも保つ薄いオーバーレイ。 */
+.board-canvas__era-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.board-canvas__era-overlay--showa {
+  background: linear-gradient(165deg, rgba(255, 235, 195, 0.5) 0%, rgba(180, 120, 55, 0.46) 100%);
+}
+
+.board-canvas__era-overlay--present {
+  background: linear-gradient(165deg, rgba(4, 10, 26, 0.48) 0%, rgba(10, 22, 48, 0.6) 100%);
+}
+
+.board-canvas__era-overlay--future {
+  background: linear-gradient(165deg, rgba(20, 10, 45, 0.4) 0%, rgba(8, 18, 40, 0.56) 100%);
 }
 
 /* ---------- 年代エリア（BoardStageSection） ---------- */
@@ -2470,6 +2538,12 @@
   font-weight: 700;
   color: #414a5c;
   font-size: 15px;
+}
+
+.world-settings__row-text {
+  font-size: 13px;
+  color: #52596b;
+  line-height: 1.6;
 }
 
 .world-settings__era-badge {
