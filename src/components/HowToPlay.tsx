@@ -1,5 +1,6 @@
 interface HowToPlayProps {
   onBack: () => void;
+  onShowReleaseNotes: () => void;
 }
 
 const STEPS: { icon: string; text: string }[] = [
@@ -11,7 +12,7 @@ const STEPS: { icon: string; text: string }[] = [
   { icon: '🏆', text: '最後は資産だけでなく、人生スコアや人生タイプで評価されます。' },
 ];
 
-function HowToPlay({ onBack }: HowToPlayProps) {
+function HowToPlay({ onBack, onShowReleaseNotes }: HowToPlayProps) {
   return (
     <div className="screen how-to-play">
       <h2 className="screen__heading">遊び方</h2>
@@ -23,6 +24,14 @@ function HowToPlay({ onBack }: HowToPlayProps) {
             <p className="how-to-play__text">{step.text}</p>
           </div>
         ))}
+        <button
+          type="button"
+          className="how-to-play__item how-to-play__item--link"
+          onClick={onShowReleaseNotes}
+        >
+          <span className="how-to-play__icon">🗂️</span>
+          <p className="how-to-play__text">更新履歴を見る</p>
+        </button>
       </div>
 
       <button type="button" className="btn btn--primary btn--large" onClick={onBack}>

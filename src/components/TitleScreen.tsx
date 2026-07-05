@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { APP_VERSION } from '../data/appInfo';
 
 interface TitleScreenProps {
   onStart: () => void;
   onShowHowToPlay: () => void;
+  onShowReleaseNotes: () => void;
 }
 
 const BUTTON_REVEAL_DELAY_MS = 2000;
@@ -11,7 +13,7 @@ const BUTTON_REVEAL_DELAY_MS = 2000;
  * ファーストビュー（FV.png）を全画面表示し、世界観を邪魔しないよう
  * 操作ボタンは表示から少し間を置いてからフェードインさせる。
  */
-function TitleScreen({ onStart, onShowHowToPlay }: TitleScreenProps) {
+function TitleScreen({ onStart, onShowHowToPlay, onShowReleaseNotes }: TitleScreenProps) {
   const [showActions, setShowActions] = useState(false);
 
   useEffect(() => {
@@ -41,6 +43,13 @@ function TitleScreen({ onStart, onShowHowToPlay }: TitleScreenProps) {
           遊び方
         </button>
         <p className="title-screen__note">2〜4人であそべます</p>
+      </div>
+
+      <div className="title-screen__meta">
+        <span className="title-screen__version">Ver.{APP_VERSION}</span>
+        <button type="button" className="title-screen__changelog-link" onClick={onShowReleaseNotes}>
+          更新履歴
+        </button>
       </div>
     </div>
   );

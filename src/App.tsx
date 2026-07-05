@@ -10,6 +10,7 @@ import HowToPlay from './components/HowToPlay';
 import LifeLog from './components/LifeLog';
 import Newspaper from './components/Newspaper';
 import PlayerSetup from './components/PlayerSetup';
+import ReleaseNotesModal from './components/ReleaseNotesModal';
 import RouteChoiceModal from './components/RouteChoiceModal';
 import TitleScreen from './components/TitleScreen';
 import TurnAnnouncement from './components/TurnAnnouncement';
@@ -74,6 +75,7 @@ function App() {
   const [activeDraw, setActiveDraw] = useState<DrawnEvent | null>(null);
   const [moveAnimation, setMoveAnimation] = useState<MoveAnimationState | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [showReleaseNotes, setShowReleaseNotes] = useState(false);
   const [turnAnnouncementPlayerId, setTurnAnnouncementPlayerId] = useState<string | null>(null);
   // ルーレットが結果を出してから「止まりきって余韻を終える」までの間、移動内容を保持しておく置き場。
   // ルーレット側が完全に停止・静止するまで、コマは実際には動かさない。
@@ -115,6 +117,9 @@ function App() {
   const handleShowHowToPlay = () => {
     setGameState((prev) => ({ ...prev, phase: 'howToPlay' }));
   };
+
+  const handleShowReleaseNotes = () => setShowReleaseNotes(true);
+  const handleCloseReleaseNotes = () => setShowReleaseNotes(false);
 
   const handleBackToTitle = () => {
     setPendingPlayerInputs(null);
@@ -590,10 +595,16 @@ function App() {
   return (
     <div className="app-shell">
       {gameState.phase === 'title' && (
-        <TitleScreen onStart={handleGoToEraSelect} onShowHowToPlay={handleShowHowToPlay} />
+        <TitleScreen
+          onStart={handleGoToEraSelect}
+          onShowHowToPlay={handleShowHowToPlay}
+          onShowReleaseNotes={handleShowReleaseNotes}
+        />
       )}
 
-      {gameState.phase === 'howToPlay' && <HowToPlay onBack={handleBackToTitle} />}
+      {gameState.phase === 'howToPlay' && (
+        <HowToPlay onBack={handleBackToTitle} onShowReleaseNotes={handleShowReleaseNotes} />
+      )}
 
       {gameState.phase === 'eraSelect' && (
         <EraSelect initialEra={gameState.settings.era} onStart={handleEraSelected} onBack={handleBackToTitle} />
@@ -701,6 +712,8 @@ function App() {
           onPlayDifferentEra={handlePlayDifferentEra}
         />
       )}
+
+      {showReleaseNotes && <ReleaseNotesModal onClose={handleCloseReleaseNotes} />}
     </div>
   );
 }
