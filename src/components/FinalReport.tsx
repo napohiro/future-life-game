@@ -20,6 +20,7 @@ import {
   getBestLifeLogs,
   getGraduationReason,
   getPlayerVisual,
+  getRelationshipDisplayLabel,
   getRepresentativeNewspaperHeadline,
   getWorstLifeLogs,
   rankPlayers,
@@ -107,7 +108,8 @@ function FinalReport({ players, era, soundEnabled, onRestart, onPlayDifferentEra
                   {getDisplayOccupation(player.age, player.occupation)}
                 </span>
                 <span className="final-report__life-fact">
-                  {STATUS_FIELD_ICONS.romanceStatus} {STATUS_FIELD_LABELS.romanceStatus}：{player.romanceStatus}
+                  {STATUS_FIELD_ICONS.romanceStatus} {STATUS_FIELD_LABELS.romanceStatus}：
+                  {getRelationshipDisplayLabel(player)}
                 </span>
                 <span className="final-report__life-fact">
                   {STATUS_FIELD_ICONS.housingStatus} {STATUS_FIELD_LABELS.housingStatus}：{player.housingStatus}

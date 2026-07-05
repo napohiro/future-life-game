@@ -14,6 +14,7 @@ import {
   getLifeStageName,
   getLongevityBadge,
   getPlayerVisual,
+  getRelationshipDisplayLabel,
 } from '../utils/gameLogic';
 
 interface PlayerCardProps {
@@ -51,7 +52,7 @@ function StatusFieldList({ player }: { player: Player }) {
         {STATUS_FIELD_ICONS.annualIncome} {STATUS_FIELD_LABELS.annualIncome}：{player.annualIncome}万円
       </span>
       <span className="player-card__status-field">
-        {STATUS_FIELD_ICONS.romanceStatus} {STATUS_FIELD_LABELS.romanceStatus}：{player.romanceStatus}
+        {STATUS_FIELD_ICONS.romanceStatus} {STATUS_FIELD_LABELS.romanceStatus}：{getRelationshipDisplayLabel(player)}
       </span>
       <span className="player-card__status-field">
         {STATUS_FIELD_ICONS.housingStatus} {STATUS_FIELD_LABELS.housingStatus}：{player.housingStatus}

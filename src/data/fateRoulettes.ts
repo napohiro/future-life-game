@@ -73,6 +73,29 @@ export const RELATIONSHIP_FATE_ROULETTE: FateRoulette = {
   ],
 };
 
+// 「気になる人から食事に誘われた」専用の出会い運。RELATIONSHIP_FATE_ROULETTEは結婚を前提にした
+// イベント（プロポーズ等）でも使い回されており、そちらのbaseStatusEffects（married）を
+// 誤って上書きしてしまわないよう、新しい交際状態（relationshipStatus:'dating'）はこちらの
+// 専用プリセットにだけ設定する。効果量・重みはRELATIONSHIP_FATE_ROULETTEと同一。
+export const NEW_ENCOUNTER_FATE_ROULETTE: FateRoulette = {
+  title: '出会いの運命',
+  influenceStat: 'trust',
+  outcomes: [
+    {
+      id: 'best-encounter',
+      label: '最高の出会い',
+      severity: 'greatSuccess',
+      weight: 8,
+      effects: { happiness: 20, relationships: 20 },
+      statusEffects: { romanceStatus: '交際中', relationshipStatus: 'dating' },
+    },
+    { id: 'good-relationship', label: '良い関係になる', severity: 'success', weight: 26, effects: { happiness: 10, relationships: 12 } },
+    { id: 'friendship', label: '友人関係に落ち着く', severity: 'neutral', weight: 32, effects: { relationships: 5 } },
+    { id: 'miss', label: 'すれ違う', severity: 'failure', weight: 24, effects: { happiness: -8, relationships: -5 } },
+    { id: 'worsen', label: '関係が悪化する', severity: 'greatFailure', weight: 10, effects: { happiness: -15, relationships: -15, trust: -5 } },
+  ],
+};
+
 // 事故・健康リスクなど「人生終了」につながりうる運命ルーレット。
 // 最も厳しい結果（人生終了の危機）にのみ endsLifeChance を設定し、
 // そこに至っても必ず人生終了するわけではない（さらに低確率の抽選を挟む）ようにしている。

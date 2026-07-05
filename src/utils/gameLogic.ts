@@ -21,6 +21,7 @@ import type {
   Player,
   PlayerSetupInput,
   Rarity,
+  RelationshipStatus,
   SquareType,
   StatEffects,
   StatKey,
@@ -220,6 +221,22 @@ function findLifeStageMeta(ageOrPosition: number): LifeStageMeta {
 
 export function getLifeStageName(age: number): string {
   return findLifeStageMeta(age).name;
+}
+
+// 構造化されたrelationshipStatusの表示ラベル（独身・交際中・既婚・離婚）。
+export const RELATIONSHIP_STATUS_LABELS: Record<RelationshipStatus, string> = {
+  single: '独身',
+  dating: '交際中',
+  married: '既婚',
+  divorced: '離婚',
+};
+
+/** プレイヤー情報・履歴で使う、恋愛・家族状況の表示文字列（例：「既婚・子どもあり」）。
+ * イベントごとに表記ゆれのあった従来のromanceStatus（自由文字列）に代わり、
+ * 常に一貫した4状態＋子どもの有無で表示する。 */
+export function getRelationshipDisplayLabel(player: Player): string {
+  const base = RELATIONSHIP_STATUS_LABELS[player.relationshipStatus];
+  return player.hasChildren ? `${base}・子どもあり` : base;
 }
 
 /** 表示用の肩書き。データ上のoccupation（生成時は「学生」）はそのままに、
@@ -659,6 +676,77 @@ const CATEGORY_COOLDOWN_YEARS: Partial<Record<EventCategory, number>> = {
   startup: 4,
 };
 
+// ---------------------------------------------------------------------------
+// 恋愛・結婚・離婚・子ども関連イベントの状態フィルタ
+// ------------------------------------------------------------
+// 「独身なのに再婚」「既婚なのに新しい恋愛」のような人生ストーリー上の矛盾を防ぐための
+// 追加フィルタ。既存のイベントデータ（category等）は一切変更せず、カテゴリごとの既定条件＋
+// 個別イベントの例外リストという2段構えで、この関数だけで判定を完結させている。
+// ---------------------------------------------------------------------------
+
+// カテゴリごとの既定条件（このrelationshipStatusの時だけ候補になる）。指定が無いカテゴリは
+// 関係状態による制限を受けない（例：family=家族一般の出来事は誰にでも起こりうる）。
+const CATEGORY_RELATIONSHIP_REQUIREMENT: Partial<Record<EventCategory, RelationshipStatus[]>> = {
+  // loveカテゴリの大部分は「新しい出会い・交際開始」を表すため、独身・離婚後にのみ許可する。
+  // 交際中の人向けの継続コンテンツ（別れ・プロポーズ等）はRELATIONSHIP_EVENT_STATUS_OVERRIDESで
+  // 個別に['dating']を許可しており、「交際中は新しい恋愛開始イベントを出さない」を両立させている。
+  love: ['single', 'divorced'],
+  // marriage（婚約・結婚）は独身・交際中・離婚後のいずれからでも起こってよい。既婚では重婚を防ぐ。
+  marriage: ['single', 'dating', 'divorced'],
+  // 別れ話・離婚は「交際中」または「既婚」でなければ起こりようがない。
+  divorce: ['dating', 'married'],
+  // 孫は自分の子どもがいて初めて存在しうる（hasChildrenは別途チェック）ため、
+  // ここでは既婚・離婚後（子がいる前提の年代）にだけ許可しておく。
+  grandchild: ['married', 'divorced'],
+};
+
+// カテゴリの既定条件では表現できない個別イベントの例外（新規の恋愛・結婚ではなく、
+// 既存の関係の継続・別れ・プロポーズ・結婚後限定の内容など）。
+const RELATIONSHIP_EVENT_STATUS_OVERRIDES: Record<string, RelationshipStatus[]> = {
+  'love-02': ['dating'], // 遠距離恋愛（交際中の発展）
+  'love-03': ['dating'], // 長年の恋人と別れた
+  'love-04': ['dating'], // プロポーズをした（交際中のみ）
+  'marriage-02': ['married'], // 結婚式を挙げた
+  'marriage-03': ['married'], // 義理の家族との関係に悩んだ
+  'marriage-04': ['divorced'], // 再婚（離婚済みでのみ。重婚・二重結婚を防ぐ）
+  'divorce-03': ['divorced'], // 離婚後の子の親権
+  // 出産イベントは「交際中」または「既婚」でのみ（パートナー関係が成立している時のみ）。
+  'childcare-01': ['dating', 'married'],
+  'nf-love-03': ['dating', 'married'],
+};
+
+// 「子どもがいること」が前提の個別イベント（category単体では判定できないため個別指定）。
+const REQUIRES_CHILDREN_EVENT_IDS = new Set([
+  'childcare-02',
+  'childcare-03',
+  'childcare-04',
+  'childcare-05',
+  'present-childcare-hoikuen',
+  'grandchild-01',
+  'grandchild-02',
+  'showa-midlife-child-independence',
+  'showa-midlife-grandchild',
+  'elder-grandchild-walk',
+  'longevity-present-four-generations',
+  'longevity-future-greatgrandchild',
+  'longevity-showa-four-generations',
+]);
+
+// 出産そのものを表すイベント。まだ子どもがいないプレイヤーにのみ候補にする
+// （同じプレイヤーに「子供が生まれた」が何度も重複して起きないようにする簡易ガード）。
+const CHILDBIRTH_EVENT_IDS = new Set(['childcare-01', 'nf-love-03']);
+
+/** 恋愛・結婚・離婚・子ども関連イベントが、プレイヤーの現在の人生状態と矛盾しないかを判定する。 */
+function isRelationshipEventEligible(event: GameEvent, player: Player): boolean {
+  const requiredStatuses = RELATIONSHIP_EVENT_STATUS_OVERRIDES[event.id] ?? CATEGORY_RELATIONSHIP_REQUIREMENT[event.category];
+  if (requiredStatuses && !requiredStatuses.includes(player.relationshipStatus)) return false;
+
+  if (REQUIRES_CHILDREN_EVENT_IDS.has(event.id) && !player.hasChildren) return false;
+  if (CHILDBIRTH_EVENT_IDS.has(event.id) && player.hasChildren) return false;
+
+  return true;
+}
+
 /**
  * イベントが、そのプレイヤーの現在の年齢・人生フラグ・過去の履歴から見て候補になり得るかを判定する。
  * 同じマス・同じ年代でも、プレイヤーごとの人生フラグや経験（lifeLogs）が違えば結果も変わるため、
@@ -669,6 +757,7 @@ function isEventEligibleForPlayer(event: GameEvent, player: Player, age: number)
   if (event.maxAge !== undefined && age > event.maxAge) return false;
   if (event.requiredFlags && !event.requiredFlags.every((flag) => player.lifeFlags.includes(flag))) return false;
   if (event.excludedFlags && event.excludedFlags.some((flag) => player.lifeFlags.includes(flag))) return false;
+  if (!isRelationshipEventEligible(event, player)) return false;
 
   if (event.oncePerGame && player.lifeLogs.some((log) => log.eventId === event.id)) return false;
 
@@ -819,6 +908,7 @@ const INITIAL_OCCUPATION = '学生';
 const INITIAL_ANNUAL_INCOME = 0; // 単位: 万円
 const INITIAL_ROMANCE_STATUS = '独身';
 const INITIAL_HOUSING_STATUS = '実家暮らし';
+const INITIAL_RELATIONSHIP_STATUS: RelationshipStatus = 'single';
 const MAX_ANNUAL_INCOME = 3000; // 単位: 万円。極端な値で表示が壊れないよう上限を設ける
 
 function createId(prefix: string): string {
@@ -858,6 +948,9 @@ export function initializePlayers(inputs: PlayerSetupInput[]): Player[] {
       annualIncome: INITIAL_ANNUAL_INCOME,
       romanceStatus: INITIAL_ROMANCE_STATUS,
       housingStatus: INITIAL_HOUSING_STATUS,
+      relationshipStatus: INITIAL_RELATIONSHIP_STATUS,
+      hasChildren: false,
+      marriageCount: 0,
       personality,
       lifeFlags: [personalityFlag(personality)],
       characterId: input.characterId ?? DEFAULT_CHARACTER_ID,
@@ -925,6 +1018,15 @@ export function applyStatusEffectsToPlayer(player: Player, statusEffects?: Statu
       Math.max(0, updated.annualIncome + statusEffects.annualIncomeDelta),
     );
   }
+  if (statusEffects.relationshipStatus !== undefined) {
+    updated.relationshipStatus = statusEffects.relationshipStatus;
+    // 結婚に至るたびに結婚回数を1増やす（離婚を挟まない限り、この分岐自体がイベント抽選で
+    // 除外されるため二重加算は起きない）。
+    if (statusEffects.relationshipStatus === 'married') {
+      updated.marriageCount = player.marriageCount + 1;
+    }
+  }
+  if (statusEffects.hasChildren !== undefined) updated.hasChildren = statusEffects.hasChildren;
   return updated;
 }
 
@@ -1029,6 +1131,8 @@ export function mergeStatusEffects(base?: StatusEffects, extra?: StatusEffects):
   if (extra?.occupation !== undefined) merged.occupation = extra.occupation;
   if (extra?.romanceStatus !== undefined) merged.romanceStatus = extra.romanceStatus;
   if (extra?.housingStatus !== undefined) merged.housingStatus = extra.housingStatus;
+  if (extra?.relationshipStatus !== undefined) merged.relationshipStatus = extra.relationshipStatus;
+  if (extra?.hasChildren !== undefined) merged.hasChildren = extra.hasChildren;
   const incomeDelta = (base?.annualIncomeDelta ?? 0) + (extra?.annualIncomeDelta ?? 0);
   if (incomeDelta !== 0) merged.annualIncomeDelta = incomeDelta;
   return merged;

@@ -117,6 +117,11 @@ export type StatEffects = Partial<Record<StatKey, number>>;
 // 明示的に指定しない既存イベントは、utils/gameLogic.ts の deriveEventType() が内容から自動判定する。
 export type EventType = 'choice' | 'lucky' | 'unlucky' | 'growth' | 'turningPoint' | 'nearFuture';
 
+// プレイヤーの恋愛・結婚に関する「構造化された」状態。人生ストーリー上の矛盾
+// （既婚なのに新しい恋愛イベントが出る等）を防ぐため、イベント抽選時の判定に使う。
+// 表示用の自由文字列であるStatusEffects.romanceStatusとは別軸で、常にこの4値のいずれか。
+export type RelationshipStatus = 'single' | 'dating' | 'married' | 'divorced';
+
 // 職業・年収・恋愛家族状況・住居など、数値の増減ではなく「状態そのもの」が変化する系のステータス。
 // 将来的に複数エンディングへ拡張しやすいよう、StatEffects（数値差分）とは独立したデータ構造にしてある。
 export interface StatusEffects {
@@ -124,6 +129,9 @@ export interface StatusEffects {
   annualIncomeDelta?: number;
   romanceStatus?: string;
   housingStatus?: string;
+  // 恋愛・結婚イベントの抽選条件に使う、構造化された関係状態・子どもの有無の変化。
+  relationshipStatus?: RelationshipStatus;
+  hasChildren?: boolean;
 }
 
 // 運命ルーレットの結果の重要度（見た目の色・アイコンに使う5段階）。
@@ -261,6 +269,16 @@ export interface Player {
   annualIncome: number;
   romanceStatus: string;
   housingStatus: string;
+  // 恋愛・結婚・離婚・子どもの有無を表す構造化された人生状態。イベント抽選時に、
+  // 現在の状態と矛盾するイベント（既婚なのに新しい恋愛・二度目の結婚が離婚を挟まない等）を
+  // 除外するために参照する。romanceStatus（表示用の自由文字列）とは独立して管理する。
+  relationshipStatus: RelationshipStatus;
+  hasChildren: boolean;
+  // パートナーの名前。現時点ではプレイヤーが入力する手段が無いため常に未設定だが、
+  // 将来的な拡張（パートナー名の入力・イベント文への反映）に備えて型だけ用意してある。
+  spouseName?: string;
+  // これまでに結婚した回数（再婚を含む）。離婚を挟まずに増えることはない。
+  marriageCount: number;
   // ゲーム開始時にランダムで1つ付与される、小さな個性・才能（人生の方向性に少しだけ影響する）。
   personality: PersonalityTrait;
   // 留学経験・AIスキル・起業経験など、過去の重要な選択の積み重ねを表す「人生フラグ」。
