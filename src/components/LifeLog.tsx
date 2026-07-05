@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { getEraDefinition } from '../data/eras';
+import { getPlayerCharacter } from '../data/playerCharacters';
 import type { EraId, LogImportance, Player, StatEffects, StatKey, StatusEffects } from '../types/game';
 import {
   EVENT_CATEGORY_LABELS,
@@ -90,6 +91,7 @@ function LifeLog({ players, era, onClose }: LifeLogProps) {
         <div className="segmented segmented--wrap">
           {players.map((player, index) => {
             const visual = getPlayerVisual(index);
+            const character = getPlayerCharacter(player.characterId);
             const active = player.id === selectedPlayer?.id;
             return (
               <button
@@ -99,7 +101,7 @@ function LifeLog({ players, era, onClose }: LifeLogProps) {
                 style={active ? { background: visual.color, borderColor: visual.color } : undefined}
                 onClick={() => setSelectedPlayerId(player.id)}
               >
-                {visual.icon} {player.name}
+                <img src={character.avatar} alt="" className="segmented__option-avatar" /> {player.name}
               </button>
             );
           })}

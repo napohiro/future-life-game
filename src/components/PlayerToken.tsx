@@ -1,24 +1,17 @@
-import type { LifeStage } from '../types/game';
-import { getPlayerVisual, getStageTokenIcon } from '../utils/gameLogic';
+import { getPlayerCharacter } from '../data/playerCharacters';
 
 interface PlayerTokenProps {
-  playerIndex: number;
+  characterId: string;
   name: string;
   isCurrent: boolean;
-  stage?: LifeStage;
 }
 
-/** プレイヤーごとに色は固定、アイコンは今立っている人生ステージに応じて変化する（幼少期は子供、老後はシニア等）。 */
-function PlayerToken({ playerIndex, name, isCurrent, stage }: PlayerTokenProps) {
-  const visual = getPlayerVisual(playerIndex);
-  const icon = stage ? getStageTokenIcon(stage) : visual.icon;
+/** 盤面を移動するプレイヤーコマ。選択済みキャラクターの台座付きトークン画像をそのまま表示する。 */
+function PlayerToken({ characterId, name, isCurrent }: PlayerTokenProps) {
+  const character = getPlayerCharacter(characterId);
   return (
-    <span
-      className={`token ${isCurrent ? 'token--current' : ''}`}
-      style={{ background: visual.color }}
-      title={name}
-    >
-      {icon}
+    <span className={`token ${isCurrent ? 'token--current' : ''}`} title={name}>
+      <img src={character.token} alt={name} className="token__image" draggable={false} />
     </span>
   );
 }

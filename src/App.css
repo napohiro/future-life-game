@@ -262,6 +262,25 @@
   cursor: pointer;
 }
 
+/* プレイヤーの顔アイコン（選択済みキャラクターのavatar画像）を丸く収める共通クラス。
+   使用箇所（プレイヤーカード・手番演出・最終結果 等）はそれぞれ親要素で幅高さを固定している。 */
+.avatar-face-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.segmented__option-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  vertical-align: middle;
+  margin-right: 2px;
+}
+
 .segmented__option--active {
   background: #2f6fed;
   color: #fff;
@@ -284,23 +303,6 @@
   box-shadow: 0 2px 8px rgba(31, 36, 48, 0.06);
 }
 
-/* 生年月日欄が無くなった分、名前欄だけをコンパクトな横並びにする。 */
-.player-setup__card--name-only {
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-}
-
-.player-setup__card--name-only .player-setup__card-title {
-  flex-shrink: 0;
-}
-
-.player-setup__card--name-only .field {
-  flex: 1;
-  min-width: 0;
-}
-
 .player-setup__card-title {
   font-weight: 700;
   color: #2f6fed;
@@ -317,6 +319,78 @@
   font-size: 12px;
   color: #7a8299;
   font-weight: 600;
+}
+
+/* ---------- character select (プレイヤーキャラクター選択) ---------- */
+
+.character-select-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+@media (min-width: 421px) {
+  .character-select-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.character-select-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px 6px;
+  background: #f7f9fd;
+  border: 2px solid #e7ebf3;
+  border-radius: 14px;
+  cursor: pointer;
+  min-height: 88px;
+  transition: border-color 0.12s ease, transform 0.08s ease, background 0.12s ease;
+}
+
+.character-select-card:active {
+  transform: scale(0.96);
+}
+
+.character-select-card--active {
+  border-color: #2f6fed;
+  background: #eaf1ff;
+}
+
+.character-select-card__image {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.character-select-card__label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #52596b;
+}
+
+.character-select-card--active .character-select-card__label {
+  color: #2f6fed;
+}
+
+.character-select-card__check {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #2f6fed;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(47, 111, 237, 0.4);
 }
 
 .field__input {
@@ -910,9 +984,8 @@
 /* 3人以上が同じマスに重なった場合は、コマを少し小さくして重なりすぎを防ぐ */
 .board-square__tokens[data-count="3"] .token,
 .board-square__tokens[data-count="4"] .token {
-  width: 14px;
-  height: 14px;
-  font-size: 8px;
+  width: 18px;
+  height: 18px;
 }
 
 /* ---------- 分岐道の装飾ノード ---------- */
@@ -946,22 +1019,29 @@
 }
 
 .token {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  color: #fff;
-  font-size: 10px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px solid #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.token__image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
 
 .token--current {
-  box-shadow: 0 0 0 2px #1f2430, 0 0 8px rgba(255, 255, 255, 0.9), 0 1px 3px rgba(0, 0, 0, 0.25);
   animation: token-bounce 0.9s ease-in-out infinite;
   z-index: 3;
+}
+
+.token--current .token__image {
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 5px #1f2430) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
 
 @keyframes token-bounce {

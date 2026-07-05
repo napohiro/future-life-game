@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getEraDefinition } from '../data/eras';
+import { getPlayerCharacter } from '../data/playerCharacters';
 import type { EraId, Player } from '../types/game';
 import { buildNewspaperSummaries, formatLifeLogHeadline, getPlayerVisual } from '../utils/gameLogic';
 import { playNewspaperExtraSound, vibrate } from '../utils/sound';
@@ -37,6 +38,7 @@ function Newspaper({ players, era, soundEnabled, onClose }: NewspaperProps) {
         <div className="segmented segmented--wrap">
           {players.map((player, index) => {
             const visual = getPlayerVisual(index);
+            const character = getPlayerCharacter(player.characterId);
             const active = player.id === selectedPlayer?.id;
             return (
               <button
@@ -46,7 +48,7 @@ function Newspaper({ players, era, soundEnabled, onClose }: NewspaperProps) {
                 style={active ? { background: visual.color, borderColor: visual.color } : undefined}
                 onClick={() => setSelectedPlayerId(player.id)}
               >
-                {visual.icon} {player.name}
+                <img src={character.avatar} alt="" className="segmented__option-avatar" /> {player.name}
               </button>
             );
           })}

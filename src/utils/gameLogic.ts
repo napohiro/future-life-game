@@ -1,6 +1,7 @@
 import { ALL_EVENTS, pickRandomEvent } from '../data/boardEvents';
 import { getCategoryBoostsForRoutes } from '../data/branchRoutes';
 import { DEFAULT_ERA } from '../data/eras';
+import { DEFAULT_CHARACTER_ID } from '../data/playerCharacters';
 import type {
   EraId,
   EventCategory,
@@ -189,20 +190,6 @@ const PLAYER_VISUALS: PlayerVisual[] = [
 
 export function getPlayerVisual(index: number): PlayerVisual {
   return PLAYER_VISUALS[index % PLAYER_VISUALS.length];
-}
-
-// 盤面のコマは、プレイヤーごとの色はそのままに、年代に応じてアイコンだけ変化させる。
-const STAGE_TOKEN_ICONS: Record<LifeStage, string> = {
-  stage1: '👶',
-  stage2: '🧑‍🎓',
-  stage3: '🧑‍💼',
-  stage4: '🧑‍💼',
-  stage5: '🧑‍🌾',
-  stage6: '🧓',
-};
-
-export function getStageTokenIcon(stage: LifeStage): string {
-  return STAGE_TOKEN_ICONS[stage];
 }
 
 // ---------------------------------------------------------------------------
@@ -860,6 +847,7 @@ export function initializePlayers(inputs: PlayerSetupInput[]): Player[] {
       housingStatus: INITIAL_HOUSING_STATUS,
       personality,
       lifeFlags: [personalityFlag(personality)],
+      characterId: input.characterId ?? DEFAULT_CHARACTER_ID,
     };
     // 個性による小さな初期補正（強すぎる能力差にならないよう、どの個性も1項目・+5のみ）。
     return applyEffectsToPlayer(player, PERSONALITY_TRAITS[personality].statBonus);

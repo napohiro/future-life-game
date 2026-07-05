@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { BRANCH_POINTS, getBranchPointForPosition } from '../data/branchRoutes';
 import { getCalendarYear, getEraDefinition, getGengoLabel } from '../data/eras';
+import { getPlayerCharacter } from '../data/playerCharacters';
 import type { EraId, MoveAnimationState, Player } from '../types/game';
 import {
   buildSmoothPathD,
@@ -67,6 +68,7 @@ function GameBoard({
   }, [currentPlayer?.position, currentPlayerIndex]);
 
   const currentVisual = currentPlayer ? getPlayerVisual(currentPlayerIndex) : null;
+  const currentCharacter = currentPlayer ? getPlayerCharacter(currentPlayer.characterId) : null;
   const currentStage = currentPlayer ? getBoardStage(currentPlayer.position) : 'stage1';
   const currentStageTheme = getBoardStageTheme(currentStage, era);
   const currentLongevityBadge = currentPlayer ? getLongevityBadge(currentPlayer.age, era) : null;
@@ -108,7 +110,7 @@ function GameBoard({
           <div className="game-board__turn">
             <span className="game-board__turn-avatar-wrap" style={{ color: currentVisual!.color }}>
               <span className="game-board__turn-avatar" style={{ background: currentVisual!.colorSoft }}>
-                {currentVisual!.icon}
+                <img src={currentCharacter!.avatar} alt="" className="avatar-face-img" />
               </span>
             </span>
             <div className="game-board__turn-text">

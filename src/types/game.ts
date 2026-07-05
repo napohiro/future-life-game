@@ -266,6 +266,9 @@ export interface Player {
   // 留学経験・AIスキル・起業経験など、過去の重要な選択の積み重ねを表す「人生フラグ」。
   // イベント抽選の候補条件（requiredFlags/excludedFlags）に使う。数値スコアには影響しない。
   lifeFlags: string[];
+  // プレイヤー設定画面で選んだキャラクター（data/playerCharacters.ts の id）。
+  // 顔アイコン（選択画面・各種カード）とゲーム盤コマの画像は、必ずこのidから決定する。
+  characterId: string;
 }
 
 // ゲーム開始時にランダムで1つ付与される、小さな個性・才能。
@@ -397,6 +400,8 @@ export interface GameState {
 
 export interface PlayerSetupInput {
   name: string;
+  // プレイヤー設定画面で選んだキャラクターid（data/playerCharacters.ts）。未指定時は先頭のキャラクター。
+  characterId?: string;
 }
 
 // ルーレット後、コマが1マスずつ進む演出の間だけ保持する一時的な状態。

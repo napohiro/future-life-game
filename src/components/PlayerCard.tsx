@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { getRouteById } from '../data/branchRoutes';
 import { getCalendarYear, getGengoLabel } from '../data/eras';
+import { getPlayerCharacter } from '../data/playerCharacters';
 import type { EraId, Player, StatKey } from '../types/game';
 import {
   PERSONALITY_TRAITS,
@@ -82,6 +83,7 @@ function ChosenRouteList({ chosenRoutes }: { chosenRoutes: string[] }) {
 
 function PlayerCard({ player, index, isCurrent, era, compact = false }: PlayerCardProps) {
   const visual = getPlayerVisual(index);
+  const character = getPlayerCharacter(player.characterId);
   const [expanded, setExpanded] = useState(false);
   const personality = PERSONALITY_TRAITS[player.personality];
   const longevityBadge = getLongevityBadge(player.age, era);
@@ -93,7 +95,7 @@ function PlayerCard({ player, index, isCurrent, era, compact = false }: PlayerCa
     >
       <div className="player-card__header">
         <span className="player-card__avatar" style={{ background: visual.colorSoft }}>
-          {visual.icon}
+          <img src={character.avatar} alt="" className="avatar-face-img" />
         </span>
         <span className="player-card__name">
           {player.name}

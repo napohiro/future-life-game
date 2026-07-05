@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DEFAULT_CHARACTER_ID, PLAYER_CHARACTERS } from '../data/playerCharacters';
 import type { PlayerSetupInput } from '../types/game';
 
 interface PlayerSetupProps {
@@ -6,13 +7,37 @@ interface PlayerSetupProps {
   onBack: () => void;
 }
 
+// 選んだキャラクターだけは、ページ更新後も引き継げるようlocalStorageに保存する。
+const CHARACTER_STORAGE_KEY = 'jinsei-game:player-character-ids';
+
+function loadStoredCharacterIds(): string[] {
+  try {
+    const raw = localStorage.getItem(CHARACTER_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((v): v is string => typeof v === 'string');
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredCharacterIds(ids: string[]) {
+  try {
+    localStorage.setItem(CHARACTER_STORAGE_KEY, JSON.stringify(ids));
+  } catch {
+    // localStorageが使えない環境（プライベートモード等）でも、ゲーム進行には影響させない。
+  }
+}
+
 function createEmptyInputs(count: number): PlayerSetupInput[] {
-  return Array.from({ length: count }, () => ({ name: '' }));
+  const stored = loadStoredCharacterIds();
+  return Array.from({ length: count }, (_, i) => ({ name: '', characterId: stored[i] ?? DEFAULT_CHARACTER_ID }));
 }
 
 function PlayerSetup({ onStart, onBack }: PlayerSetupProps) {
   const [playerCount, setPlayerCount] = useState(2);
-  const [inputs, setInputs] = useState<PlayerSetupInput[]>(createEmptyInputs(2));
+  const [inputs, setInputs] = useState<PlayerSetupInput[]>(() => createEmptyInputs(2));
 
   const handleCountChange = (count: number) => {
     setPlayerCount(count);
@@ -25,8 +50,16 @@ function PlayerSetup({ onStart, onBack }: PlayerSetupProps) {
     });
   };
 
-  const handleFieldChange = (index: number, field: keyof PlayerSetupInput, value: string) => {
-    setInputs((prev) => prev.map((input, i) => (i === index ? { ...input, [field]: value } : input)));
+  const handleNameChange = (index: number, value: string) => {
+    setInputs((prev) => prev.map((input, i) => (i === index ? { ...input, name: value } : input)));
+  };
+
+  const handleCharacterSelect = (index: number, characterId: string) => {
+    setInputs((prev) => {
+      const next = prev.map((input, i) => (i === index ? { ...input, characterId } : input));
+      saveStoredCharacterIds(next.map((input) => input.characterId ?? DEFAULT_CHARACTER_ID));
+      return next;
+    });
   };
 
   const isValid = inputs.every((input) => input.name.trim().length > 0);
@@ -58,7 +91,7 @@ function PlayerSetup({ onStart, onBack }: PlayerSetupProps) {
 
       <div className="player-setup__list">
         {inputs.map((input, index) => (
-          <div key={index} className="player-setup__card player-setup__card--name-only">
+          <div key={index} className="player-setup__card">
             <div className="player-setup__card-title">プレイヤー{index + 1}</div>
             <label className="field">
               <span className="field__label">名前</span>
@@ -68,9 +101,35 @@ function PlayerSetup({ onStart, onBack }: PlayerSetupProps) {
                 placeholder="例：たろう"
                 maxLength={12}
                 value={input.name}
-                onChange={(e) => handleFieldChange(index, 'name', e.target.value)}
+                onChange={(e) => handleNameChange(index, e.target.value)}
               />
             </label>
+
+            <span className="field__label">キャラクター</span>
+            <div className="character-select-grid">
+              {PLAYER_CHARACTERS.map((character) => {
+                const active = input.characterId === character.id;
+                return (
+                  <button
+                    key={character.id}
+                    type="button"
+                    className={`character-select-card ${active ? 'character-select-card--active' : ''}`}
+                    onClick={() => handleCharacterSelect(index, character.id)}
+                    aria-pressed={active}
+                    aria-label={`${character.label}を選択`}
+                  >
+                    {active && <span className="character-select-card__check">✔</span>}
+                    <img
+                      src={character.avatar}
+                      alt={character.label}
+                      className="character-select-card__image"
+                      draggable={false}
+                    />
+                    <span className="character-select-card__label">{character.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         ))}
       </div>

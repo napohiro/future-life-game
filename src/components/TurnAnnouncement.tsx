@@ -1,4 +1,5 @@
 import { getCalendarYear, getGengoLabel } from '../data/eras';
+import { getPlayerCharacter } from '../data/playerCharacters';
 import type { EraId, Player } from '../types/game';
 import { STAT_ICONS, getLifeStageName, getLongevityBadge, getPlayerVisual } from '../utils/gameLogic';
 
@@ -17,6 +18,7 @@ interface TurnAnnouncementProps {
  */
 function TurnAnnouncement({ player, playerIndex, playerCount, era, onDismiss }: TurnAnnouncementProps) {
   const visual = getPlayerVisual(playerIndex);
+  const character = getPlayerCharacter(player.characterId);
   const calendarYear = getCalendarYear(era, player.age);
   const longevityBadge = getLongevityBadge(player.age, era);
 
@@ -28,7 +30,7 @@ function TurnAnnouncement({ player, playerIndex, playerCount, era, onDismiss }: 
       >
         <div className="turn-announce-card__glow" style={{ background: visual.colorSoft }} aria-hidden="true" />
         <span className="turn-announce-card__avatar" style={{ background: visual.color }}>
-          {visual.icon}
+          <img src={character.avatar} alt="" className="avatar-face-img" />
         </span>
         <div className="turn-announce-card__label">次のばん</div>
         <div className="turn-announce-card__name" style={{ color: visual.color }}>

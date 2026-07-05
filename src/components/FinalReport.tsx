@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { getRouteById } from '../data/branchRoutes';
+import { getPlayerCharacter } from '../data/playerCharacters';
 import type { EraId, Player, StatKey } from '../types/game';
 import {
   STAT_ICONS,
@@ -53,6 +54,7 @@ function FinalReport({ players, era, soundEnabled, onRestart }: FinalReportProps
         {ranked.map(({ player, score, rank }) => {
           const playerIndex = players.findIndex((p) => p.id === player.id);
           const visual = getPlayerVisual(playerIndex);
+          const character = getPlayerCharacter(player.characterId);
           const lifeType = calculateLifeType(player);
           const title = calculateTitle(player);
           const summary = generateLifeSummaryPlaceholder(player);
@@ -81,7 +83,7 @@ function FinalReport({ players, era, soundEnabled, onRestart }: FinalReportProps
               <div className="final-report__card-header">
                 <span className="final-report__rank">{RANK_MEDALS[rank - 1] ?? `${rank}位`}</span>
                 <span className="final-report__avatar" style={{ background: visual.colorSoft }}>
-                  {visual.icon}
+                  <img src={character.avatar} alt="" className="avatar-face-img" />
                 </span>
                 <span className="final-report__name">{player.name}</span>
                 <span className="final-report__score">総合スコア {score}</span>
