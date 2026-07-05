@@ -161,9 +161,9 @@ function GameBoard({
                 💼 {getDisplayOccupation(currentPlayer.age, currentPlayer.occupation)}
               </div>
               <div className="game-board__turn-priority-stats">
-                <span>💰{currentPlayer.money.toLocaleString()}万円</span>
-                <span>😊{currentPlayer.happiness}</span>
-                <span>❤️{currentPlayer.health}</span>
+                <span>💰 {currentPlayer.money.toLocaleString()}万円</span>
+                <span>😊 幸福 {currentPlayer.happiness}</span>
+                <span>❤️ 健康 {currentPlayer.health}</span>
               </div>
             </div>
           </div>

@@ -93,13 +93,17 @@ function PlayerSetup({ onStart, onBack }: PlayerSetupProps) {
         {inputs.map((input, index) => (
           <div key={index} className="player-setup__card">
             <div className="player-setup__card-title">プレイヤー{index + 1}</div>
-            <label className="field">
-              <span className="field__label">名前</span>
+            <label className="field field--name">
+              <span className="field__label">
+                名前を入力してください
+                <span className="field__required-badge">必須</span>
+              </span>
               <input
                 type="text"
-                className="field__input"
-                placeholder="例：たろう"
+                className="field__input field__input--name"
+                placeholder="ここに名前を入力"
                 maxLength={12}
+                required
                 value={input.name}
                 onChange={(e) => handleNameChange(index, e.target.value)}
               />

@@ -99,9 +99,9 @@
 .title-screen__actions {
   position: absolute;
   left: 50%;
-  /* FV画像の主役感を保つため、開始ボタン群は画面下寄りに配置する。
-     safe-area分の余白は確保しつつ、9vh（8〜12vhの目安の中間）だけ従来より下げている。 */
-  bottom: calc(env(safe-area-inset-bottom, 0px) + max(9vh, 56px));
+  /* FV画像の主役感を保ちつつ、中央〜やや下側に自然に収まるよう、
+     safe-area分の余白を確保した上でさらに少し下げて配置している。 */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + max(6vh, 58px));
   z-index: 1;
   width: 100%;
   max-width: 420px;
@@ -235,22 +235,6 @@
   transform: scale(0.98);
 }
 
-.era-select__card--active {
-  border-color: #2f6fed;
-  box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.35), 0 4px 14px rgba(47, 111, 237, 0.25);
-}
-
-/* 時代ごとに縁取りの色を変え、選択中カードの雰囲気にも差を出す */
-.era-select__card--showa.era-select__card--active {
-  border-color: #e3a23c;
-  box-shadow: 0 0 0 3px rgba(227, 162, 60, 0.35), 0 4px 14px rgba(150, 100, 30, 0.25);
-}
-
-.era-select__card--future.era-select__card--active {
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.35), 0 4px 14px rgba(139, 92, 246, 0.25);
-}
-
 /* 背景画像の上でも文字が沈まないよう、下から暗くなるグラデーションを重ねる
    （画像の魅力が消えない程度に、上部は薄く・文字が乗る下部だけ濃くする）。 */
 .era-select__card-overlay {
@@ -377,6 +361,45 @@
   font-weight: 600;
 }
 
+/* 名前入力欄は見過ごされないよう、ラベル・枠線・背景で目立たせる。 */
+.field--name .field__label {
+  font-size: 14px;
+  color: #2f4f8f;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.field__required-badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  background: #ef4444;
+  border-radius: 999px;
+  padding: 2px 8px;
+  letter-spacing: 0.02em;
+}
+
+.field__input--name {
+  border: 2px solid #2f6fed;
+  background: #f3f7ff;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 12px 14px;
+}
+
+.field__input--name::placeholder {
+  color: #9aa8c7;
+  font-weight: 500;
+}
+
+.field__input--name:focus {
+  outline: none;
+  border-color: #2f6fed;
+  box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.22);
+}
+
 /* ---------- character select (プレイヤーキャラクター選択) ---------- */
 
 .character-select-grid {
@@ -416,14 +439,14 @@
 }
 
 .character-select-card__image {
-  width: 48px;
-  height: 48px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
   pointer-events: none;
 }
 
 .character-select-card__label {
-  font-size: 11px;
+  font-size: 12.5px;
   font-weight: 700;
   color: #52596b;
 }
@@ -433,7 +456,7 @@
 }
 
 .character-select-card__description {
-  font-size: 10px;
+  font-size: 11px;
   color: #8891a5;
   line-height: 1.35;
   text-align: center;

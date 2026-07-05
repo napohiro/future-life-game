@@ -607,7 +607,7 @@ function App() {
       )}
 
       {gameState.phase === 'eraSelect' && (
-        <EraSelect initialEra={gameState.settings.era} onStart={handleEraSelected} onBack={handleBackToTitle} />
+        <EraSelect onStart={handleEraSelected} onBack={handleBackToTitle} />
       )}
 
       {gameState.phase === 'setup' && (

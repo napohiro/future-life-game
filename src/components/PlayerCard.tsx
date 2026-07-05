@@ -133,7 +133,7 @@ function PlayerCard({ player, index, isCurrent, era, compact = false }: PlayerCa
           <div className="player-card__chip-row">
             {PRIMARY_CHIP_KEYS.map((key) => (
               <span className="stat-chip" key={key}>
-                {STAT_ICONS[key]} {player[key]}
+                {STAT_ICONS[key]} {STAT_LABELS[key]} {player[key]}
               </span>
             ))}
             <button type="button" className="stat-chip stat-chip--toggle" onClick={() => setExpanded((v) => !v)}>
