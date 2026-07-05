@@ -533,6 +533,18 @@
   text-overflow: ellipsis;
 }
 
+.game-board__longevity-badge {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #8a5a1c;
+  background: #fdf1d9;
+  border-radius: 999px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+
 .game-board__turn-occupation {
   font-size: 11px;
   color: #6b7285;
@@ -1294,6 +1306,18 @@
 .player-card__age {
   font-size: 12px;
   color: #8891a5;
+}
+
+.player-card__longevity-badge {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #8a5a1c;
+  background: #fdf1d9;
+  border-radius: 999px;
+  padding: 1px 7px;
+  white-space: nowrap;
 }
 
 .player-card__money {
@@ -2654,6 +2678,18 @@
   margin-top: 10px;
   font-size: 13px;
   color: #52596b;
+}
+
+.turn-announce-card__longevity-badge {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #8a5a1c;
+  background: #fdf1d9;
+  border-radius: 999px;
+  padding: 1px 7px;
+  white-space: nowrap;
 }
 
 .turn-announce-card__stats {

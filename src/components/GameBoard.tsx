@@ -14,6 +14,7 @@ import {
   getBoardStage,
   getBoardStageTheme,
   getLifeStageName,
+  getLongevityBadge,
   getPlayerVisual,
   getSquareType,
 } from '../utils/gameLogic';
@@ -68,6 +69,7 @@ function GameBoard({
   const currentVisual = currentPlayer ? getPlayerVisual(currentPlayerIndex) : null;
   const currentStage = currentPlayer ? getBoardStage(currentPlayer.position) : 'stage1';
   const currentStageTheme = getBoardStageTheme(currentStage, era);
+  const currentLongevityBadge = currentPlayer ? getLongevityBadge(currentPlayer.age, era) : null;
 
   // 老後・近未来エリア（80歳〜）は固定ゴールではないため、進んだ分だけ道が見える「霧マップ」にする。
   // 全プレイヤーのうち最も先へ進んだ位置を基準に、そこから数マス先までだけを見せる。
@@ -118,6 +120,11 @@ function GameBoard({
                 {getLifeStageName(currentPlayer.age)}・{currentPlayer.age}歳（
                 {era === 'showa' ? `${getGengoLabel(getCalendarYear(era, currentPlayer.age))}・` : ''}
                 {getCalendarYear(era, currentPlayer.age)}年）
+                {currentLongevityBadge && (
+                  <span className="game-board__longevity-badge">
+                    {currentLongevityBadge.icon} {currentLongevityBadge.label}
+                  </span>
+                )}
               </div>
               <div className="game-board__turn-occupation">💼 {currentPlayer.occupation}</div>
               <div className="game-board__turn-priority-stats">

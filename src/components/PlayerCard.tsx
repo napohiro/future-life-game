@@ -10,6 +10,7 @@ import {
   STATUS_FIELD_LABELS,
   calculateAssetRank,
   getLifeStageName,
+  getLongevityBadge,
   getPlayerVisual,
 } from '../utils/gameLogic';
 
@@ -83,6 +84,7 @@ function PlayerCard({ player, index, isCurrent, era, compact = false }: PlayerCa
   const visual = getPlayerVisual(index);
   const [expanded, setExpanded] = useState(false);
   const personality = PERSONALITY_TRAITS[player.personality];
+  const longevityBadge = getLongevityBadge(player.age, era);
 
   return (
     <div
@@ -109,6 +111,11 @@ function PlayerCard({ player, index, isCurrent, era, compact = false }: PlayerCa
           {getLifeStageName(player.age)}・{player.age}歳（
           {era === 'showa' ? `${getGengoLabel(getCalendarYear(era, player.age))}・` : ''}
           {getCalendarYear(era, player.age)}年）
+          {longevityBadge && (
+            <span className="player-card__longevity-badge">
+              {longevityBadge.icon} {longevityBadge.label}
+            </span>
+          )}
         </span>
       </div>
 

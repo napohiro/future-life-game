@@ -1,6 +1,6 @@
 import { getCalendarYear, getGengoLabel } from '../data/eras';
 import type { EraId, Player } from '../types/game';
-import { STAT_ICONS, getLifeStageName, getPlayerVisual } from '../utils/gameLogic';
+import { STAT_ICONS, getLifeStageName, getLongevityBadge, getPlayerVisual } from '../utils/gameLogic';
 
 interface TurnAnnouncementProps {
   player: Player;
@@ -18,6 +18,7 @@ interface TurnAnnouncementProps {
 function TurnAnnouncement({ player, playerIndex, playerCount, era, onDismiss }: TurnAnnouncementProps) {
   const visual = getPlayerVisual(playerIndex);
   const calendarYear = getCalendarYear(era, player.age);
+  const longevityBadge = getLongevityBadge(player.age, era);
 
   return (
     <div className="turn-announce-overlay" onClick={onDismiss} role="button" tabIndex={0}>
@@ -39,6 +40,11 @@ function TurnAnnouncement({ player, playerIndex, playerCount, era, onDismiss }: 
           <span className="turn-announce-card__fact">
             {getLifeStageName(player.age)}・{player.age}歳
             {era === 'showa' ? `（${getGengoLabel(calendarYear)}・${calendarYear}年）` : `（${calendarYear}年）`}
+            {longevityBadge && (
+              <span className="turn-announce-card__longevity-badge">
+                {longevityBadge.icon} {longevityBadge.label}
+              </span>
+            )}
           </span>
           <span className="turn-announce-card__fact">{player.occupation}</span>
         </div>

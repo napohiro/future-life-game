@@ -243,6 +243,41 @@ export function getLifeStageMeta(stage: LifeStage): { name: string; color: strin
   return { name: meta.name, color: meta.color };
 }
 
+export interface LongevityBadge {
+  icon: string;
+  label: string;
+}
+
+// 「同じ年齢でも時代によって意味合いが変わる」ことを表す控えめな追加表示。
+// 各時代の「中心的な人生終了年齢帯」より年上になった時にだけ出現し、通常の人生ステージ表示に
+// 上乗せする形で使う（80歳未満・各時代の通常範囲内では null を返し、既存表示のままにする）。
+const LONGEVITY_BADGE_TIERS: Record<EraId, { minAge: number; icon: string; label: string }[]> = {
+  showa: [
+    { minAge: 150, icon: '🏁', label: '人生の最終章' },
+    { minAge: 123, icon: '🌟', label: '人類最高齢級' },
+    { minAge: 120, icon: '✨', label: '昭和の伝説的長寿' },
+    { minAge: 100, icon: '📖', label: '極めて稀な長寿' },
+    { minAge: 80, icon: '🌿', label: '長寿期' },
+  ],
+  present: [
+    { minAge: 150, icon: '🏁', label: '人生の最終章' },
+    { minAge: 123, icon: '🌟', label: '人類最高齢級' },
+    { minAge: 120, icon: '✨', label: '超長寿クラス' },
+    { minAge: 100, icon: '📖', label: '長寿期' },
+  ],
+  future: [
+    { minAge: 150, icon: '🏁', label: '人生の最終章' },
+    { minAge: 123, icon: '🌟', label: '人類最高齢更新ルート' },
+    { minAge: 120, icon: '✨', label: '超長寿クラス' },
+  ],
+};
+
+/** 年齢・時代から、控えめな「長寿の節目」バッジを返す（該当なしは null＝通常の人生ステージ表示のまま）。 */
+export function getLongevityBadge(age: number, era: EraId): LongevityBadge | null {
+  const tier = LONGEVITY_BADGE_TIERS[era].find((t) => age >= t.minAge);
+  return tier ? { icon: tier.icon, label: tier.label } : null;
+}
+
 // 現在のステージに応じて画面全体の雰囲気を少し変えるための背景グラデーション。
 export const LIFE_STAGE_BACKGROUNDS: Record<LifeStage, string> = {
   stage1: 'linear-gradient(180deg, #e3f9d5 0%, #eef3fb 260px, #eef3fb 100%)', // 幼少期：明るい緑
@@ -733,10 +768,28 @@ export interface DrawnEvent {
   squareType: SquareType;
 }
 
+/**
+ * イベント文中の「{age}」を実際の年齢に置き換える。123歳以降のように、発生年齢の幅が広い
+ * イベントで「固定の年齢を書いた文章」と「実際の到達年齢」がズレる（矛盾する）のを防ぐための仕組み。
+ * 単一年齢に絞れる節目イベント（100歳ちょうど等）は従来通り固定文字列のままでよい。
+ */
+function resolveEventTextForAge(event: GameEvent, age: number): GameEvent {
+  if (!event.title.includes('{age}') && !event.description.includes('{age}') && !event.logText.includes('{age}')) {
+    return event;
+  }
+  const replaceAge = (text: string) => text.replace(/\{age\}/g, String(age));
+  return {
+    ...event,
+    title: replaceAge(event.title),
+    description: replaceAge(event.description),
+    logText: replaceAge(event.logText),
+  };
+}
+
 export function drawEventForPosition(player: Player, settings: GameSettings): DrawnEvent {
   const stage = getBoardStage(player.position);
   const squareType = getSquareType(player.position);
-  const event = getEventForSquare(player, stage, squareType, settings);
+  const event = resolveEventTextForAge(getEventForSquare(player, stage, squareType, settings), player.age);
   return { event, stage, squareType };
 }
 
@@ -1362,7 +1415,7 @@ export function rankPlayers(players: Player[]): RankedPlayer[] {
 // ---------------------------------------------------------------------------
 // 80歳（=盤面position80）以降、老後・近未来エリアは固定ゴールを持たない。
 // ターンごとに確率判定を行い、ステータスに応じて選ばれた理由で「人生の卒業」を迎える。
-// 盤面の物理的な終端（position 100＝100歳）に達した場合も、その時点で強制的に卒業扱いにする。
+// 盤面の物理的な終端（position 150＝150歳）に達した場合も、その時点で強制的に卒業扱いにする。
 
 // 50歳から「卒業（人生終了）」の周期判定が始まる。49歳以下は判定なし＝危険な選択をした場合の
 // endsLifeChance（個々のイベント）だけがリスク源になる（「0〜49歳は極めて低確率」という方針）。
@@ -1451,36 +1504,75 @@ export function pickEarlyEndingReason(category: EventCategory): GraduationReason
   return getGraduationReason('earlyAccident');
 }
 
-// 80〜149歳を10歳刻みで区切った基礎卒業確率。150歳（盤面終端）は`forcedGraduationAtBoardEnd`で
-// 必ず卒業となるため、ここでは149歳までをカバーすれば十分。150歳までの70年分の道のりに
-// 引き伸ばしたことで、旧来（〜100歳・20年分）よりもかなり緩やかな傾きにしてある。
-// 50〜149歳を10歳刻みで区切った基礎卒業確率。150歳（盤面終端）は`forcedGraduationAtBoardEnd`で
-// 必ず卒業となるため、ここでは149歳までをカバーすれば十分。年齢が上がるほど自然にリスクが
-// 高まっていくよう、50代はごく僅か・140代にかけて急激に上がる曲線にしてある。
-const GRADUATION_BASE_CHANCE_BY_AGE: { maxAge: number; base: number }[] = [
-  { maxAge: 59, base: 0.004 },
-  { maxAge: 69, base: 0.008 },
-  { maxAge: 79, base: 0.015 },
-  { maxAge: 89, base: 0.025 },
-  { maxAge: 99, base: 0.04 },
-  { maxAge: 109, base: 0.07 },
-  { maxAge: 119, base: 0.1 },
-  { maxAge: 129, base: 0.16 },
-  { maxAge: 139, base: 0.24 },
-  { maxAge: Infinity, base: 0.38 }, // 140〜149歳
-];
+// 時代ごとの基礎卒業確率カーブ（50〜149歳を10歳刻みで区切る）。150歳（盤面終端）は
+// `forcedGraduationAtBoardEnd`で必ず卒業となるため、ここでは149歳までをカバーすれば十分。
+// 3つの時代で「人生の長さ・ゲームの長さ」がはっきり変わるよう、傾きを大きく変えてある
+// （乱数シミュレーションで、昭和編は中央値70代半ば・現代編は90代半ば・近未来編は110代終盤に
+// 決着するよう調整済み）。
+// - 昭和編：60〜80代中心のショートゲーム。100歳以上は極めて稀、120歳以上はほぼ伝説級。
+// - 現代編：80〜100代中心のミドルゲーム。120歳以上は非常に稀、123歳以上は特別演出級。
+// - 近未来編：100〜120代中心のロングゲーム。123歳以上の人類最高齢更新ルートも一定数発生し、
+//   150歳到達は極めて稀な伝説ルートとして残す。
+const GRADUATION_BASE_CHANCE_BY_ERA: Record<EraId, { maxAge: number; base: number }[]> = {
+  showa: [
+    { maxAge: 59, base: 0.03 },
+    { maxAge: 69, base: 0.09 },
+    { maxAge: 79, base: 0.18 },
+    { maxAge: 89, base: 0.32 },
+    { maxAge: 99, base: 0.5 },
+    { maxAge: 109, base: 0.55 },
+    { maxAge: 119, base: 0.72 },
+    { maxAge: 129, base: 0.85 },
+    { maxAge: 139, base: 0.9 },
+    { maxAge: Infinity, base: 0.93 },
+  ],
+  present: [
+    { maxAge: 59, base: 0.006 },
+    { maxAge: 69, base: 0.012 },
+    { maxAge: 79, base: 0.03 },
+    { maxAge: 89, base: 0.08 },
+    { maxAge: 99, base: 0.15 },
+    { maxAge: 109, base: 0.22 },
+    { maxAge: 119, base: 0.42 },
+    { maxAge: 129, base: 0.7 },
+    { maxAge: 139, base: 0.85 },
+    { maxAge: Infinity, base: 0.92 },
+  ],
+  future: [
+    { maxAge: 59, base: 0.002 },
+    { maxAge: 69, base: 0.004 },
+    { maxAge: 79, base: 0.008 },
+    { maxAge: 89, base: 0.015 },
+    { maxAge: 99, base: 0.028 },
+    { maxAge: 109, base: 0.06 },
+    { maxAge: 119, base: 0.13 },
+    { maxAge: 129, base: 0.35 },
+    { maxAge: 139, base: 0.55 },
+    { maxAge: Infinity, base: 0.75 },
+  ],
+};
+
+// 危険な出来事（病気・事故・災害）の経験回数が多いほど、僅かに卒業確率を押し上げる
+// （「積み重なった人生の負荷」を表現する。1件あたりの影響は小さく、上限を設けて理不尽にしない）。
+const DANGEROUS_HISTORY_CATEGORIES: EventCategory[] = ['illness', 'accident', 'disaster'];
+const DANGEROUS_HISTORY_MAX_BONUS = 0.25;
+
+function calculateDangerousHistoryFactor(player: Player): number {
+  const count = player.lifeLogs.filter((log) => DANGEROUS_HISTORY_CATEGORIES.includes(log.category)).length;
+  return 1 + Math.min(DANGEROUS_HISTORY_MAX_BONUS, count * 0.02);
+}
 
 /**
- * 年代（50歳〜）とステータス・資産・時代設定から、その回の「卒業確率」を計算する。
- * 健康・資産・寿命モード（世界設定）・時代選択という既存のレバーの掛け算だけで、
- * 「健康管理や医療選択・資産で長寿の可能性を高められる」を実現している。
- * 100歳以降は時代による差をはっきり付け、現代編はかなり厳しく、近未来編の長寿医療で
- * 生存可能性を上げられるようにしている。
+ * 年代（50歳〜）とステータス・資産・家族関係・治療選択・危険な出来事歴・時代設定から、
+ * その回の「卒業確率」を計算する。時代ごとに基礎カーブそのものが異なるうえ、健康・資産・
+ * 家族の支え・長寿治療の選択・過去の危険な出来事という複数のレバーの掛け算で、
+ * 「努力や選択で少しは寿命を延ばせた」と感じられる余地を残しつつ、長寿を保証はしない。
  */
 function calculateGraduationChance(player: Player, age: number, settings: GameSettings): number {
   if (age < ELDER_GRADUATION_START_AGE) return 0;
 
-  const base = (GRADUATION_BASE_CHANCE_BY_AGE.find((b) => age <= b.maxAge) ?? GRADUATION_BASE_CHANCE_BY_AGE[GRADUATION_BASE_CHANCE_BY_AGE.length - 1]).base;
+  const curve = GRADUATION_BASE_CHANCE_BY_ERA[settings.era];
+  const base = (curve.find((b) => age <= b.maxAge) ?? curve[curve.length - 1]).base;
 
   // 健康が高いほど確率は下がり、低いほど上がる（50を基準に±）。
   const healthFactor = 1 - (player.health - 50) / 150;
@@ -1491,20 +1583,29 @@ function calculateGraduationChance(player: Player, age: number, settings: GameSe
   const moneyFactor = 1 - Math.max(-0.15, Math.min(0.15, (player.money - 300) / 4000));
   chance *= moneyFactor;
 
-  // 長寿モードでは卒業確率を少し下げる。
+  // 家族・人間関係の支えが厚いほど、僅かにリスクが下がる（見守り・介護・心の支え）。
+  const relationshipsFactor = 1 - Math.max(-0.08, Math.min(0.08, (player.relationships - 50) / 400));
+  chance *= relationshipsFactor;
+
+  // 病気・事故・災害を多く経験してきた人生ほど、僅かに負荷が積み重なっている。
+  chance *= calculateDangerousHistoryFactor(player);
+
+  // 長寿治療・再生医療・身体拡張を受け入れてきた場合、その後の卒業確率を少し下げる
+  // （近未来編の「長寿治療を選ぶかどうか」という選択を、以降の生存確率にも反映する）。
+  if (player.lifeFlags.includes('longevityTreatment')) {
+    chance *= 0.82;
+  }
+  // 意識データ化を選んだ場合、肉体の限界からある程度切り離されたことを表し、さらに下げる。
+  if (player.lifeFlags.includes('consciousnessUploaded')) {
+    chance *= 0.7;
+  }
+
+  // 長寿モード（世界設定）では卒業確率を少し下げる。
   if (settings.longevityMode === 'longevity') {
     chance *= 0.7;
   }
 
-  // 100歳未満は時代による差を軽めに、100歳以降は現代編と近未来編ではっきり差を付ける
-  // （現代編は長寿医療に限界がありかなり厳しく、近未来編は長寿治療・再生医療で伸ばせる）。
-  if (age >= 100) {
-    chance *= settings.era === 'future' ? 0.6 : 1.2;
-  } else if (settings.era === 'future') {
-    chance *= 0.85;
-  }
-
-  return Math.min(0.85, Math.max(0.015, chance));
+  return Math.min(0.95, Math.max(0.01, chance));
 }
 
 /** 卒業理由を、プレイヤーのステータスに応じた重み付きランダムで選ぶ。 */

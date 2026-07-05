@@ -2092,9 +2092,12 @@ const stage6ExtraEvents: GameEvent[] = [
     ageCategory: 'stage6',
     category: 'elder',
     squareType: 'superRare',
-    // 盤面は最大position100（=100歳）までしか進まないため、minAge:100を指定することで
-    // 「実際に100歳になった時にしか出ない」ことを保証している（=文章と年齢の不一致を防ぐ）。
+    // 昭和編は独自の「百寿」演出（longevity-showa-milestone-100）を使うため、こちらは現代編・
+    // 近未来編専用にする。「100歳の誕生日」という文章と矛盾しないよう、実際に100歳ちょうどの
+    // 時にしか出さない（maxAgeを指定し忘れると101歳以降でも出てしまい、年齢と文章が食い違う）。
+    era: ['present', 'future'],
     minAge: 100,
+    maxAge: 100,
     oncePerGame: true,
     effects: { happiness: 20, relationships: 15, socialContribution: 10 },
     logText: '100歳の誕生日を、多くの人に祝ってもらった。',

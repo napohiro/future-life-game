@@ -1,5 +1,5 @@
 import { LONGEVITY_TREATMENT_FATE_ROULETTE } from './fateRoulettes';
-import type { GameEvent } from '../types/game';
+import type { EraId, GameEvent, Rarity, StatEffects } from '../types/game';
 
 // ============================================================
 // 100〜149歳の人生後半イベント
@@ -10,25 +10,133 @@ import type { GameEvent } from '../types/game';
 // 「延命」につながる選択には LONGEVITY_TREATMENT_FATE_ROULETTE を使い、受けない場合は
 // リスクなし・受ける場合はギャンブル性を持たせることで、理不尽な即終了を避けつつ
 // プレイヤーの選択がその後の健康・寿命に影響する構造にしている。
+//
+// 「年齢と文章の矛盾」を防ぐため、特定の年齢だけに意味を持つ節目イベント
+// （100歳・105歳・110歳・115歳・120歳・122歳）は必ず minAge===maxAge の
+// 単一年齢に絞っている（makeAgeMilestoneEvent）。123歳以降は到達年齢の幅が
+// 広いため、文中の {age} を実際の年齢に置き換える動的テキスト（gameLogic.ts の
+// resolveEventTextForAge）を使い、固定文字列と実年齢がズレないようにしている。
 // ============================================================
 
-// --- 現代編（2026年）専用：100〜149歳を通して現実的な内容で統一 ---
-const presentLongevityEvents: GameEvent[] = [
-  {
-    id: 'longevity-present-award',
-    title: '長寿の表彰状が届いた',
-    description: '自治体から、長寿を祝う表彰状と記念品が届きました。',
+/** 100〜122歳の間で、特定の年齢にだけ意味を持つ「節目」イベントを作る（年齢と文章の矛盾を防ぐ）。 */
+function makeAgeMilestoneEvent(params: {
+  id: string;
+  era: EraId;
+  age: number;
+  title: string;
+  description: string;
+  logText: string;
+  rarity: Rarity;
+  effects: StatEffects;
+}): GameEvent {
+  return {
+    id: params.id,
+    title: params.title,
+    description: params.description,
     ageCategory: 'stage6',
     category: 'elder',
     squareType: 'normal',
-    era: ['present'],
-    minAge: 100,
-    maxAge: 109,
+    era: [params.era],
+    minAge: params.age,
+    maxAge: params.age,
     oncePerGame: true,
-    effects: { happiness: 15, socialContribution: 10 },
-    logText: '長寿の表彰状を受け取り、これまでの人生を誇らしく思った。',
+    effects: params.effects,
+    logText: params.logText,
+    rarity: params.rarity,
+  };
+}
+
+/**
+ * 123歳以降、非常に稀に到達した場合の「人類最高齢」演出。到達年齢の幅が広いため、
+ * {age} を実際の年齢に動的差し替えする（gameLogic.ts の resolveEventTextForAge）。
+ * cooldownYearsで連発を防ぎつつ、150歳（盤面終端）まで年齢を重ねるたびに再度更新しうる。
+ */
+function makeRecordUpdateEvent(params: {
+  era: EraId;
+  description: string;
+  logText: string;
+  effects: StatEffects;
+}): GameEvent {
+  return {
+    id: `longevity-${params.era}-record-update`,
+    title: '{age}歳、人類最高齢記録を更新した',
+    description: params.description,
+    ageCategory: 'stage6',
+    category: 'elder',
+    squareType: 'superRare',
+    era: [params.era],
+    minAge: 123,
+    cooldownYears: 5,
+    effects: params.effects,
+    logText: params.logText,
+    rarity: 'superRare',
+  };
+}
+
+// --- 現代編（2026年）専用：100〜149歳を通して現実的な内容で統一 ---
+// 100歳ちょうどの節目は era非依存の共通イベント（elder-100th-birthday, boardEvents.ts）が担うため、
+// ここでは105・110・115・120・122歳の節目と、123歳以降の「人類最高齢」演出を追加する。
+const presentLongevityMilestones: GameEvent[] = [
+  makeAgeMilestoneEvent({
+    id: 'longevity-present-milestone-105',
+    era: 'present',
+    age: 105,
+    title: '105歳、超高齢者として地域で話題になった',
+    description: '105歳という年齢が地域の話題となり、広報誌やニュースで紹介されました。',
+    logText: '105歳、超高齢者として地域で話題になった。',
     rarity: 'rare',
-  },
+    effects: { happiness: 10, socialContribution: 12 },
+  }),
+  makeAgeMilestoneEvent({
+    id: 'longevity-present-milestone-110',
+    era: 'present',
+    age: 110,
+    title: '110歳の長寿記録を打ち立てた',
+    description: '110歳を迎え、自治体が誇る長寿記録として認定されました。',
+    logText: '110歳、自治体が誇る長寿記録を打ち立てた。',
+    rarity: 'rare',
+    effects: { happiness: 12, socialContribution: 15 },
+  }),
+  makeAgeMilestoneEvent({
+    id: 'longevity-present-milestone-115',
+    era: 'present',
+    age: 115,
+    title: '115歳、全国的な長寿者として注目された',
+    description: '115歳という年齢がニュースで取り上げられ、全国的に注目を集めました。',
+    logText: '115歳、全国的な長寿者として大きな注目を浴びた。',
+    rarity: 'rare',
+    effects: { happiness: 15, socialContribution: 15 },
+  }),
+  makeAgeMilestoneEvent({
+    id: 'longevity-present-milestone-120',
+    era: 'present',
+    age: 120,
+    title: '120歳、歴史的な長寿の節目を迎えた',
+    description: '120歳という、めったに到達できない歴史的な節目を迎えました。',
+    logText: '120歳、歴史的な長寿の節目を静かに迎えた。',
+    rarity: 'superRare',
+    effects: { happiness: 20, socialContribution: 20 },
+  }),
+  makeAgeMilestoneEvent({
+    id: 'longevity-present-milestone-122',
+    era: 'present',
+    age: 122,
+    title: '122歳、人類最高齢級の記録に迫っている',
+    description: '122歳、確認された人類最高齢記録にあと一歩と迫っていると医療関係者の間で話題になりました。',
+    logText: '122歳、人類最高齢級の記録に迫る存在として注目された。',
+    rarity: 'superRare',
+    effects: { happiness: 15, socialContribution: 15 },
+  }),
+  makeRecordUpdateEvent({
+    era: 'present',
+    description: '最新の医療と本人の努力が実を結び、{age}歳で確認済みの人類最高齢記録を更新したというニュースが世界を巡りました。',
+    logText: '{age}歳、人類最高齢記録を更新したというニュースが世界を駆け巡った。',
+    effects: { happiness: 20, socialContribution: 20, luck: 5 },
+  }),
+];
+
+const presentLongevityEvents: GameEvent[] = [
+  ...presentLongevityMilestones,
   {
     id: 'longevity-present-four-generations',
     title: '家族4世代が集まった',
@@ -137,7 +245,13 @@ const futureLongevityEvents: GameEvent[] = [
     rarity: 'rare',
     eventType: 'choice',
     choices: [
-      { id: 'accept', label: '治療を受ける', effects: {}, fateRoulette: LONGEVITY_TREATMENT_FATE_ROULETTE },
+      {
+        id: 'accept',
+        label: '治療を受ける',
+        effects: {},
+        fateRoulette: LONGEVITY_TREATMENT_FATE_ROULETTE,
+        grantsFlags: ['longevityTreatment'],
+      },
       { id: 'decline', label: '今の暮らしを続ける', effects: { mentalStrength: 5 } },
     ],
   },
@@ -184,7 +298,13 @@ const futureLongevityEvents: GameEvent[] = [
     rarity: 'rare',
     eventType: 'choice',
     choices: [
-      { id: 'accept', label: '再生医療を受ける', effects: {}, fateRoulette: LONGEVITY_TREATMENT_FATE_ROULETTE },
+      {
+        id: 'accept',
+        label: '再生医療を受ける',
+        effects: {},
+        fateRoulette: LONGEVITY_TREATMENT_FATE_ROULETTE,
+        grantsFlags: ['longevityTreatment'],
+      },
       { id: 'decline', label: '自然な形を選ぶ', effects: { mentalStrength: 5 } },
     ],
   },
@@ -231,7 +351,13 @@ const futureLongevityEvents: GameEvent[] = [
     rarity: 'rare',
     eventType: 'choice',
     choices: [
-      { id: 'accept', label: '身体拡張を導入する', effects: {}, fateRoulette: LONGEVITY_TREATMENT_FATE_ROULETTE },
+      {
+        id: 'accept',
+        label: '身体拡張を導入する',
+        effects: {},
+        fateRoulette: LONGEVITY_TREATMENT_FATE_ROULETTE,
+        grantsFlags: ['longevityTreatment'],
+      },
       { id: 'decline', label: '生身のままでいる', effects: { mentalStrength: 5 } },
     ],
   },
@@ -332,25 +458,141 @@ const futureLongevityEvents: GameEvent[] = [
       { id: 'stay', label: '地球で暮らし続ける', effects: { relationships: 10 } },
     ],
   },
+  // 100歳ちょうどの節目は era非依存の共通イベント（elder-100th-birthday）が担うため、
+  // ここでは105・110・115・120・122歳の節目と、123歳以降の「人類最高齢」演出を追加する。
+  makeAgeMilestoneEvent({
+    id: 'longevity-future-milestone-105',
+    era: 'future',
+    age: 105,
+    title: '105歳、AI健康管理の成功例として話題になった',
+    description: 'AI健康管理システムを使いこなしてきた105歳の暮らしぶりが、話題になりました。',
+    logText: '105歳、AI健康管理の成功例として注目された。',
+    rarity: 'rare',
+    effects: { happiness: 10, socialContribution: 12, aiAffinity: 5 },
+  }),
+  makeAgeMilestoneEvent({
+    id: 'longevity-future-milestone-110',
+    era: 'future',
+    age: 110,
+    title: '110歳の長寿記録を打ち立てた',
+    description: '再生医療の恩恵も受けながら、110歳という長寿記録を打ち立てました。',
+    logText: '110歳、再生医療の恩恵も受けながら長寿記録を打ち立てた。',
+    rarity: 'rare',
+    effects: { happiness: 12, socialContribution: 15, health: 5 },
+  }),
+  makeAgeMilestoneEvent({
+    id: 'longevity-future-milestone-115',
+    era: 'future',
+    age: 115,
+    title: '115歳、長寿研究の象徴として注目された',
+    description: '115歳という年齢が長寿研究の象徴的な事例として、世界中の研究者から注目されました。',
+    logText: '115歳、長寿研究の象徴として世界中から注目された。',
+    rarity: 'rare',
+    effects: { happiness: 15, socialContribution: 15, aiAffinity: 5 },
+  }),
+  makeAgeMilestoneEvent({
+    id: 'longevity-future-milestone-120',
+    era: 'future',
+    age: 120,
+    title: '120歳、歴史的な長寿の節目を迎えた',
+    description: '120歳という、長寿技術の進歩を体現する歴史的な節目を迎えました。',
+    logText: '120歳、長寿技術の進歩を体現する歴史的節目を迎えた。',
+    rarity: 'superRare',
+    effects: { happiness: 20, socialContribution: 20 },
+  }),
+  makeAgeMilestoneEvent({
+    id: 'longevity-future-milestone-122',
+    era: 'future',
+    age: 122,
+    title: '122歳、人類最高齢級の記録に迫っている',
+    description: '122歳、確認された人類最高齢記録にあと一歩と迫っていると、長寿研究の象徴として世界中が注目しました。',
+    logText: '122歳、人類最高齢級の記録に迫る生き証人として注目された。',
+    rarity: 'superRare',
+    effects: { happiness: 15, socialContribution: 15, aiAffinity: 5 },
+  }),
+  makeRecordUpdateEvent({
+    era: 'future',
+    description: '長寿治療と再生医療の粋を尽くし、{age}歳で確認済みの人類最高齢記録を更新。世界中から祝福が届きました。',
+    logText: '{age}歳、人類最高齢記録を更新し、世界中から祝福が届いた。',
+    effects: { happiness: 20, socialContribution: 20, aiAffinity: 10, luck: 5 },
+  }),
 ];
 
 // --- 昭和編（1948年スタート）専用：100〜149歳。SF色は出さず、語り部・家族・記憶の継承を中心にする ---
-const showaLongevityEvents: GameEvent[] = [
-  {
-    id: 'longevity-showa-centenarian-award',
-    title: '百寿の表彰状が届いた',
-    description: '自治体から、100歳を祝う表彰状と記念の盃が届きました。',
-    ageCategory: 'stage6',
-    category: 'elder',
-    squareType: 'normal',
-    era: ['showa'],
-    minAge: 100,
-    maxAge: 109,
-    oncePerGame: true,
-    effects: { happiness: 15, socialContribution: 10 },
-    logText: '百寿の表彰状を受け取り、昭和から歩んできた人生を誇らしく思った。',
+// 昭和編は era非依存の共通イベント（elder-100th-birthday）を使わず、独自の「百寿」演出を持つ。
+// 100歳ちょうど・105・110・115・120・122歳の節目と、123歳以降の「人類最高齢」演出を用意する
+// （100歳以上への到達自体が極めて稀なため、昭和編にとってはどの節目も特別な意味を持つ）。
+const showaLongevityMilestones: GameEvent[] = [
+  makeAgeMilestoneEvent({
+    id: 'longevity-showa-milestone-100',
+    era: 'showa',
+    age: 100,
+    title: '百寿の祝いを受けた',
+    description: '自治体から、100歳を祝う「百寿」の表彰状と記念の盃が届きました。',
+    logText: '百寿の祝いを受け、昭和から歩んできた人生を誇らしく思った。',
     rarity: 'rare',
-  },
+    effects: { happiness: 15, socialContribution: 10 },
+  }),
+  makeAgeMilestoneEvent({
+    id: 'longevity-showa-milestone-105',
+    era: 'showa',
+    age: 105,
+    title: '105歳、超高齢者として地域で話題になった',
+    description: '105歳という年齢が地域の話題となり、新聞や回覧板で紹介されました。',
+    logText: '105歳、超高齢者として地域で話題になった。',
+    rarity: 'rare',
+    effects: { happiness: 10, socialContribution: 12 },
+  }),
+  makeAgeMilestoneEvent({
+    id: 'longevity-showa-milestone-110',
+    era: 'showa',
+    age: 110,
+    title: '110歳の長寿記録を打ち立てた',
+    description: '110歳を迎え、地域が誇る長寿記録として認定されました。',
+    logText: '110歳、地域が誇る長寿記録を打ち立てた。',
+    rarity: 'rare',
+    effects: { happiness: 12, socialContribution: 15 },
+  }),
+  makeAgeMilestoneEvent({
+    id: 'longevity-showa-milestone-115',
+    era: 'showa',
+    age: 115,
+    title: '115歳、全国的な長寿者として注目された',
+    description: '115歳という年齢が新聞やテレビで取り上げられ、全国的に注目を集めました。',
+    logText: '115歳、全国的な長寿者として大きな注目を浴びた。',
+    rarity: 'rare',
+    effects: { happiness: 15, socialContribution: 15 },
+  }),
+  makeAgeMilestoneEvent({
+    id: 'longevity-showa-milestone-120',
+    era: 'showa',
+    age: 120,
+    title: '120歳、歴史的な長寿の節目を迎えた',
+    description: '120歳という、昭和を生きた者として歴史的な節目を迎えました。',
+    logText: '120歳、歴史的な長寿の節目を静かに迎えた。',
+    rarity: 'superRare',
+    effects: { happiness: 20, socialContribution: 20 },
+  }),
+  makeAgeMilestoneEvent({
+    id: 'longevity-showa-milestone-122',
+    era: 'showa',
+    age: 122,
+    title: '122歳、人類最高齢級の記録に迫っている',
+    description: '122歳、確認された人類最高齢記録にあと一歩と迫っていると話題になりました。',
+    logText: '122歳、人類最高齢級の記録に迫る存在として注目された。',
+    rarity: 'superRare',
+    effects: { happiness: 15, socialContribution: 15 },
+  }),
+  makeRecordUpdateEvent({
+    era: 'showa',
+    description: '戦後を生き抜いた昭和世代の生き証人として、{age}歳で確認済みの人類最高齢記録を更新したというニュースが世界を巡りました。',
+    logText: '{age}歳、人類最高齢記録を更新したというニュースが世界を駆け巡った。',
+    effects: { happiness: 20, socialContribution: 20, luck: 5 },
+  }),
+];
+
+const showaLongevityEvents: GameEvent[] = [
+  ...showaLongevityMilestones,
   {
     id: 'longevity-showa-four-generations',
     title: '家族4世代が集まった',
