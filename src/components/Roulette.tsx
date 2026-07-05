@@ -32,7 +32,7 @@ const EXTRA_SLOWDOWN_SPINS = 1; // 減速中にあと何周してから止まる
 const STOPPED_BOUNCE_MS = 320;
 const RESULT_PAUSE_MS = 600; // バウンド後、さらに余韻を持たせる時間（合計で停止後 約0.9秒 でコマが動き出す）
 const TICK_SOUND_INTERVAL_MS = 110;
-const NUMBER_RADIUS_PX = 38;
+const NUMBER_RADIUS_PX = 26; // roulette-wheel(76px)の半径に合わせた数字ラベルの配置半径
 // 寿命枠の見た目の割合は、常に大きくなり過ぎないよう上限を設ける
 // （実際の判定確率はこの上限に関わらず、渡された deathChance をそのまま使う）。
 const MAX_DEATH_VISUAL_FRACTION = 0.4;

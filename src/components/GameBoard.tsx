@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { BOARD_AREA_CARDS, getCurrentBoardArea } from '../data/boardAreas';
 import { BRANCH_POINTS, getBranchPointForPosition } from '../data/branchRoutes';
-import { getCalendarYear, getEraDefinition, getGengoLabel } from '../data/eras';
+import { getEraDefinition } from '../data/eras';
 import { getPlayerCharacter } from '../data/playerCharacters';
 import { ERA_BACKGROUND_IMAGES } from '../data/uiAssets';
 import type { EraId, MoveAnimationState, Player } from '../types/game';
@@ -15,8 +15,6 @@ import {
 import {
   getBoardMilestone,
   getBoardStage,
-  getDisplayOccupation,
-  getLifeStageName,
   getLongevityBadge,
   getPlayerVisual,
   getSquareType,
@@ -109,121 +107,120 @@ function GameBoard({
         style={{ backgroundImage: `url(${ERA_BACKGROUND_IMAGES[era]})` }}
         aria-hidden="true"
       />
-      <div className="game-board__era-strip">
-        <span className="game-board__stage-pill">
-          {currentArea.icon} {currentArea.title}｜{currentArea.ageLabel}
-        </span>
-        <span className={`game-board__era-pill game-board__era-pill--${era}`}>
-          {eraDefinition.icon} {eraDefinition.year}年｜{eraDefinition.name}
-        </span>
-      </div>
-      <div
-        className="game-board__top"
-        style={
-          currentVisual
-            ? {
-                borderLeftColor: currentVisual.color,
-                background: `linear-gradient(135deg, #fff 60%, ${currentVisual.colorSoft} 165%)`,
-              }
-            : undefined
-        }
-      >
-        {currentPlayer && !currentPlayer.finished ? (
-          <div className="game-board__turn">
-            <span className="game-board__turn-avatar-wrap" style={{ color: currentVisual!.color }}>
-              <span className="game-board__turn-avatar" style={{ background: currentVisual!.colorSoft }}>
-                <img src={currentCharacter!.avatar} alt="" className="avatar-face-img" />
-              </span>
-            </span>
-            <div className="game-board__turn-text">
-              <div className="game-board__turn-heading" style={{ color: currentVisual!.color }}>
-                ▶ 只今の順番
-              </div>
-              <div className="game-board__turn-name">{currentPlayer.name}さん</div>
-              <div className="game-board__turn-age">
-                <span className="game-board__turn-age-label">現在</span>
-                <span key={currentPlayer.age} className="game-board__turn-age-value">
-                  {currentPlayer.age}
+
+      <div className="game-board__header">
+        <div className="game-board__era-strip">
+          <span className="game-board__stage-pill">
+            {currentArea.icon} {currentArea.title}｜{currentArea.ageLabel}
+          </span>
+          <span className={`game-board__era-pill game-board__era-pill--${era}`}>
+            {eraDefinition.icon} {eraDefinition.year}年｜{eraDefinition.name}
+          </span>
+        </div>
+        <div
+          className="game-board__top"
+          style={
+            currentVisual
+              ? {
+                  borderLeftColor: currentVisual.color,
+                  background: `linear-gradient(135deg, #fff 60%, ${currentVisual.colorSoft} 165%)`,
+                }
+              : undefined
+          }
+        >
+          {currentPlayer && !currentPlayer.finished ? (
+            <div className="game-board__turn">
+              <span className="game-board__turn-avatar-wrap" style={{ color: currentVisual!.color }}>
+                <span className="game-board__turn-avatar" style={{ background: currentVisual!.colorSoft }}>
+                  <img src={currentCharacter!.avatar} alt="" className="avatar-face-img" />
                 </span>
-                <span className="game-board__turn-age-unit">歳</span>
-              </div>
-              <div className="game-board__turn-meta">
-                {getLifeStageName(currentPlayer.age)}・{currentPlayer.age}歳（
-                {era === 'showa' ? `${getGengoLabel(getCalendarYear(era, currentPlayer.age))}・` : ''}
-                {getCalendarYear(era, currentPlayer.age)}年）
-                {currentLongevityBadge && (
-                  <span className="game-board__longevity-badge">
-                    {currentLongevityBadge.icon} {currentLongevityBadge.label}
+              </span>
+              <div className="game-board__turn-text">
+                <div className="game-board__turn-row1">
+                  <span className="game-board__turn-name">{currentPlayer.name}さん</span>
+                  <span className="game-board__turn-age">
+                    現在
+                    <span key={currentPlayer.age} className="game-board__turn-age-value">
+                      {currentPlayer.age}
+                    </span>
+                    歳
                   </span>
-                )}
-              </div>
-              <div className="game-board__turn-occupation">
-                💼 {getDisplayOccupation(currentPlayer.age, currentPlayer.occupation)}
-              </div>
-              <div className="game-board__turn-priority-stats">
-                <span>💰 {currentPlayer.money.toLocaleString()}万円</span>
-                <span>😊 幸福 {currentPlayer.happiness}</span>
-                <span>❤️ 健康 {currentPlayer.health}</span>
+                  {currentLongevityBadge && (
+                    <span className="game-board__longevity-badge">
+                      {currentLongevityBadge.icon} {currentLongevityBadge.label}
+                    </span>
+                  )}
+                </div>
+                <div className="game-board__turn-priority-stats">
+                  <span className="game-board__turn-stat game-board__turn-stat--money">
+                    💰 {currentPlayer.money.toLocaleString()}万円
+                  </span>
+                  <span className="game-board__turn-stat">😊 幸福 {currentPlayer.happiness}</span>
+                  <span className="game-board__turn-stat">❤️ 健康 {currentPlayer.health}</span>
+                </div>
               </div>
             </div>
+          ) : (
+            <span>ゲーム終了処理中…</span>
+          )}
+          <div className="game-board__top-actions">
+            <button
+              type="button"
+              className="btn--icon-round"
+              onClick={onToggleSound}
+              title="効果音のON/OFF"
+              aria-label="効果音のON/OFF"
+            >
+              {soundEnabled ? '🔊' : '🔇'}
+            </button>
+            <button
+              type="button"
+              className="btn--icon-round"
+              onClick={onShowNewspaper}
+              title="人生新聞"
+              aria-label="人生新聞"
+            >
+              📰
+            </button>
+            <button
+              type="button"
+              className="btn--icon-round"
+              onClick={onShowLifeLog}
+              title="人生ログ"
+              aria-label="人生ログ"
+            >
+              📖
+            </button>
           </div>
-        ) : (
-          <span>ゲーム終了処理中…</span>
-        )}
-        <div className="game-board__top-actions">
-          <button
-            type="button"
-            className="btn--icon-round"
-            onClick={onToggleSound}
-            title="効果音のON/OFF"
-            aria-label="効果音のON/OFF"
-          >
-            {soundEnabled ? '🔊' : '🔇'}
-          </button>
-          <button
-            type="button"
-            className="btn--icon-round"
-            onClick={onShowNewspaper}
-            title="人生新聞"
-            aria-label="人生新聞"
-          >
-            📰
-          </button>
-          <button
-            type="button"
-            className="btn--icon-round"
-            onClick={onShowLifeLog}
-            title="人生ログ"
-            aria-label="人生ログ"
-          >
-            📖
-          </button>
         </div>
       </div>
 
-      {moveAnimation && (
-        <div className="game-board__move-toast">
-          {moveAnimation.playerName}さん、{moveAnimation.totalSteps}マス進みます
-          {moveAnimation.stepIndex > 0 && (
-            <span className="game-board__move-toast-progress">
-              {' '}
-              （{moveAnimation.stepIndex} / {moveAnimation.totalSteps}マス）
-            </span>
-          )}
-        </div>
-      )}
+      <div className="game-board__board-area">
+        {moveAnimation && (
+          <div className="game-board__move-toast">
+            {moveAnimation.playerName}さん、{moveAnimation.totalSteps}マス進みます
+            {moveAnimation.stepIndex > 0 && (
+              <span className="game-board__move-toast-progress">
+                {' '}
+                （{moveAnimation.stepIndex} / {moveAnimation.totalSteps}マス）
+              </span>
+            )}
+          </div>
+        )}
 
-      <p className="board-info-note">
-        💡 人生の節目（18・30・45・60歳）では、将来のルートが分かれることがあります。
-      </p>
-      {currentStage === 'stage6' && (
-        <p className="board-info-note board-info-note--fog">
-          🌫️ この先の人生は、まだ見えていません。進むごとに、少しずつ道が開けていきます。
-        </p>
-      )}
+        <div className="board-scroll">
+          <div className="board-scroll__notes">
+            <p className="board-info-note">
+              💡 人生の節目（18・30・45・60歳）では、将来のルートが分かれることがあります。
+            </p>
+            {currentStage === 'stage6' && (
+              <p className="board-info-note board-info-note--fog">
+                🌫️ この先の人生は、まだ見えていません。進むごとに、少しずつ道が開けていきます。
+              </p>
+            )}
+          </div>
 
-      <div className="board-scroll">
-        <div className="board-canvas" style={{ height: canvasHeight }}>
+          <div className="board-canvas" style={{ height: canvasHeight }}>
           <div
             className={`board-canvas__era-backdrop board-canvas__era-backdrop--${era}`}
             style={{ backgroundImage: `url(${ERA_BACKGROUND_IMAGES[era]})` }}
@@ -318,32 +315,35 @@ function GameBoard({
               isCurrent={areaCard.id === currentArea.id}
             />
           ))}
+          </div>
         </div>
       </div>
 
-      <div className="game-board__players">
-        {players.map((player, index) => (
-          <PlayerCard key={player.id} player={player} index={index} isCurrent={index === currentPlayerIndex} era={era} compact />
-        ))}
-      </div>
+      {/* 下部は「プレイヤー一覧の帯」＋「ルーレット」をまとめたコンパクトな固定フッター。
+          盤面（.game-board__board-area）がflex:1で残り全域を使うため、フッターは
+          必要な分だけの高さで済み、盤面表示を最大限確保できる。 */}
+      <div className="game-board__footer">
+        <div className="game-board__players">
+          {players.map((player, index) => (
+            <PlayerCard key={player.id} player={player} index={index} isCurrent={index === currentPlayerIndex} era={era} compact />
+          ))}
+        </div>
 
-      {/* ルーレットは通常のドキュメントフローから外し、画面下部に固定表示する。
-          スクロール位置に関わらず常に操作でき、イベントモーダル（z-index高）表示中は
-          自動的にその下に隠れるため、重なりや誤操作の心配がない。 */}
-      <div className="game-board__roulette-dock">
-        {/* keyに現在の手番プレイヤーIDを使うことで、手番が次のプレイヤーに切り替わるたびに
-            Rouletteを再マウントし、前のプレイヤーの結果表示（「3年進む→7歳へ」等）や
-            回転角度・強調表示を初期状態にリセットする。同じプレイヤーが続けて振る分には
-            再マウントされないため、直前の結果はそのまま見え続ける（意図した挙動）。 */}
-        <Roulette
-          key={currentPlayer?.id ?? 'none'}
-          disabled={rollDisabled || !currentPlayer || currentPlayer.finished}
-          currentAge={currentPlayer?.age ?? 0}
-          deathChance={deathChance}
-          soundEnabled={soundEnabled}
-          onRoll={onRoll}
-          onRollSettled={onRollSettled}
-        />
+        <div className="game-board__roulette-dock">
+          {/* keyに現在の手番プレイヤーIDを使うことで、手番が次のプレイヤーに切り替わるたびに
+              Rouletteを再マウントし、前のプレイヤーの結果表示（「3年進む→7歳へ」等）や
+              回転角度・強調表示を初期状態にリセットする。同じプレイヤーが続けて振る分には
+              再マウントされないため、直前の結果はそのまま見え続ける（意図した挙動）。 */}
+          <Roulette
+            key={currentPlayer?.id ?? 'none'}
+            disabled={rollDisabled || !currentPlayer || currentPlayer.finished}
+            currentAge={currentPlayer?.age ?? 0}
+            deathChance={deathChance}
+            soundEnabled={soundEnabled}
+            onRoll={onRoll}
+            onRollSettled={onRollSettled}
+          />
+        </div>
       </div>
     </StageBackground>
   );

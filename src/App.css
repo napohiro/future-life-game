@@ -513,12 +513,19 @@
 
 /* ---------- game board ---------- */
 
+/* ゲーム中は「盤面が主役」のアプリシェル型レイアウトにする。上部ヘッダーと下部フッターは
+   内容に応じた最小限の高さ（flex-shrink:0）に留め、中央の盤面エリアだけがflex:1で
+   残り全域を使う。ページ全体はスクロールさせず、盤面エリア内部だけがスクロールする。 */
 .game-board {
   position: relative;
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
+  gap: 6px;
+  padding: max(8px, env(safe-area-inset-top)) 12px 0;
   transition: background 0.6s ease;
-  /* 画面下部に固定したルーレットドックの高さ分、最後まで隠れず読めるようにする。 */
-  padding-bottom: 220px;
+  overflow: hidden;
 }
 
 /* 時代ごとの世界観を伝える背景写真。文字・マス・コマの視認性を最優先するため、
@@ -534,21 +541,33 @@
   pointer-events: none;
 }
 
-.game-board__roulette-dock {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 0;
-  width: 100%;
-  max-width: 480px;
-  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(180deg, rgba(238, 243, 251, 0) 0%, #eef3fb 18%, #eef3fb 100%);
-  z-index: 40;
-  pointer-events: none;
+/* 上部ヘッダー：時代/エリアの帯＋手番カード。内容に応じた高さのみを使い、伸び縮みしない。 */
+.game-board__header {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 6px;
 }
 
-.game-board__roulette-dock .roulette {
-  pointer-events: auto;
+/* 中央：盤面スクロール領域。ヘッダー・フッターを除いた残り全域を占める、この画面の主役。 */
+.game-board__board-area {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 下部フッター：プレイヤー一覧の帯＋ルーレット。通常のドキュメントフロー内に置き、
+   盤面エリアの残り高さを圧迫しないよう内容に応じた最小限の高さに留める
+   （以前のposition:fixedによる固定ドック＋余白確保のハックは不要になった）。 */
+.game-board__footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
 }
 
 .game-board__era-strip {
@@ -612,22 +631,19 @@
   justify-content: space-between;
   gap: 10px;
   background: #fff;
-  border-radius: 18px;
-  padding: 10px 14px;
+  border-radius: 16px;
+  padding: 8px 12px;
   font-size: 15px;
   color: #1f2430;
   border: 1px solid #e7ebf3;
   border-left: 4px solid transparent;
-  position: sticky;
-  top: 8px;
-  z-index: 20;
   box-shadow: 0 4px 12px rgba(31, 36, 48, 0.08);
 }
 
 .game-board__turn {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 8px;
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -664,73 +680,62 @@
 }
 
 .game-board__turn-avatar {
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 14px;
   flex-shrink: 0;
 }
 
 .game-board__turn-text {
   min-width: 0;
   flex: 1 1 auto;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
-.game-board__turn-heading {
+/* 1行目：名前・現在年齢・（あれば）長寿バッジを横並びにまとめる。
+   「▶只今の順番」の文字ラベルは廃止し、代わりに現在プレイヤーのアバターの
+   パルスリング（game-board__turn-avatar-wrap::after）だけで手番を示す。 */
+.game-board__turn-row1 {
   display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .game-board__turn-name {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
-  margin-top: 1px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 40vw;
 }
 
-/* 「現在34歳」表示。名前の直下に、他の情報より少し目立つ大きさで現在の実年齢を表示する。
+/* 「現在34歳」表示。他の情報より少し目立つ大きさで現在の実年齢を表示する。
    1マス進んで年齢が変わるたびに数字要素のkeyが変わり再マウントされるので、
    turn-age-popアニメーションが自然に再生される（軽くポップする演出）。 */
 .game-board__turn-age {
   display: flex;
   align-items: baseline;
-  gap: 3px;
-  margin-top: 2px;
-  white-space: nowrap;
-}
-
-.game-board__turn-age-label {
+  gap: 2px;
   font-size: 12px;
   font-weight: 700;
-  color: #8891a5;
+  color: #6b7488;
+  white-space: nowrap;
 }
 
 .game-board__turn-age-value {
   display: inline-block;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   color: #1f2430;
   line-height: 1;
+  margin: 0 1px;
   animation: game-board-turn-age-pop 0.35s ease;
-}
-
-.game-board__turn-age-unit {
-  font-size: 13px;
-  font-weight: 700;
-  color: #1f2430;
 }
 
 @keyframes game-board-turn-age-pop {
@@ -745,19 +750,8 @@
   }
 }
 
-.game-board__turn-meta {
-  font-size: 12px;
-  color: #8891a5;
-  min-width: 0;
-  margin-top: 1px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .game-board__longevity-badge {
   display: inline-block;
-  margin-left: 4px;
   font-size: 10px;
   font-weight: 700;
   color: #8a5a1c;
@@ -767,28 +761,32 @@
   white-space: nowrap;
 }
 
-.game-board__turn-occupation {
-  font-size: 11px;
-  color: #6b7285;
-  margin-top: 1px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
+/* 2行目：資産・幸福度・健康・職業をチップ状に横並びで見せる（縦積みだった旧レイアウトを解消）。 */
 .game-board__turn-priority-stats {
   display: flex;
-  gap: 8px;
+  gap: 5px;
   margin-top: 3px;
-  font-size: 11px;
+  flex-wrap: wrap;
+}
+
+.game-board__turn-stat {
+  font-size: 11.5px;
   font-weight: 700;
   color: #414a5c;
-  flex-wrap: wrap;
+  background: #f5f7fb;
+  border-radius: 999px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+.game-board__turn-stat--money {
+  color: #a3670a;
+  background: #fff3dd;
 }
 
 .game-board__top-actions {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
@@ -827,17 +825,17 @@
 
 @media (min-width: 640px) {
   .game-board__top {
-    padding: 14px 18px;
+    padding: 10px 16px;
   }
 
   .game-board__turn-avatar {
-    width: 44px;
-    height: 44px;
-    font-size: 22px;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
   }
 
   .game-board__turn-name {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .btn--icon-round {
@@ -847,16 +845,23 @@
   }
 }
 
+/* 移動アニメーション中だけ表示するトースト。盤面エリアの上に浮かせるオーバーレイにして、
+   表示・非表示の切り替えで盤面スクロール領域の高さ（flex:1）が変動しないようにする。 */
 .game-board__move-toast {
-  align-self: center;
-  background: #1f2430;
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  background: rgba(31, 36, 48, 0.92);
   color: #fff;
   font-weight: 700;
-  font-size: 14px;
-  padding: 10px 18px;
+  font-size: 13px;
+  padding: 8px 16px;
   border-radius: 999px;
   animation: move-toast-in 0.25s ease;
   box-shadow: 0 6px 16px rgba(31, 36, 48, 0.3);
+  white-space: nowrap;
 }
 
 .game-board__move-toast-progress {
@@ -875,14 +880,25 @@
   }
 }
 
+/* 節目・霧マップの案内文は、盤面スクロール領域の先頭に置いて一緒にスクロールさせる
+   （常時表示のヘッダー領域を圧迫しないようにするため）。 */
+.board-scroll__notes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* 0歳（盤面の一番上）のエリアカードは自分の位置より少し上に浮き上がって表示されるため、
+     案内文と重ならないよう、盤面本体との間に余裕のある間隔を確保しておく。 */
+  margin-bottom: 44px;
+}
+
 .board-info-note {
   margin: 0;
-  font-size: 12px;
+  font-size: 11.5px;
   color: #52596b;
   background: #fff;
   border-radius: 12px;
-  padding: 8px 12px;
-  line-height: 1.5;
+  padding: 6px 12px;
+  line-height: 1.45;
 }
 
 .board-info-note--fog {
@@ -891,11 +907,15 @@
   font-weight: 600;
 }
 
+/* 盤面の主役感を最優先し、この画面ではヘッダー・フッターを除いた残り全域まで広げる。
+   （以前はmax-height:50svhで固定的に高さを制限していたが、flex:1でヘッダー/フッターの
+   実際の高さに応じて動的に最大化されるようにした）。 */
 .board-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
   background: transparent;
   border-radius: 16px;
-  padding: 10px;
-  max-height: 50svh;
+  padding: 8px 10px;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -1360,7 +1380,7 @@
 .game-board__players {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
 /* ---------- roulette ---------- */
@@ -1369,11 +1389,11 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   background: #fff;
   border-radius: 16px;
-  padding: 18px 22px 18px 16px;
-  box-shadow: 0 8px 20px rgba(31, 36, 48, 0.12);
+  padding: 8px 14px 8px 12px;
+  box-shadow: 0 6px 16px rgba(31, 36, 48, 0.12);
   overflow: hidden;
 }
 
@@ -1384,13 +1404,15 @@
 
 .roulette-wheel-frame {
   position: relative;
-  width: 128px;
-  height: 128px;
+  /* タップ領域は操作性のため十分に確保しつつ、見た目のホイール自体は
+     一回り小さくして（下のroulette-wheelを参照）フッター全体の高さを抑える。 */
+  width: 84px;
+  height: 84px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 10px 4px 8px;
+  margin: 4px;
   background: none;
   border: none;
   padding: 0;
@@ -1424,8 +1446,8 @@
 
 .roulette-wheel {
   position: relative;
-  width: 112px;
-  height: 112px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   background: conic-gradient(
     from -30deg,
@@ -1493,7 +1515,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 13px;
   font-weight: 800;
   color: #fff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
@@ -1502,7 +1524,7 @@
 /* 寿命リスク開始年齢を超えた後だけ現れる「寿命を迎える」枠。控えめな鳩のアイコンにし、
    数字マスより少し小さくして威圧感を出さないようにする。 */
 .roulette-wheel__number--death {
-  font-size: 15px;
+  font-size: 11px;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
@@ -1511,14 +1533,14 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 30px;
-  height: 30px;
+  width: 21px;
+  height: 21px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #ffffff, #d9dfe8 70%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 11px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 0 0 2px rgba(31, 36, 48, 0.1);
   z-index: 4;
 }
@@ -1581,36 +1603,34 @@
 }
 
 @media (min-width: 640px) {
-  .game-board {
-    padding-bottom: 260px;
-  }
-
+  /* PC等の広い画面でも、盤面優先の方針を崩さないよう控えめな拡大に留める
+     （以前は160/142pxまで拡大しており、間延びして見えていた）。 */
   .roulette {
-    padding: 20px 26px 20px 20px;
+    padding: 12px 20px 12px 16px;
   }
 
   .roulette-wheel-frame {
-    width: 160px;
-    height: 160px;
+    width: 112px;
+    height: 112px;
   }
 
   .roulette-wheel {
-    width: 142px;
-    height: 142px;
+    width: 100px;
+    height: 100px;
   }
 
   .roulette-wheel__number {
-    font-size: 22px;
-  }
-
-  .roulette-wheel__hub {
-    width: 38px;
-    height: 38px;
     font-size: 17px;
   }
 
+  .roulette-wheel__hub {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+  }
+
   .roulette-wheel-pointer {
-    font-size: 22px;
+    font-size: 19px;
   }
 }
 
@@ -1618,12 +1638,12 @@
 
 .player-card {
   background: #fff;
-  border-radius: 14px;
-  padding: 12px 14px;
+  border-radius: 12px;
+  padding: 6px 10px;
   border: 2px solid transparent;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   box-shadow: 0 2px 8px rgba(31, 36, 48, 0.06);
 }
 
@@ -1652,28 +1672,32 @@
 .player-card__header {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
 }
 
 .player-card__avatar {
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 14px;
   flex-shrink: 0;
 }
 
 .player-card__name {
   font-weight: 700;
-  font-size: 16px;
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 6px;
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .player-card__turn-badge {
@@ -1702,8 +1726,11 @@
 }
 
 .player-card__age {
-  font-size: 12px;
+  font-size: 11.5px;
+  font-weight: 600;
   color: #8891a5;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .player-card__longevity-badge {
@@ -1764,16 +1791,33 @@
 .stat-chip {
   background: #f7f9fd;
   border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
+  padding: 3px 9px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #414a5c;
+  white-space: nowrap;
 }
 
-.stat-chip--toggle {
+.stat-chip--money {
+  color: #a3670a;
+  background: #fff3dd;
+  font-weight: 700;
+}
+
+/* プレイヤー一覧の帯の折りたたみ切替。ヘッダー行の右端に置き、既定では詳細（資産・
+   幸福度・健康など）を隠すことで、フッター全体の高さを最小限に抑える。 */
+.player-card__expand-toggle {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
   border: none;
   background: #eef1f7;
   color: #2f6fed;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 

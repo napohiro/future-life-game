@@ -26,8 +26,12 @@ interface PlayerCardProps {
 }
 
 const BAR_STAT_KEYS: StatKey[] = ['health', 'happiness', 'knowledge', 'relationships', 'freedom'];
-const PRIMARY_CHIP_KEYS: StatKey[] = ['health', 'happiness', 'relationships', 'freedom'];
+// compact表示の既定チップ（資産は別枠で先頭に出すため、ここは幸福度・健康のみ。
+// 人間関係・自由は優先度が下がるため詳細ステータス側へ移した）。
+const PRIMARY_CHIP_KEYS: StatKey[] = ['happiness', 'health'];
 const DETAIL_CHIP_KEYS: StatKey[] = [
+  'relationships',
+  'freedom',
   'knowledge',
   'experience',
   'luck',
@@ -108,52 +112,71 @@ function PlayerCard({ player, index, isCurrent, era, compact = false }: PlayerCa
             </span>
           )}
           {player.finished && <span className="player-card__finished-badge">🕊️ 卒業済み</span>}
-          <span className="player-card__personality-badge" title={personality.description}>
-            {personality.icon} {personality.label}
-          </span>
+          {!compact && (
+            <span className="player-card__personality-badge" title={personality.description}>
+              {personality.icon} {personality.label}
+            </span>
+          )}
         </span>
         <span className="player-card__age">
-          {getLifeStageName(player.age)}・{player.age}歳（
-          {era === 'showa' ? `${getGengoLabel(getCalendarYear(era, player.age))}・` : ''}
-          {getCalendarYear(era, player.age)}年）
+          {compact ? (
+            `${player.age}歳`
+          ) : (
+            <>
+              {getLifeStageName(player.age)}・{player.age}歳（
+              {era === 'showa' ? `${getGengoLabel(getCalendarYear(era, player.age))}・` : ''}
+              {getCalendarYear(era, player.age)}年）
+            </>
+          )}
           {longevityBadge && (
             <span className="player-card__longevity-badge">
               {longevityBadge.icon} {longevityBadge.label}
             </span>
           )}
         </span>
+        {compact && (
+          <button
+            type="button"
+            className="player-card__expand-toggle"
+            onClick={() => setExpanded((v) => !v)}
+            aria-label={expanded ? 'このプレイヤーの詳細ステータスを閉じる' : 'このプレイヤーの詳細ステータスを表示'}
+            aria-expanded={expanded}
+          >
+            {expanded ? '▲' : '▼'}
+          </button>
+        )}
       </div>
 
-      <div className="player-card__money">
-        {STAT_ICONS.money} {player.money.toLocaleString()}万円
-      </div>
+      {!compact && (
+        <div className="player-card__money">
+          {STAT_ICONS.money} {player.money.toLocaleString()}万円
+        </div>
+      )}
 
       {compact ? (
-        <>
-          <div className="player-card__chip-row">
-            {PRIMARY_CHIP_KEYS.map((key) => (
-              <span className="stat-chip" key={key}>
-                {STAT_ICONS[key]} {STAT_LABELS[key]} {player[key]}
+        expanded && (
+          <>
+            <div className="player-card__chip-row">
+              <span className="stat-chip stat-chip--money">
+                {STAT_ICONS.money} {player.money.toLocaleString()}万円
               </span>
-            ))}
-            <button type="button" className="stat-chip stat-chip--toggle" onClick={() => setExpanded((v) => !v)}>
-              {expanded ? '▲ 閉じる' : '▼ 詳細ステータス'}
-            </button>
-          </div>
-          {expanded && (
-            <>
-              <div className="player-card__chip-row">
-                {DETAIL_CHIP_KEYS.map((key) => (
-                  <span className="stat-chip" key={key} title={STAT_LABELS[key]}>
-                    {STAT_ICONS[key]} {STAT_LABELS[key]} {player[key]}
-                  </span>
-                ))}
-              </div>
-              <StatusFieldList player={player} />
-              <ChosenRouteList chosenRoutes={player.chosenRoutes} />
-            </>
-          )}
-        </>
+              {PRIMARY_CHIP_KEYS.map((key) => (
+                <span className="stat-chip" key={key}>
+                  {STAT_ICONS[key]} {STAT_LABELS[key]} {player[key]}
+                </span>
+              ))}
+            </div>
+            <div className="player-card__chip-row">
+              {DETAIL_CHIP_KEYS.map((key) => (
+                <span className="stat-chip" key={key} title={STAT_LABELS[key]}>
+                  {STAT_ICONS[key]} {STAT_LABELS[key]} {player[key]}
+                </span>
+              ))}
+            </div>
+            <StatusFieldList player={player} />
+            <ChosenRouteList chosenRoutes={player.chosenRoutes} />
+          </>
+        )
       ) : (
         <div className="player-card__stats">
           {BAR_STAT_KEYS.map((key) => (
