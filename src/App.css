@@ -1377,10 +1377,64 @@
   }
 }
 
-.game-board__players {
+/* 参加者アバター帯：常時は小さな丸アバターの重なり表示のみで、盤面を圧迫しない。
+   現在の手番のプレイヤーだけ枠線を強調し、タップで詳細モーダルを開ける。 */
+.game-board__participants {
+  align-self: flex-start;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 6px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #e7ebf3;
+  border-radius: 999px;
+  padding: 4px 12px 4px 6px;
+  appearance: none;
+  font: inherit;
+  color: #6b7488;
+  cursor: pointer;
+}
+
+.game-board__participants-avatars {
+  display: flex;
+}
+
+.game-board__participant-avatar {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  margin-left: -8px;
+  box-shadow: 0 1px 3px rgba(31, 36, 48, 0.18);
+}
+
+.game-board__participant-avatar:first-child {
+  margin-left: 0;
+}
+
+.game-board__participant-avatar--current {
+  box-shadow: 0 0 0 1px #fff, 0 2px 6px rgba(31, 36, 48, 0.28);
+  transform: scale(1.12);
+}
+
+.game-board__participant-avatar--finished {
+  opacity: 0.55;
+  filter: grayscale(40%);
+}
+
+.game-board__participants-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.game-board__participants-chevron {
+  font-size: 13px;
+  color: #b2b9c9;
 }
 
 /* ---------- roulette ---------- */
@@ -1804,21 +1858,11 @@
   font-weight: 700;
 }
 
-/* プレイヤー一覧の帯の折りたたみ切替。ヘッダー行の右端に置き、既定では詳細（資産・
-   幸福度・健康など）を隠すことで、フッター全体の高さを最小限に抑える。 */
-.player-card__expand-toggle {
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: none;
-  background: #eef1f7;
-  color: #2f6fed;
-  font-size: 10px;
+/* 参加者一覧モーダル内で、各プレイヤーのフルカードを縦に並べるリスト。 */
+.game-board__participants-list {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .player-card__stats {

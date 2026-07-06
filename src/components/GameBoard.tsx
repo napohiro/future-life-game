@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { BOARD_AREA_CARDS, getCurrentBoardArea } from '../data/boardAreas';
 import { BRANCH_POINTS, getBranchPointForPosition } from '../data/branchRoutes';
 import { getEraDefinition } from '../data/eras';
@@ -65,6 +65,7 @@ function GameBoard({
   const currentPlayer = players[currentPlayerIndex];
   const eraDefinition = getEraDefinition(era);
   const currentSquareRef = useRef<HTMLDivElement>(null);
+  const [showParticipants, setShowParticipants] = useState(false);
 
   useEffect(() => {
     currentSquareRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -193,6 +194,37 @@ function GameBoard({
             </button>
           </div>
         </div>
+
+        {/* 参加者は常時は小さな丸アバターの帯だけを表示し、盤面の表示領域を圧迫しない。
+            タップすると各プレイヤーの詳細ステータスをモーダルで確認できる。 */}
+        <button
+          type="button"
+          className="game-board__participants"
+          onClick={() => setShowParticipants(true)}
+          aria-haspopup="dialog"
+          aria-label={`参加者一覧を表示（${players.length}人）`}
+        >
+          <span className="game-board__participants-avatars">
+            {players.map((player, index) => {
+              const visual = getPlayerVisual(index);
+              const character = getPlayerCharacter(player.characterId);
+              const isThisTurn = index === currentPlayerIndex;
+              return (
+                <span
+                  key={player.id}
+                  className={`game-board__participant-avatar ${isThisTurn ? 'game-board__participant-avatar--current' : ''} ${player.finished ? 'game-board__participant-avatar--finished' : ''}`}
+                  style={{ background: visual.colorSoft, borderColor: isThisTurn ? visual.color : undefined }}
+                >
+                  <img src={character.avatar} alt="" className="avatar-face-img" />
+                </span>
+              );
+            })}
+          </span>
+          <span className="game-board__participants-label">参加者 {players.length}人</span>
+          <span className="game-board__participants-chevron" aria-hidden="true">
+            ›
+          </span>
+        </button>
       </div>
 
       <div className="game-board__board-area">
@@ -319,16 +351,10 @@ function GameBoard({
         </div>
       </div>
 
-      {/* 下部は「プレイヤー一覧の帯」＋「ルーレット」をまとめたコンパクトな固定フッター。
-          盤面（.game-board__board-area）がflex:1で残り全域を使うため、フッターは
-          必要な分だけの高さで済み、盤面表示を最大限確保できる。 */}
+      {/* 下部は「ルーレット」のみのコンパクトな固定フッター。プレイヤー一覧は上部の
+          参加者アバター帯（タップでモーダル表示）に集約したため、盤面
+          （.game-board__board-area）がflex:1で使える残り全域が最大限確保できる。 */}
       <div className="game-board__footer">
-        <div className="game-board__players">
-          {players.map((player, index) => (
-            <PlayerCard key={player.id} player={player} index={index} isCurrent={index === currentPlayerIndex} era={era} compact />
-          ))}
-        </div>
-
         <div className="game-board__roulette-dock">
           {/* keyに現在の手番プレイヤーIDを使うことで、手番が次のプレイヤーに切り替わるたびに
               Rouletteを再マウントし、前のプレイヤーの結果表示（「3年進む→7歳へ」等）や
@@ -345,6 +371,24 @@ function GameBoard({
           />
         </div>
       </div>
+
+      {showParticipants && (
+        <div className="modal-overlay">
+          <div className="modal modal--tall">
+            <div className="modal__header">
+              <h3 className="modal__title">👥 参加者一覧</h3>
+              <button type="button" className="btn btn--ghost btn--small" onClick={() => setShowParticipants(false)}>
+                閉じる
+              </button>
+            </div>
+            <div className="game-board__participants-list">
+              {players.map((player, index) => (
+                <PlayerCard key={player.id} player={player} index={index} isCurrent={index === currentPlayerIndex} era={era} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </StageBackground>
   );
 }
