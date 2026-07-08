@@ -2082,12 +2082,32 @@
   }
 }
 
+/* イベント種別を示す、1イベントにつき常に1個だけのラベル。年齢（modal__banner-age）や
+   運命リスクの補足（modal__risk-sublabel）は、別バッジにせずこの中に小さく同居させる。 */
 .modal__mood-banner {
   align-self: center;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
   font-weight: 800;
   font-size: 16px;
   padding: 6px 18px;
   border-radius: 999px;
+}
+
+.modal__banner-age {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+/* squareTypeに専用の見出し（MOOD_BANNER）が無いイベント（恋愛・投資・学び・趣味・社会貢献・通常）用の
+   控えめなフォールバック表示。目立たせすぎず、年齢と最低限の種別だけを伝える。 */
+.modal__mood-banner--plain {
+  background: #eef1f7;
+  color: #5c6478;
+  font-size: 13px;
+  padding: 4px 14px;
 }
 
 .modal__mood-banner--turning {
@@ -2118,9 +2138,6 @@
 .modal__mood-banner--risk {
   background: #fbf0d9;
   color: #8a6416;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .modal__risk-sublabel {

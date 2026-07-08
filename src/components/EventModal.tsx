@@ -66,16 +66,18 @@ function isRiskEvent(event: GameEvent): boolean {
   );
 }
 
+// イベントの「種別ラベル」は、この1個だけを表示する（squareType別バッジ・eventType別バッジと
+// 重複して並べない）。年齢は各ラベルの末尾に小さく添えるだけにとどめる。
 const MOOD_BANNER: Partial<Record<SquareType, { text: string; className: string }>> = {
   chance: { text: '🍀 チャンス！', className: 'modal__mood-banner--chance' },
   pinch: { text: '⚡ ピンチ！', className: 'modal__mood-banner--pinch' },
   turningPoint: { text: '🔀 人生の転機！', className: 'modal__mood-banner--turning' },
   superRare: { text: '🌈 超レアな出来事！', className: 'modal__mood-banner--super-rare' },
-  aiEra: { text: '🤖 AI時代の出来事', className: 'modal__mood-banner--future' },
-  future: { text: '🚀 近未来の出来事', className: 'modal__mood-banner--future' },
-  health: { text: '🏥 健康にまつわる出来事', className: 'modal__mood-banner--health' },
-  family: { text: '👨‍👩‍👧 家族の出来事', className: 'modal__mood-banner--family' },
-  work: { text: '💼 仕事にまつわる出来事', className: 'modal__mood-banner--work' },
+  aiEra: { text: '🤖 AI時代イベント', className: 'modal__mood-banner--future' },
+  future: { text: '🚀 近未来イベント', className: 'modal__mood-banner--future' },
+  health: { text: '🏥 健康イベント', className: 'modal__mood-banner--health' },
+  family: { text: '❤️ 家族イベント', className: 'modal__mood-banner--family' },
+  work: { text: '💼 仕事イベント', className: 'modal__mood-banner--work' },
 };
 
 function EventModal({
@@ -106,6 +108,20 @@ function EventModal({
   const riskCategoryLabel = RISK_CATEGORY_LABEL[event.category];
   const eventType = result ? result.eventType : getEventType(event);
 
+  // イベントの「種別」を表すラベルは、常にこの1個だけに統一する（squareType別・eventType別の
+  // バッジを別々に並べない）。年齢は末尾に小さく添えるだけにし、思い出カードだけは例外的に年齢を出さない。
+  const primaryBanner: { text?: string; sub?: string; className: string; showAge: boolean } = milestone
+    ? { text: `🎉 人生の節目：${milestone.title}`, className: 'modal__mood-banner--milestone', showAge: true }
+    : isRisk
+      ? { text: '⚠️ 運命の分岐', sub: riskCategoryLabel, className: 'modal__mood-banner--risk', showAge: true }
+      : moodBanner
+        ? { text: moodBanner.text, className: moodBanner.className, showAge: true }
+        : {
+            text: squareMeta.icon ? `${squareMeta.icon} ${squareMeta.label}イベント` : undefined,
+            className: 'modal__mood-banner--plain',
+            showAge: true,
+          };
+
   return (
     <div className="modal-overlay">
       <div className={`modal ${moodClass}`}>
@@ -113,28 +129,15 @@ function EventModal({
           <>
             {isMemoryCard ? (
               <div className="modal__mood-banner modal__mood-banner--memory-card">📼 思い出カード</div>
-            ) : milestone ? (
-              <div className="modal__mood-banner modal__mood-banner--milestone">
-                🎉 人生の節目：{milestone.title}
-              </div>
-            ) : isRisk ? (
-              <div className="modal__mood-banner modal__mood-banner--risk">
-                ⚠️ 運命の分岐
-                {riskCategoryLabel && <span className="modal__risk-sublabel">{riskCategoryLabel}</span>}
-              </div>
             ) : (
-              moodBanner && <div className={`modal__mood-banner ${moodBanner.className}`}>{moodBanner.text}</div>
+              <div className={`modal__mood-banner ${primaryBanner.className}`}>
+                {primaryBanner.text}
+                {primaryBanner.sub && <span className="modal__risk-sublabel">{primaryBanner.sub}</span>}
+                {primaryBanner.showAge && <span className="modal__banner-age">{age}歳</span>}
+              </div>
             )}
 
-            {!isMemoryCard && (
-              <div className="modal__badge-row">
-                <div className="modal__badge">{age}歳・{squareMeta.icon} {squareMeta.label}マス</div>
-                <div className="modal__badge modal__badge--type">
-                  {EVENT_TYPE_ICONS[eventType]} {EVENT_TYPE_LABELS[eventType]}
-                </div>
-                {rarityBadge && <div className="modal__badge modal__badge--rare">{rarityBadge}</div>}
-              </div>
-            )}
+            {rarityBadge && <div className="modal__badge modal__badge--rare">{rarityBadge}</div>}
             <h3 className="modal__title">{event.title}</h3>
             <p className="modal__description">{event.description}</p>
             {isMemoryCard && event.memoryQuote && <p className="modal__memory-quote">「{event.memoryQuote}」</p>}
