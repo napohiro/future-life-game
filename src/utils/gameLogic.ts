@@ -1829,6 +1829,288 @@ export function generateFinalChapter(player: Player, lastEventHeadline?: string)
   return `${lastEventPart}${reason.body}${secondLifeLabel}セカンドライフを経て、${player.graduationAge}歳で静かに物語の幕を閉じました。`;
 }
 
+// ---------------------------------------------------------------------------
+// 人生ストーリー（最終レポート用の物語生成）
+// ------------------------------------------------------------
+// generateFinalChapter等と同じく、Ver.1.0では固定テンプレートの組み合わせで文章を生成する
+// プレースホルダー方針（将来はここをAI生成に差し替える想定）。厳密な因果関係の検証は行わず、
+// 「人生ストーリーとして自然につながって見えること」を優先する。
+// ---------------------------------------------------------------------------
+
+const TURNING_POINT_CATEGORIES: EventCategory[] = [
+  'marriage', 'divorce', 'childcare', 'jobChange', 'startup', 'housing', 'care', 'illness', 'accident', 'disaster', 'path', 'retirement',
+];
+
+function turningPointPriority(log: LifeLogEntry): number {
+  return Math.abs(weightedNetEffect(log.effects)) + IMPORTANCE_RANKING_BONUS[log.importance];
+}
+
+/** 進学・結婚・離婚・転職・住宅購入・介護・危険イベントなど「人生の転機」となった出来事を抽出する。 */
+export function getTurningPointLogs(player: Player, count = 5): LifeLogEntry[] {
+  const candidates = player.lifeLogs.filter(
+    (log) => log.eventType === 'turningPoint' || log.importance === 'critical' || TURNING_POINT_CATEGORIES.includes(log.category),
+  );
+  return [...candidates].sort((a, b) => turningPointPriority(b) - turningPointPriority(a)).slice(0, count);
+}
+
+const BEST_REASON_BY_CATEGORY: Partial<Record<EventCategory, string>> = {
+  housing: '暮らしの拠点ができ、人生に安定感が生まれました。',
+  marriage: '支え合えるパートナーを得て、人生に安心が加わりました。',
+  childcare: '新しい家族の存在が、日々に温かい張り合いを与えました。',
+  grandchild: '新しい世代との出会いが、人生に穏やかな喜びを添えました。',
+  work: '積み重ねた努力が実を結び、自信につながりました。',
+  jobChange: '新しい環境が、人生の可能性を広げました。',
+  startup: '自分の力で道を切り開いた経験が、大きな自信になりました。',
+  investment: '堅実な備えが、この先の安心材料になりました。',
+  study: '学びを深めたことが、その後の視野を広げました。',
+  health: '心身を整えたことが、人生を支える土台になりました。',
+  family: '家族との時間が、かけがえのない支えになりました。',
+  friend: '気の置けない仲間との時間が、人生を豊かにしました。',
+  love: '心通わせる相手との出会いが、日々に彩りを添えました。',
+  hobby: '好きなことに打ち込んだ時間が、心の余裕を育てました。',
+  social: '人や地域とのつながりが、人生に彩りを添えました。',
+  ai: '新しい技術とうまく付き合えたことが、暮らしを前に進めました。',
+};
+const BEST_REASON_FALLBACK = 'この出来事が、人生に小さな明るさを加えました。';
+
+/** ベストイベントに添える「なぜ人生にとって良かったのか」の一言。 */
+export function describeBestEventReason(log: LifeLogEntry): string {
+  return BEST_REASON_BY_CATEGORY[log.category] ?? BEST_REASON_FALLBACK;
+}
+
+const PINCH_REASON_BY_CATEGORY: Partial<Record<EventCategory, string>> = {
+  divorce: '大きな喪失を経験しましたが、そのぶん一人で立つ強さを学びました。',
+  friend: '人との距離の難しさを知る出来事でしたが、その後の人間関係への向き合い方に影響しました。',
+  love: 'すれ違いを経験しましたが、次の関係を大切にする気持ちにつながりました。',
+  illness: '体と向き合う大変さを知りましたが、健康の大切さに気づくきっかけになりました。',
+  accident: '思いがけない出来事に見舞われましたが、日々の当たり前のありがたさに気づく機会になりました。',
+  disaster: '厳しい状況に見舞われましたが、周囲との支え合いの大切さを実感しました。',
+  fraud: '苦い経験でしたが、その後は物事をより慎重に見極める目が育ちました。',
+  jobChange: '思うようにいかない時期でしたが、次の一歩を考え直すきっかけになりました。',
+  care: '負担の大きい時期でしたが、家族との関わり方を見つめ直す機会になりました。',
+  smallPinch: 'ちょっとしたつまずきでしたが、乗り越える力が少しずつ育ちました。',
+  investment: '手痛い経験でしたが、お金との付き合い方を学ぶ機会になりました。',
+};
+const PINCH_REASON_FALLBACK = '簡単ではない時期でしたが、この経験がその後の歩みを支えました。';
+
+/** ピンチイベントに添える「どう乗り越えたか・何を学んだか」の一言。暗くなりすぎないトーンにしている。 */
+export function describePinchEventReason(log: LifeLogEntry): string {
+  return PINCH_REASON_BY_CATEGORY[log.category] ?? PINCH_REASON_FALLBACK;
+}
+
+const TURNING_POINT_REASON_BY_CATEGORY: Partial<Record<EventCategory, string>> = {
+  marriage: 'この出来事を境に、人生の歩み方が「自分一人」から「誰かと共に」へと変わりました。',
+  divorce: 'この出来事を境に、それまでとは違う生き方を選び直すことになりました。',
+  childcare: 'この出来事を境に、日々の暮らしの中心に家族が加わりました。',
+  jobChange: 'この出来事を境に、それまでとは違う環境で新しい力を試すことになりました。',
+  startup: 'この出来事を境に、人に雇われる立場から自ら道を作る立場へと変わりました。',
+  housing: 'この出来事を境に、暮らしの拠点が定まり、人生に落ち着きが生まれました。',
+  care: 'この出来事を境に、家族との向き合い方を見つめ直すことになりました。',
+  illness: 'この出来事を境に、健康というものへの向き合い方が変わりました。',
+  accident: 'この出来事を境に、日々の当たり前の大切さを強く意識するようになりました。',
+  disaster: 'この出来事を境に、備えることの大切さを実感するようになりました。',
+  path: 'この出来事を境に、それまでとは違う道を歩み始めました。',
+  retirement: 'この出来事を境に、それまでとは違うペースの日々が始まりました。',
+};
+const TURNING_POINT_REASON_FALLBACK = 'この出来事が、その後の人生の方向を静かに変えました。';
+
+/** 人生の転機に添える「この出来事が人生の方向を変えた」ことが分かる一言。 */
+export function describeTurningPointReason(log: LifeLogEntry): string {
+  return TURNING_POINT_REASON_BY_CATEGORY[log.category] ?? TURNING_POINT_REASON_FALLBACK;
+}
+
+export interface ForeshadowConnection {
+  earlyLog: LifeLogEntry;
+  laterLog: LifeLogEntry;
+  text: string;
+}
+
+interface ForeshadowSeed {
+  earlyCategories: EventCategory[];
+  laterCategories: EventCategory[];
+  text: string;
+}
+
+// 「早い時期のカテゴリ」→「後年の関連カテゴリ」の対応表。実際の因果関係の検証はせず、
+// 人生ストーリーとして自然に見える組み合わせを定義している。
+const FORESHADOW_SEEDS: ForeshadowSeed[] = [
+  {
+    earlyCategories: ['friend', 'smallPinch', 'love'],
+    laterCategories: ['family', 'marriage', 'childcare'],
+    text: '若い頃に知った人との距離の難しさが、後に家族や仲間との関係を大切にする価値観につながりました。',
+  },
+  {
+    earlyCategories: ['accident', 'illness'],
+    laterCategories: ['health', 'care'],
+    text: '早い時期に経験した体の不安が、後に健康を大切にする習慣につながりました。',
+  },
+  {
+    earlyCategories: ['ai', 'study'],
+    laterCategories: ['jobChange', 'startup', 'work'],
+    text: 'まだ珍しかった頃に触れたAI・学びの経験が、後の仕事の選び方に影響しました。',
+  },
+  {
+    earlyCategories: ['hobby', 'challenge', 'smallChallenge'],
+    laterCategories: ['startup', 'jobChange', 'social'],
+    text: '若い頃に夢中になった挑戦が、後に新しい一歩を踏み出す力になりました。',
+  },
+  {
+    earlyCategories: ['fraud', 'disaster'],
+    laterCategories: ['investment', 'housing', 'care'],
+    text: '早い時期に経験した苦い出来事が、後により慎重な選択をする力になりました。',
+  },
+];
+
+const FORESHADOW_EARLY_AGE_LIMIT = 30;
+const FORESHADOW_MIN_GAP_YEARS = 5;
+const FORESHADOW_MAX_RESULTS = 4;
+
+/**
+ * 早い時期の出来事が、後の人生につながって見える組み合わせを抽出する。
+ * 完全な因果関係の証明ではなく、人生ストーリーとして自然に読める「伏線」の演出用。
+ */
+export function getForeshadowingConnections(player: Player): ForeshadowConnection[] {
+  const results: ForeshadowConnection[] = [];
+  const usedEarlyIds = new Set<string>();
+  const usedLaterIds = new Set<string>();
+
+  for (const seed of FORESHADOW_SEEDS) {
+    const earlyLog = player.lifeLogs.find(
+      (log) => log.age <= FORESHADOW_EARLY_AGE_LIMIT && seed.earlyCategories.includes(log.category) && !usedEarlyIds.has(log.id),
+    );
+    if (!earlyLog) continue;
+    const laterLog = player.lifeLogs.find(
+      (log) =>
+        log.age >= earlyLog.age + FORESHADOW_MIN_GAP_YEARS &&
+        seed.laterCategories.includes(log.category) &&
+        !usedLaterIds.has(log.id),
+    );
+    if (!laterLog) continue;
+
+    results.push({ earlyLog, laterLog, text: seed.text });
+    usedEarlyIds.add(earlyLog.id);
+    usedLaterIds.add(laterLog.id);
+    if (results.length >= FORESHADOW_MAX_RESULTS) break;
+  }
+
+  return results;
+}
+
+interface LifeStoryBracket {
+  minAge: number;
+  maxAge: number;
+}
+
+// 幼少期／学生時代／若者・社会人／壮年期／老後の5区分（LIFE_STAGESの年齢帯と揃えている）。
+const LIFE_STORY_BRACKETS: LifeStoryBracket[] = [
+  { minAge: 0, maxAge: 12 },
+  { minAge: 13, maxAge: 22 },
+  { minAge: 23, maxAge: 39 },
+  { minAge: 40, maxAge: 59 },
+  { minAge: 60, maxAge: Infinity },
+];
+
+/** 区分内で最も重要度・影響量が大きいログを、その区分の「アンカー」として選ぶ。 */
+function pickAnchorLog(logs: LifeLogEntry[]): LifeLogEntry | undefined {
+  if (logs.length === 0) return undefined;
+  return [...logs].sort((a, b) => turningPointPriority(b) - turningPointPriority(a))[0];
+}
+
+function eraStoryOpening(player: Player, era: EraId): string {
+  if (era === 'showa') return `${player.name}さんの人生は、家族や近所の支え合いが色濃く残る昭和の時代に始まりました。`;
+  if (era === 'future') return `${player.name}さんの人生は、AIやテクノロジーが暮らしに溶け込んだ近未来の時代に始まりました。`;
+  return `${player.name}さんの人生は、変化の速い現代社会の中で始まりました。`;
+}
+
+function eraFlavorPhrase(era: EraId): string {
+  if (era === 'showa') return '会社や地域との関わりを大切にしながら';
+  if (era === 'future') return 'AIとの付き合い方を模索しながら';
+  return '転職や副業といった選択肢と向き合いながら';
+}
+
+// 人生ログがこの件数以下の場合は、多くを語らず短く丁寧な文章にとどめる
+// （幼少期など早い段階で人生の終幕を迎えた場合に、不自然に長い物語を作らないため）。
+const SHORT_LIFE_STORY_LOG_THRESHOLD = 3;
+
+/**
+ * 最終レポートの「人生ストーリー」本文（プレースホルダー）。
+ * Ver.1.0では固定テンプレートの組み合わせで生成するが、将来はここをAI生成に差し替える想定。
+ * 年代ごとにアンカーとなる出来事を1つずつ選び、時代背景の語彙を添えながら物語としてつなげる。
+ */
+export function generateLifeStory(player: Player, era: EraId): string {
+  if (player.lifeLogs.length <= SHORT_LIFE_STORY_LOG_THRESHOLD) {
+    const anchor = pickAnchorLog(player.lifeLogs);
+    const anchorPhrase = anchor ? `「${anchor.eventTitle}」という出来事もありましたが、` : '';
+    return `${eraStoryOpening(player, era)}${anchorPhrase}まだ多くを語るには短い時間でしたが、そこで過ごした日々は確かなものでした。`;
+  }
+
+  const paragraphs: string[] = [eraStoryOpening(player, era)];
+
+  const bracketAnchors = LIFE_STORY_BRACKETS.map((bracket) =>
+    pickAnchorLog(player.lifeLogs.filter((log) => log.age >= bracket.minAge && log.age <= bracket.maxAge)),
+  );
+
+  const youngAnchor = bracketAnchors[0] ?? bracketAnchors[1];
+  if (youngAnchor) {
+    const tone =
+      weightedNetEffect(youngAnchor.effects) < 0
+        ? 'それは簡単なことではありませんでしたが、その出来事は、のちの選択に静かに影を落としました。'
+        : 'その出来事は、その後の人生に小さな自信を残しました。';
+    paragraphs.push(`${youngAnchor.age}歳の頃、「${youngAnchor.eventTitle}」という出来事がありました。${tone}`);
+  }
+
+  const workAnchor = bracketAnchors[2] ?? bracketAnchors[3];
+  if (workAnchor) {
+    paragraphs.push(
+      `${eraFlavorPhrase(era)}、${workAnchor.age}歳では「${workAnchor.eventTitle}」を経験しました。人生は順風満帆ではありませんでしたが、そのたびに選び直しながら、${player.name}さんは前へ進んでいきました。`,
+    );
+  }
+
+  const relationshipPhrase =
+    player.relationshipStatus === 'married'
+      ? player.hasChildren
+        ? '家族と過ごす時間が、人生を支える大きな柱になりました。'
+        : 'パートナーと過ごす時間が、人生の支えになりました。'
+      : player.relationshipStatus === 'divorced'
+        ? '人との関係には浮き沈みがありましたが、それもまた人生の一部でした。'
+        : '一人の時間も、人とのつながりも、どちらも大切にしながら歩んできました。';
+  paragraphs.push(relationshipPhrase);
+
+  const elderAnchor = bracketAnchors[4];
+  const closingFacts = '資産の多さだけでなく、人とのつながりや、健康を守ろうとした日々が、この人生を支えていたことに気づかされます。';
+  const elderPhrase = elderAnchor ? `${elderAnchor.age}歳での「${elderAnchor.eventTitle}」を経て、` : '';
+  if (player.graduationReasonId) {
+    const reason = getGraduationReason(player.graduationReasonId);
+    paragraphs.push(`${elderPhrase}${reason.body}${closingFacts}`);
+  } else {
+    paragraphs.push(`${elderPhrase}${closingFacts}`);
+  }
+
+  paragraphs.push('これは、派手ではないけれど、確かに自分の足で歩いた人生でした。');
+
+  return paragraphs.join('\n\n');
+}
+
+/**
+ * 最終レポートの「最後の総評」本文（プレースホルダー）。
+ * 「勝ち負け」ではなく、資産・幸福度・健康・人間関係のバランスから人生の質を語る。
+ */
+export function generateFinalReview(player: Player): string {
+  const type = calculateLifeType(player);
+  const balanceScore = Math.round((player.happiness + player.health + player.relationships) / 3);
+
+  const balancePhrase =
+    balanceScore >= 70
+      ? '幸福度・健康・人間関係のバランスが取れた、穏やかな充実感のある人生でした。'
+      : balanceScore >= 45
+        ? '良いことばかりではありませんでしたが、そのたびにバランスを取り戻しながら歩んだ人生でした。'
+        : '楽ではない場面も多くありましたが、それでも歩みを止めなかった人生でした。';
+
+  const moneyPhrase = player.money >= 800 ? '資産にも恵まれましたが、それだけが物差しではなく、' : '資産の多さだけが物差しではなく、';
+
+  return `この人生は、大成功というよりも、何度も選び直した人生でした。${moneyPhrase}${balancePhrase}${type.headline}。最終的に残ったものは、数字だけでは測れない、${player.name}さんらしい歩みそのものでした。`;
+}
+
 export function createInitialGameState(): GameState {
   return {
     phase: 'title',

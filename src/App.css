@@ -2809,6 +2809,103 @@
   padding: 8px 12px;
 }
 
+/* ---------- 人生ストーリー（最終レポートの折り畳みセクション群） ---------- */
+/* ネイティブ<details>/<summary>を使い、スマホでも標準のタップ動作で開閉できるようにしている。 */
+
+.life-story {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.life-story__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #414a5c;
+}
+
+.life-story__section {
+  background: #f7f9fd;
+  border: 1px solid #e7ebf3;
+  border-radius: 12px;
+  padding: 2px 14px;
+}
+
+.life-story__section[open] {
+  padding-bottom: 12px;
+}
+
+.life-story__summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 10px 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #2f3a52;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.life-story__summary::-webkit-details-marker {
+  display: none;
+}
+
+/* 開閉状態を示す矢印。summaryの::afterで自前描画し、[open]時だけ回転させる。 */
+.life-story__summary::after {
+  content: '▾';
+  font-size: 12px;
+  color: #8891a5;
+  transition: transform 0.15s ease;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.life-story__section[open] > .life-story__summary::after {
+  transform: rotate(180deg);
+}
+
+.life-story__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.life-story__paragraph {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: #33394a;
+}
+
+.life-story__event-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.life-story__event-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.life-story__event-headline {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2430;
+}
+
+.life-story__event-reason {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #6b7488;
+}
+
 /* ---------- world settings ---------- */
 
 .world-settings__lead {

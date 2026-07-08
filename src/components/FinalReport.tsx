@@ -17,15 +17,14 @@ import {
   generateLifeSummaryPlaceholder,
   generateReplaySuggestion,
   generateRouteNarrative,
-  getBestLifeLogs,
   getGraduationReason,
   getPlayerVisual,
   getRelationshipDisplayLabel,
   getRepresentativeNewspaperHeadline,
-  getWorstLifeLogs,
   rankPlayers,
 } from '../utils/gameLogic';
 import { playFinalResultSound, vibrate } from '../utils/sound';
+import LifeStoryAccordion from './LifeStoryAccordion';
 
 interface FinalReportProps {
   players: Player[];
@@ -63,8 +62,6 @@ function FinalReport({ players, era, soundEnabled, onRestart, onPlayDifferentEra
           const summary = generateLifeSummaryPlaceholder(player);
           const routeNarrative = generateRouteNarrative(player);
           const replaySuggestion = generateReplaySuggestion(player);
-          const bestLogs = getBestLifeLogs(player, 3);
-          const worstLogs = getWorstLifeLogs(player, 3);
 
           const graduationReason = player.graduationReasonId ? getGraduationReason(player.graduationReasonId) : null;
           const graduationSummary = graduationReason ? generateGraduationSummary(player) : null;
@@ -173,27 +170,7 @@ function FinalReport({ players, era, soundEnabled, onRestart, onPlayDifferentEra
                 </div>
               </div>
 
-              {bestLogs.length > 0 && (
-                <div className="final-report__event-block">
-                  <div className="final-report__event-heading">🌟 人生のベストイベント</div>
-                  <ul className="final-report__event-list">
-                    {bestLogs.map((log) => (
-                      <li key={log.id}>{formatLifeLogHeadline(log)}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {worstLogs.length > 0 && (
-                <div className="final-report__event-block">
-                  <div className="final-report__event-heading">⚡ 人生のピンチイベント</div>
-                  <ul className="final-report__event-list">
-                    {worstLogs.map((log) => (
-                      <li key={log.id}>{formatLifeLogHeadline(log)}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <LifeStoryAccordion player={player} era={era} />
 
               {finalChapter && (
                 <div className="final-report__event-block final-report__event-block--final-chapter">
