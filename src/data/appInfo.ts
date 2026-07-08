@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.0.1';
 
 export interface ReleaseNote {
   version: string;
@@ -9,6 +9,18 @@ export interface ReleaseNote {
 // 新しいバージョンをリリースする際は、この配列の先頭に追加する。
 // 表記ルール：Ver.1.0.1｜2026/07/06 の形式（PATCH=修正のみ／MINOR=機能追加／MAJOR=大規模な仕様変更）
 export const RELEASE_NOTES: ReleaseNote[] = [
+  {
+    version: '1.0.1',
+    date: '2026/07/08',
+    changes: [
+      'キャラクター選択カードの画像表示を拡大',
+      'キャラクター画像の透過表示を調整',
+      'ゲーム上部のプレイヤーカードをコンパクト化',
+      '参加者一覧表示を整理し、盤面表示領域を拡大',
+      'イベントモーダルの重複ラベルを整理',
+      '盤面の見やすさとスマホ操作性を改善',
+    ],
+  },
   {
     version: '1.0.0',
     date: '2026/07/05',
