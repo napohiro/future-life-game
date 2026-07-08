@@ -419,13 +419,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 4px 6px;
+  gap: 6px;
+  padding: 10px 6px 8px;
   background: #f7f9fd;
   border: 2px solid #e7ebf3;
   border-radius: 14px;
   cursor: pointer;
-  min-height: 96px;
+  min-height: 128px;
   transition: border-color 0.12s ease, transform 0.08s ease, background 0.12s ease;
 }
 
@@ -438,10 +438,17 @@
   background: #eaf1ff;
 }
 
+/* 顔がしっかり見えるよう、カードの枠サイズは変えずに画像だけを大きく・上寄りにトリミングする。
+   avatar画像は顔＋肩までのバスト構図（上端が髪の生え際に近い）なので、
+   object-position: center top で下側（肩・服）側を優先的に切り取る。 */
 .character-select-card__image {
-  width: 60px;
-  height: 60px;
-  object-fit: contain;
+  width: 100%;
+  max-width: 88px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 12px;
+  background: #fff;
   pointer-events: none;
 }
 
@@ -453,17 +460,6 @@
 
 .character-select-card--active .character-select-card__label {
   color: #2f6fed;
-}
-
-.character-select-card__description {
-  font-size: 11px;
-  color: #8891a5;
-  line-height: 1.35;
-  text-align: center;
-}
-
-.character-select-card--active .character-select-card__description {
-  color: #5a7fd4;
 }
 
 .character-select-card__check {
