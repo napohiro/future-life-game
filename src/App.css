@@ -721,10 +721,19 @@
 .game-board__turn-age {
   display: flex;
   align-items: baseline;
+  flex-wrap: wrap;
   gap: 2px;
   font-size: 12px;
   font-weight: 700;
   color: #6b7488;
+}
+
+/* 「（1956年）」の西暦部分。狭い画面では年齢部分と別行に折り返してもよいが、
+   「〇〇年）」の途中では改行させたくないため、この単位自体はnowrapにしている。 */
+.game-board__turn-year {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8891a5;
   white-space: nowrap;
 }
 
@@ -1005,6 +1014,14 @@
   z-index: 6;
   width: min(70%, 270px);
   pointer-events: none;
+  /* 普段は控えめな透過表示にして、マス目・プレイヤーコマ・イベントアイコンの邪魔をしない
+     「盤面の世界観を補助する装飾」として扱う。現在いるエリアだけ--currentで不透明に戻す。 */
+  opacity: 0.32;
+  transition: opacity 0.25s ease;
+}
+
+.board-area-card--current {
+  opacity: 1;
 }
 
 /* 縦の行間隔が最も詰まる区間（青春・学生エリア→若者・社会人前半エリア等）でも

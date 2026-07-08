@@ -180,6 +180,18 @@ export interface EventChoice {
 // endsLifeChance / fateRoulette の実値で行うため、riskLevelそのものはゲームロジックに影響しない）。
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
+// 史実・時代背景イベントの分類タグ（コンテンツ分類用のメタ情報）。
+export type HistoricalTag =
+  | 'historical'
+  | 'social'
+  | 'economy'
+  | 'technology'
+  | 'disaster'
+  | 'culture'
+  | 'work'
+  | 'family'
+  | 'health';
+
 export interface GameEvent {
   id: string;
   title: string;
@@ -225,6 +237,12 @@ export interface GameEvent {
   // このイベント自体（選択肢を持たない場合）が人生終了に至った場合に使う卒業理由の指定。
   // 未指定の場合はイベントのカテゴリから汎用的な理由が自動選択される。
   graduationReasonId?: string;
+  // 史実・時代背景イベントの分類（コンテンツ整理用のメタ情報。抽選ロジックには使わない）。
+  historicalTag?: HistoricalTag[];
+  // 指定した場合、時代の開始年＋年齢で算出される「物語上の暦年」がこの範囲内の時だけ候補になる
+  // （例：昭和編の大阪万博イベントに yearRange: [1970, 1970] を指定すると、年齢が合っていても
+  // 暦年が1970年でなければ出現しない）。未指定の場合は暦年による絞り込みを行わない。
+  yearRange?: [number, number];
 }
 
 export type LogImportance = 'normal' | 'high' | 'critical';

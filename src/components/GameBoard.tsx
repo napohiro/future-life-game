@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BOARD_AREA_CARDS, getCurrentBoardArea } from '../data/boardAreas';
 import { BRANCH_POINTS, getBranchPointForPosition } from '../data/branchRoutes';
-import { getEraDefinition } from '../data/eras';
+import { getCalendarYear, getEraDefinition, getGengoLabel } from '../data/eras';
 import { getPlayerCharacter } from '../data/playerCharacters';
 import { ERA_BACKGROUND_IMAGES } from '../data/uiAssets';
 import type { EraId, MoveAnimationState, Player } from '../types/game';
@@ -145,6 +145,11 @@ function GameBoard({
                       {currentPlayer.age}
                     </span>
                     歳
+                    <span className="game-board__turn-year">
+                      （
+                      {era === 'showa' ? `${getGengoLabel(getCalendarYear(era, currentPlayer.age))}・` : ''}
+                      {getCalendarYear(era, currentPlayer.age)}年）
+                    </span>
                   </span>
                   {currentLongevityBadge && (
                     <span className="game-board__longevity-badge">

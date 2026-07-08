@@ -1,6 +1,6 @@
 import { ALL_EVENTS, pickRandomEvent } from '../data/boardEvents';
 import { getCategoryBoostsForRoutes } from '../data/branchRoutes';
-import { DEFAULT_ERA } from '../data/eras';
+import { DEFAULT_ERA, getCalendarYear } from '../data/eras';
 import { getBaseDeathChance } from '../data/lifespanSettings';
 import { DEFAULT_CHARACTER_ID } from '../data/playerCharacters';
 import type {
@@ -570,6 +570,19 @@ function isEventAvailableForEra(event: GameEvent, era: EraId): boolean {
   return true;
 }
 
+/**
+ * 史実・時代背景イベントの yearRange（暦年の範囲）に、現在の「物語上の暦年」が
+ * 収まっているかを判定する。yearRange未指定のイベントは常にtrue（暦年による絞り込みを受けない）。
+ * 「昭和編の幼少期に大阪万博イベントが出るより、年齢と西暦が合う時期に出る方が自然」という
+ * 要望に対応するための、年齢(minAge/maxAge)とは独立した絶対年基準のフィルタ。
+ */
+function isEventYearEligible(event: GameEvent, era: EraId, age: number): boolean {
+  if (!event.yearRange) return true;
+  const calendarYear = getCalendarYear(era, age);
+  const [from, to] = event.yearRange;
+  return calendarYear >= from && calendarYear <= to;
+}
+
 /** 世界設定によるイベント出現の軽い補正。候補配列に該当イベントを重複追加/除外することで、出現しやすさを調整する。 */
 function applySettingsBias(events: GameEvent[], settings: GameSettings): GameEvent[] {
   let biased = events;
@@ -805,7 +818,8 @@ export function getEventForSquare(player: Player, stage: LifeStage, squareType: 
       e.ageCategory === stage &&
       preferredCategoryList.includes(e.category) &&
       isEventEligibleForPlayer(e, player, age) &&
-      isEventAvailableForEra(e, settings.era),
+      isEventAvailableForEra(e, settings.era) &&
+      isEventYearEligible(e, settings.era, age),
   );
   pool = applySettingsBias(pool, settings);
   // 選んだ人生ルート（chosenRoutes）に応じて、関連カテゴリのイベントを少し出やすくする。
@@ -829,7 +843,8 @@ export function getEventForSquare(player: Player, stage: LifeStage, squareType: 
       e.ageCategory === stage &&
       stageAllowedCategories.includes(e.category) &&
       isEventEligibleForPlayer(e, player, age) &&
-      isEventAvailableForEra(e, settings.era),
+      isEventAvailableForEra(e, settings.era) &&
+      isEventYearEligible(e, settings.era, age),
   );
   stagePool = preferUnexperienced(stagePool, player);
   if (stagePool.length > 0) return pickRandomEvent(stagePool);
