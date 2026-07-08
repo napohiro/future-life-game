@@ -118,6 +118,64 @@ export const HEALTH_RISK_FATE_ROULETTE: FateRoulette = {
   ],
 };
 
+// 危険度「low」向け。ほとんどが無事〜軽い不調で収まり、人生終了には至らない。
+export const MINOR_RISK_FATE_ROULETTE: FateRoulette = {
+  title: '運命判定',
+  influenceStat: 'health',
+  outcomes: [
+    { id: 'safe', label: '無事だった', severity: 'greatSuccess', weight: 45, effects: { mentalStrength: 3 } },
+    { id: 'minor-injury', label: '軽傷で済んだ', severity: 'success', weight: 30, effects: { health: -5 } },
+    { id: 'lingering', label: '少し体調を崩した', severity: 'neutral', weight: 15, effects: { health: -10, happiness: -3 } },
+    { id: 'setback', label: 'しばらく本調子に戻らなかった', severity: 'failure', weight: 8, effects: { health: -15, money: -5 } },
+    { id: 'prolonged', label: '長引く不調に悩まされた', severity: 'greatFailure', weight: 2, effects: { health: -20, mentalStrength: -5 } },
+  ],
+};
+
+// 危険度「high」向け。無事〜長期入院〜後遺症〜人生終了まで、幅広い結果を用意する。
+export const MAJOR_ACCIDENT_FATE_ROULETTE: FateRoulette = {
+  title: '運命判定',
+  influenceStat: 'health',
+  outcomes: [
+    { id: 'safe', label: '無事だった', severity: 'greatSuccess', weight: 22, effects: { mentalStrength: 5 } },
+    { id: 'minor-injury', label: '軽傷で済んだ', severity: 'success', weight: 26, effects: { health: -10 } },
+    { id: 'long-hospitalization', label: '長期入院となった', severity: 'neutral', weight: 26, effects: { health: -25, money: -30, happiness: -5 } },
+    {
+      id: 'after-effects',
+      label: '後遺症が残った',
+      severity: 'failure',
+      weight: 18,
+      effects: { health: -35, money: -20, mentalStrength: -10 },
+    },
+    {
+      id: 'life-ended',
+      label: '人生の幕を閉じた',
+      severity: 'greatFailure',
+      weight: 8,
+      effects: { health: -40 },
+      endsLifeChance: 0.55,
+    },
+  ],
+};
+
+// 危険度「critical」向け。史実上の大事故・極めて危険な選択専用。出現頻度自体を
+// oncePerGame・superRareで極端に絞ることを前提に、結果は重い方向へ大きく偏らせている。
+export const CRITICAL_INCIDENT_FATE_ROULETTE: FateRoulette = {
+  title: '運命判定',
+  influenceStat: 'health',
+  outcomes: [
+    { id: 'miraculous-safe', label: '奇跡的に無事だった', severity: 'success', weight: 10, effects: { mentalStrength: 10, luck: 10 } },
+    { id: 'after-effects', label: '後遺症が残った', severity: 'neutral', weight: 20, effects: { health: -40, mentalStrength: -15 } },
+    {
+      id: 'life-ended',
+      label: '人生の幕を閉じた',
+      severity: 'greatFailure',
+      weight: 70,
+      effects: { health: -50 },
+      endsLifeChance: 0.75,
+    },
+  ],
+};
+
 export const TECH_FATE_ROULETTE: FateRoulette = {
   title: '近未来テクノロジーの運命',
   influenceStat: 'aiAffinity',

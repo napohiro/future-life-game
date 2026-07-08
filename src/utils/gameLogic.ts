@@ -103,6 +103,7 @@ export const EVENT_CATEGORY_LABELS: Record<EventCategory, string> = {
   housing: '住居',
   fortune: '幸運チャンス',
   memory: '思い出',
+  travel: '旅行',
 };
 
 // 職業・年収・恋愛家族状況・住居（StatKeyとは別枠の「状態」ステータス）の表示用ラベル・アイコン。
@@ -1047,6 +1048,7 @@ const UNLUCKY_LEANING_CATEGORIES: EventCategory[] = [
   'death',
   'smallPinch',
   'care',
+  'travel',
 ];
 
 function sumEffectValues(effects: StatEffects): number {
@@ -1594,6 +1596,20 @@ export const GRADUATION_REASONS: GraduationReason[] = [
     title: '人生の卒業',
     body: '思いがけない災害により、人生の幕を閉じることになりました。あなたが歩んできた道のりは、確かにここにありました。',
   },
+  {
+    id: 'earlyTravel',
+    label: '旅先での出来事',
+    title: '人生の卒業',
+    body: '出かけた先での思いがけない出来事により、人生の幕を閉じることになりました。それでも、そこに至るまでの日々は確かなものでした。',
+  },
+  // 昭和編の特別な旅行イベント専用の卒業理由。実在の出来事を静かに思わせる表現に留め、
+  // 日付・会社名・便名の史実対応・犠牲者数などは一切記載しない（史実への配慮）。
+  {
+    id: 'showaFlightTragedy',
+    label: '旅立ちの日',
+    title: '人生の卒業',
+    body: 'その便は、のちに人々の記憶に長く残る大きな事故に見舞われた便でした。あなたの人生は、ここで静かに幕を閉じました。',
+  },
   // 盤面の物理的な終端（150歳）に到達した、ごく限られた人だけがたどり着く特別な卒業理由。
   {
     id: 'grandFinale',
@@ -1608,10 +1624,22 @@ export function getGraduationReason(id: string): GraduationReason {
 }
 
 /** 80歳未満の「人生終了」イベントが発生した際、イベントのカテゴリに応じた理由を選ぶ。 */
-export function pickEarlyEndingReason(category: EventCategory): GraduationReason {
+function pickEarlyEndingReasonByCategory(category: EventCategory): GraduationReason {
   if (category === 'illness') return getGraduationReason('earlyIllness');
   if (category === 'disaster') return getGraduationReason('earlyDisaster');
+  if (category === 'travel') return getGraduationReason('earlyTravel');
   return getGraduationReason('earlyAccident');
+}
+
+/**
+ * 80歳未満の「人生終了」イベントが発生した際の卒業理由を選ぶ。
+ * イベント（または選んだ選択肢）に graduationReasonId が明示されている場合はそれを優先し
+ * （史実をモチーフにした特別イベントなど、専用の一言が必要な場合に使う）、
+ * なければ従来通りカテゴリから汎用的な理由を選ぶ。
+ */
+export function resolveEarlyEndingReason(category: EventCategory, graduationReasonId?: string): GraduationReason {
+  if (graduationReasonId) return getGraduationReason(graduationReasonId);
+  return pickEarlyEndingReasonByCategory(category);
 }
 
 // 危険な出来事（病気・事故・災害）の経験回数が多いほど、僅かに寿命確率を押し上げる
@@ -1674,6 +1702,27 @@ export function calculateLifespanDeathChance(player: Player, settings: GameSetti
   }
 
   return Math.min(0.9, Math.max(0.01, chance));
+}
+
+/**
+ * 病気・事故・災害などのイベント単位の「人生終了確率」（endsLifeChance）を、プレイヤーの
+ * ステータスに応じて僅かに補正する。寿命システム（calculateLifespanDeathChance）と同じ考え方で、
+ * 「健康なら病気に強く、資産があれば医療・避難で助かりやすく、幸福度・関係が厚いと支えがある」
+ * ことを表現する。ただし補正幅は小さく抑え、選択そのものの回避効果（endsLifeChanceを付けない）
+ * が主たる回避手段であり続けるようにしている。
+ */
+export function adjustEndsLifeChance(baseChance: number, player: Player): number {
+  let chance = baseChance * calculateHealthLifespanFactor(player.health);
+
+  // 資産が多いほど医療・避難行動へのアクセスが良く、僅かにリスクが下がる。
+  const moneyFactor = 1 - Math.max(-0.15, Math.min(0.15, (player.money - 300) / 4000));
+  chance *= moneyFactor;
+
+  // 幸福度・人間関係の支えが厚いほど、僅かにリスクが下がる。
+  const supportFactor = 1 - Math.max(-0.1, Math.min(0.1, (player.happiness + player.relationships - 100) / 800));
+  chance *= supportFactor;
+
+  return Math.min(0.95, Math.max(0.005, chance));
 }
 
 /** 卒業理由を、プレイヤーのステータスに応じた重み付きランダムで選ぶ。 */

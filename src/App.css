@@ -2003,6 +2003,14 @@
   background: linear-gradient(180deg, #eaf8fc 0%, #fff 120px);
 }
 
+/* 病気・事故・事件・災害など「人生終了」につながりうる危険イベント専用。
+   pinch（赤・シェイク演出）より落ち着いた琥珀色にし、恐怖を煽りすぎないようにしている。 */
+.modal--risk {
+  border-top-color: #b8860b;
+  background: linear-gradient(180deg, #fdf6e8 0%, #fff 120px);
+  animation: modal-pop-in 0.28s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
 .modal--super-rare {
   border-top: 6px solid transparent;
   border-image: linear-gradient(90deg, #ff6f91, #ffb020, #22c55e, #2fb6d9, #8b5cf6) 1;
@@ -2090,6 +2098,22 @@
 .modal__mood-banner--health {
   background: #e2f6f2;
   color: #2a9d8f;
+}
+
+.modal__mood-banner--risk {
+  background: #fbf0d9;
+  color: #8a6416;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal__risk-sublabel {
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  padding: 2px 10px;
 }
 
 .modal__mood-banner--family {

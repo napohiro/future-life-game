@@ -45,6 +45,27 @@ const MOOD_CLASS: Partial<Record<SquareType, string>> = {
   work: 'modal--work',
 };
 
+// 病気・事故・事件・災害など「人生終了」につながりうる危険イベント専用のバナー。
+// 通常のsquareType別バナー（MOOD_BANNER）より優先して表示し、一目で「特別な出来事」だと
+// 分かるようにする。ただし恐怖を煽りすぎないよう、既存のpinch（赤系）より落ち着いた琥珀色にしている。
+const RISK_CATEGORY_LABEL: Partial<Record<GameEvent['category'], string>> = {
+  illness: '🏥 健康リスク',
+  health: '🏥 健康リスク',
+  accident: '🚧 事故リスク',
+  disaster: '🌪️ 災害イベント',
+  travel: '✈️ 旅の分岐',
+  fraud: '⚠️ 事件リスク',
+  care: '🏥 健康リスク',
+};
+
+function isRiskEvent(event: GameEvent): boolean {
+  return (
+    event.riskLevel !== undefined ||
+    event.endsLifeChance !== undefined ||
+    (event.choices?.some((c) => c.endsLifeChance !== undefined) ?? false)
+  );
+}
+
 const MOOD_BANNER: Partial<Record<SquareType, { text: string; className: string }>> = {
   chance: { text: '🍀 チャンス！', className: 'modal__mood-banner--chance' },
   pinch: { text: '⚡ ピンチ！', className: 'modal__mood-banner--pinch' },
@@ -73,8 +94,16 @@ function EventModal({
   const rarityBadge = RARITY_BADGE[event.rarity];
   const milestone = getBoardMilestone(age);
   const isMemoryCard = event.category === 'memory';
-  const moodClass = isMemoryCard ? 'modal--memory-card' : milestone ? 'modal--milestone' : MOOD_CLASS[squareType] ?? '';
+  const isRisk = result === null && isRiskEvent(event);
+  const moodClass = isMemoryCard
+    ? 'modal--memory-card'
+    : milestone
+      ? 'modal--milestone'
+      : isRisk
+        ? 'modal--risk'
+        : MOOD_CLASS[squareType] ?? '';
   const moodBanner = MOOD_BANNER[squareType];
+  const riskCategoryLabel = RISK_CATEGORY_LABEL[event.category];
   const eventType = result ? result.eventType : getEventType(event);
 
   return (
@@ -87,6 +116,11 @@ function EventModal({
             ) : milestone ? (
               <div className="modal__mood-banner modal__mood-banner--milestone">
                 🎉 人生の節目：{milestone.title}
+              </div>
+            ) : isRisk ? (
+              <div className="modal__mood-banner modal__mood-banner--risk">
+                ⚠️ 運命の分岐
+                {riskCategoryLabel && <span className="modal__risk-sublabel">{riskCategoryLabel}</span>}
               </div>
             ) : (
               moodBanner && <div className={`modal__mood-banner ${moodBanner.className}`}>{moodBanner.text}</div>

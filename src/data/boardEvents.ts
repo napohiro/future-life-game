@@ -7,6 +7,7 @@ import {
 } from './fateRoulettes';
 import { fortuneEvents } from './fortuneEvents';
 import { longevityEvents } from './longevityEvents';
+import { futureEvents } from './futureEvents';
 import { presentEvents } from './presentEvents';
 import { showaEvents } from './showaEvents';
 import type { GameEvent } from '../types/game';
@@ -3175,6 +3176,7 @@ export const ALL_EVENTS: GameEvent[] = [
   ...lifePathEvents,
   ...presentEvents,
   ...showaEvents,
+  ...futureEvents,
   ...fortuneEvents,
   ...longevityEvents,
   ...infantEvents,

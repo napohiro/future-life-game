@@ -27,6 +27,7 @@ import type {
   PlayerSetupInput,
 } from './types/game';
 import {
+  adjustEndsLifeChance,
   appendLifeLog,
   applyEffectsToPlayer,
   applyFlagsToPlayer,
@@ -45,9 +46,9 @@ import {
   mergeStatEffects,
   mergeStatusEffects,
   movePlayerPosition,
-  pickEarlyEndingReason,
   pickFateOutcome,
   pickLifespanEndReason,
+  resolveEarlyEndingReason,
   rollDice,
 } from './utils/gameLogic';
 import type { DrawnEvent } from './utils/gameLogic';
@@ -351,6 +352,7 @@ function App() {
             baseStatusEffects: choice ? choice.statusEffects : prev.activeEvent.statusEffects,
             baseEndsLifeChance: choice ? choice.endsLifeChance : prev.activeEvent.endsLifeChance,
             baseGrantsFlags: choice ? choice.grantsFlags : prev.activeEvent.grantsFlags,
+            baseGraduationReasonId: choice ? choice.graduationReasonId : prev.activeEvent.graduationReasonId,
             choiceLabel: choice?.label,
           },
         };
@@ -359,6 +361,7 @@ function App() {
       const statusEffects = choice ? choice.statusEffects : prev.activeEvent.statusEffects;
       const endsLifeChance = choice ? choice.endsLifeChance : prev.activeEvent.endsLifeChance;
       const grantsFlags = choice ? choice.grantsFlags : prev.activeEvent.grantsFlags;
+      const graduationReasonId = choice ? choice.graduationReasonId : prev.activeEvent.graduationReasonId;
       return {
         ...prev,
         pendingResult: {
@@ -366,6 +369,7 @@ function App() {
           statusEffects,
           endsLifeChance,
           grantsFlags,
+          graduationReasonId,
           choiceLabel: choice?.label,
           eventType: getEventType(prev.activeEvent),
         },
@@ -397,6 +401,7 @@ function App() {
           statusEffects,
           endsLifeChance,
           grantsFlags: pending.baseGrantsFlags,
+          graduationReasonId: pending.baseGraduationReasonId,
           choiceLabel: pending.choiceLabel,
           eventType: getEventType(prev.activeEvent),
           fateOutcomeLabel: outcome.label,
@@ -413,8 +418,12 @@ function App() {
       const result = prev.pendingResult;
       // 選択（または選択肢のないイベント自体）に人生終了の確率が設定されている場合、
       // ここで低確率抽選を行う。安全な選択肢を選べば endsLifeChance が付かないため、
-      // プレイヤーの選択次第で回避できる。
-      const rolledEarlyEnding = result.endsLifeChance !== undefined && Math.random() < result.endsLifeChance;
+      // プレイヤーの選択次第で回避できる。健康・資産・幸福度/関係による僅かな補正も加える。
+      const eventPlayerSnapshot = prev.players.find((p) => p.id === prev.activePlayerIdForEvent);
+      const rolledEarlyEnding =
+        result.endsLifeChance !== undefined &&
+        eventPlayerSnapshot !== undefined &&
+        Math.random() < adjustEndsLifeChance(result.endsLifeChance, eventPlayerSnapshot);
       // 運命ルーレットで大成功・大失敗を引いた場合は、人生新聞・人生ログで目立つよう重要度を上げる。
       const isBigFateResult = result.fateSeverity === 'greatSuccess' || result.fateSeverity === 'greatFailure';
 
@@ -456,7 +465,7 @@ function App() {
         // 80歳未満でも起こりうる、低確率の「人生終了」。老後の卒業と同じ仕組み（pendingGraduation）を
         // 再利用することで、人生新聞・人生ログ・最終ステータスの扱いや以降のターン除外を統一している。
         const endingPlayer = updatedPlayers.find((p) => p.id === prev.activePlayerIdForEvent)!;
-        const reason = pickEarlyEndingReason(event.category);
+        const reason = resolveEarlyEndingReason(event.category, result.graduationReasonId);
         updatedPlayers = updatedPlayers.map((p) =>
           p.id === prev.activePlayerIdForEvent
             ? { ...p, finished: true, graduationAge: endingPlayer.age, graduationReasonId: reason.id }

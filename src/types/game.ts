@@ -94,7 +94,8 @@ export type EventCategory =
   | 'family'
   | 'housing'
   | 'fortune'
-  | 'memory';
+  | 'memory'
+  | 'travel';
 
 export type Rarity = 'common' | 'rare' | 'superRare';
 
@@ -170,7 +171,14 @@ export interface EventChoice {
   fateRoulette?: FateRoulette;
   // この選択をすると付与される「人生フラグ」（留学経験・AIスキルなど）。以降のイベント抽選条件に使う。
   grantsFlags?: string[];
+  // この選択で人生終了に至った場合に使う卒業理由（data/gameLogic.ts の GRADUATION_REASONS の id）。
+  // 未指定の場合はイベントのカテゴリから汎用的な理由が自動選択される。
+  graduationReasonId?: string;
 }
+
+// 危険イベントの危険度（UI表示・コンテンツ分類用のメタ情報。実際の確率計算は
+// endsLifeChance / fateRoulette の実値で行うため、riskLevelそのものはゲームロジックに影響しない）。
+export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
 export interface GameEvent {
   id: string;
@@ -212,6 +220,11 @@ export interface GameEvent {
   // 昭和編専用の「思い出カード」（category: 'memory'）で使う、当時を思い出す一言コメント。
   // 通常イベントとは別枠の低確率演出で、人生の勝敗にはほぼ影響しない懐かしさ重視の要素。
   memoryQuote?: string;
+  // 病気・事故・事件・災害イベントの危険度（UI表示用）。低確率演出であることを示す目安。
+  riskLevel?: RiskLevel;
+  // このイベント自体（選択肢を持たない場合）が人生終了に至った場合に使う卒業理由の指定。
+  // 未指定の場合はイベントのカテゴリから汎用的な理由が自動選択される。
+  graduationReasonId?: string;
 }
 
 export type LogImportance = 'normal' | 'high' | 'critical';
@@ -373,6 +386,8 @@ export interface PendingEventResult {
   fateOutcomeLabel?: string;
   fateSeverity?: FateSeverity;
   grantsFlags?: string[];
+  // 人生終了に至った場合に優先して使う卒業理由の指定（選択またはイベント自体から引き継ぐ）。
+  graduationReasonId?: string;
 }
 
 // 選択肢（または選択肢のないイベント自体）に運命ルーレットが設定されていた場合、
@@ -384,6 +399,8 @@ export interface PendingFateRoulette {
   baseEndsLifeChance?: number;
   baseGrantsFlags?: string[];
   choiceLabel?: string;
+  // 人生終了に至った場合に優先して使う卒業理由の指定（選択またはイベント自体から引き継ぐ）。
+  baseGraduationReasonId?: string;
 }
 
 export interface PendingBranchChoice {
