@@ -419,8 +419,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 10px 6px 8px;
+  gap: 4px;
+  padding: 8px 6px 6px;
   background: #f7f9fd;
   border: 2px solid #e7ebf3;
   border-radius: 14px;
@@ -438,17 +438,18 @@
   background: #eaf1ff;
 }
 
-/* 顔がしっかり見えるよう、カードの枠サイズは変えずに画像だけを大きく・上寄りにトリミングする。
-   avatar画像は顔＋肩までのバスト構図（上端が髪の生え際に近い）なので、
-   object-position: center top で下側（肩・服）側を優先的に切り取る。 */
+/* 顔がしっかり見えるよう、カードの枠サイズ（グリッド列数・padding）は変えずに画像面積だけを
+   カード内の8〜9割まで広げる。avatar画像は顔＋肩までのバスト構図（上端が髪の生え際に近い透過PNG）
+   なので、object-position: center top で下側（肩・服）側を優先的に切り取り、
+   backgroundは透明のままにして透過PNGの背景（不自然な白四角）が出ないようにしている。 */
 .character-select-card__image {
   width: 100%;
-  max-width: 88px;
+  max-width: 136px;
   aspect-ratio: 1 / 1;
   object-fit: cover;
   object-position: center top;
   border-radius: 12px;
-  background: #fff;
+  background: transparent;
   pointer-events: none;
 }
 
