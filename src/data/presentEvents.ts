@@ -250,6 +250,8 @@ const presentAiEvents: GameEvent[] = [
     effects: {},
     logText: '生成AIツールを使い始め、暮らしや仕事の仕方が少し変わった。',
     rarity: 'common',
+    image: '/assets/events/modern/generative-ai-work.webp',
+    imageAlt: '生成AIを使った仕事をイメージした画像',
     eventType: 'choice',
     choices: [
       {
@@ -287,6 +289,8 @@ const presentLoveEvents: GameEvent[] = [
     effects: {},
     logText: 'マッチングアプリでの出会いから、結婚という決断に至った。',
     rarity: 'rare',
+    image: '/assets/events/common/marriage.webp',
+    imageAlt: '結婚をイメージした画像',
     eventType: 'choice',
     choices: [
       {
@@ -416,6 +420,8 @@ const presentCareEvents: GameEvent[] = [
     effects: { mentalStrength: -10, money: -10 },
     logText: '親の介護という現実と向き合うことになった。',
     rarity: 'common',
+    image: '/assets/events/modern/caregiving.webp',
+    imageAlt: '現代の介護をイメージした画像',
     eventType: 'choice',
     choices: [
       { id: 'balance', label: '仕事と両立しながら介護する', effects: { health: -10, mentalStrength: -5, relationships: 10 } },
@@ -463,6 +469,8 @@ const presentFraudEvents: GameEvent[] = [
     effects: { mentalStrength: -15, trust: -10 },
     logText: 'SNSでの炎上騒動に、しばらく心を痛めた。',
     rarity: 'common',
+    image: '/assets/events/modern/sns-trouble.webp',
+    imageAlt: 'SNSトラブルをイメージした画像',
   },
   {
     id: 'present-fraud-sidejob-scam',
@@ -858,6 +866,8 @@ const presentRiskEvents: GameEvent[] = [
     effects: {},
     logText: '介護疲れに、どう向き合うか選んだ。',
     rarity: 'common',
+    image: '/assets/events/modern/caregiving.webp',
+    imageAlt: '現代の介護をイメージした画像',
     eventType: 'choice',
     choices: [
       { id: 'a', label: '介護サービスを頼り、負担を分かち合う', effects: { money: -15, mentalStrength: 10, happiness: 5 } },
@@ -903,6 +913,8 @@ const presentHistoricalEvents: GameEvent[] = [
     effects: { money: 8, actionPower: 8, aiAffinity: 10 },
     logText: '生成AIを仕事に取り入れ、作業時間を大きく短縮した。',
     rarity: 'common',
+    image: '/assets/events/modern/generative-ai-work.webp',
+    imageAlt: '生成AIを使った仕事をイメージした画像',
   },
   {
     id: 'present-history-inflation',

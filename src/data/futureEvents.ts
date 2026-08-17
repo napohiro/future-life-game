@@ -49,6 +49,8 @@ const futureRiskEvents: GameEvent[] = [
     effects: {},
     logText: '再生医療による治療を受けるか選んだ。',
     rarity: 'rare',
+    image: '/assets/events/future/ai-medical.webp',
+    imageAlt: 'AI医療をイメージした画像',
     eventType: 'choice',
     futureTag: 'regenerative-medicine',
     choices: [

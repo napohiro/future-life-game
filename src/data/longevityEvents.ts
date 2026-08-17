@@ -268,6 +268,8 @@ const futureLongevityEvents: GameEvent[] = [
     effects: { health: 15, aiAffinity: 10 },
     logText: 'AI健康管理システムのおかげで、体調を維持しやすくなった。',
     rarity: 'common',
+    image: '/assets/events/future/ai-medical.webp',
+    imageAlt: 'AI医療をイメージした画像',
   },
   {
     id: 'longevity-future-robot-care',
@@ -373,6 +375,8 @@ const futureLongevityEvents: GameEvent[] = [
     effects: { happiness: 10, knowledge: 10, aiAffinity: 5 },
     logText: '大切な記憶をデジタルに保存し、安心感を得た。',
     rarity: 'common',
+    image: '/assets/events/future/personality-data.webp',
+    imageAlt: '人格データをイメージした画像',
   },
   {
     id: 'longevity-future-virtual-society',
@@ -428,6 +432,8 @@ const futureLongevityEvents: GameEvent[] = [
     effects: {},
     logText: '意識データ化という、人生で最も重い決断と向き合った。',
     rarity: 'superRare',
+    image: '/assets/events/future/personality-data.webp',
+    imageAlt: '人格データをイメージした画像',
     eventType: 'turningPoint',
     choices: [
       {

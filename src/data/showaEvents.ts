@@ -392,6 +392,8 @@ const showaTeenEvents: GameEvent[] = [
     effects: { knowledge: 5, mentalStrength: 5 },
     logText: '集団就職で都会へ向かう同級生の話に、将来を思い巡らせた。',
     rarity: 'common',
+    image: '/assets/events/showa/group-employment.webp',
+    imageAlt: '昭和の集団就職をイメージした画像',
   },
   {
     id: 'showa-teen-first-love',
@@ -491,6 +493,8 @@ const showaYouthEvents: GameEvent[] = [
     grantsFlags: ['showa:groupEmployment'],
     logText: '集団就職の列車に乗り、期待と不安を抱えて上京した。',
     rarity: 'rare',
+    image: '/assets/events/showa/group-employment.webp',
+    imageAlt: '昭和の集団就職をイメージした画像',
   },
   {
     id: 'showa-youth-dormitory',
@@ -548,6 +552,8 @@ const showaYouthEvents: GameEvent[] = [
     effects: {},
     logText: '結婚という人生の大きな一歩と向き合った。',
     rarity: 'rare',
+    image: '/assets/events/common/marriage.webp',
+    imageAlt: '結婚をイメージした画像',
     eventType: 'choice',
     choices: [
       {
@@ -656,6 +662,8 @@ const showaAdultEvents: GameEvent[] = [
     effects: {},
     logText: 'マイホーム購入という大きな決断と向き合った。',
     rarity: 'rare',
+    image: '/assets/events/showa/my-home.webp',
+    imageAlt: '昭和のマイホームをイメージした画像',
     eventType: 'choice',
     choices: [
       { id: 'buy', label: '思い切ってマイホームを購入する', effects: { happiness: 15, freedom: -10 }, statusEffects: { housingStatus: '持ち家（ローン返済中）' } },
@@ -1879,6 +1887,8 @@ const showaHistoricalEvents: GameEvent[] = [
     effects: { happiness: 12, relationships: 5 },
     logText: '「三種の神器」が揃っていく我が家の変化に、胸が高鳴った。',
     rarity: 'common',
+    image: '/assets/events/showa/three-sacred-treasures.webp',
+    imageAlt: '昭和の家電三種の神器をイメージした画像',
   },
   {
     id: 'showa-history-tokyo-olympics',

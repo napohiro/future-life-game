@@ -199,6 +199,8 @@ const studentEvents: GameEvent[] = [
     effects: {},
     logText: '進路に悩んだ末、自分なりの答えを出した。',
     rarity: 'common',
+    image: '/assets/events/common/job-start.webp',
+    imageAlt: '就職をイメージした画像',
     choices: [
       { id: 'a', label: '進学する', effects: { knowledge: 15, money: -30 } },
       { id: 'b', label: '就職する', effects: { money: 20, knowledge: -5, freedom: -5, actionPower: 10 } },
@@ -326,6 +328,8 @@ const workEvents: GameEvent[] = [
     effects: { health: -15, mentalStrength: -10, money: 10 },
     logText: '残業続きで燃え尽きかけたが、なんとか乗り切った。',
     rarity: 'common',
+    image: '/assets/events/common/pinch.webp',
+    imageAlt: '人生のピンチをイメージした画像',
   },
   {
     id: 'work-03',
@@ -449,6 +453,8 @@ const marriageEvents: GameEvent[] = [
     effects: {},
     logText: '人生の大きな節目として結婚と向き合った。',
     rarity: 'common',
+    image: '/assets/events/common/marriage.webp',
+    imageAlt: '結婚をイメージした画像',
     choices: [
       {
         id: 'a',
@@ -469,6 +475,8 @@ const marriageEvents: GameEvent[] = [
     effects: { happiness: 15, money: -40, relationships: 10 },
     logText: '家族や友人に祝われ、結婚式を挙げた。',
     rarity: 'common',
+    image: '/assets/events/common/marriage.webp',
+    imageAlt: '結婚をイメージした画像',
   },
   {
     id: 'marriage-03',
@@ -1738,6 +1746,8 @@ const smallPinchEvents: GameEvent[] = [
     effects: { happiness: -5, mentalStrength: 5 },
     logText: 'お気に入りのおもちゃを壊してしまい、悲しい思いをした。',
     rarity: 'common',
+    image: '/assets/events/common/pinch.webp',
+    imageAlt: '人生のピンチをイメージした画像',
   },
   {
     id: 'smallpinch-02',
@@ -3052,6 +3062,8 @@ const lifePathEvents: GameEvent[] = [
     statusEffects: { occupation: '地元企業勤務', annualIncomeDelta: 40 },
     logText: '地元企業に就職し、地に足のついたスタートを切った。',
     rarity: 'common',
+    image: '/assets/events/common/job-start.webp',
+    imageAlt: '就職をイメージした画像',
     eventType: 'growth',
   },
   {
