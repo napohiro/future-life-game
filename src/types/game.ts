@@ -243,6 +243,11 @@ export interface GameEvent {
   // （例：昭和編の大阪万博イベントに yearRange: [1970, 1970] を指定すると、年齢が合っていても
   // 暦年が1970年でなければ出現しない）。未指定の場合は暦年による絞り込みを行わない。
   yearRange?: [number, number];
+  // イベントパネル上部に表示するイメージ画像（public/assets/events 配下のパスを想定）。
+  // 未指定の場合は今まで通りタイトル・本文のみのテキスト表示になる。
+  image?: string;
+  // 画像のalt属性。未指定の場合はEventModal側でevent.titleをalt代わりに使う。
+  imageAlt?: string;
 }
 
 export type LogImportance = 'normal' | 'high' | 'critical';

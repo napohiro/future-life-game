@@ -125,6 +125,13 @@ function EventModal({
   return (
     <div className="modal-overlay">
       <div className={`modal ${moodClass}`}>
+        {event.image && (
+          <img
+            src={event.image}
+            alt={event.imageAlt || event.title}
+            className="event-modal-image"
+          />
+        )}
         {result === null ? (
           <>
             {isMemoryCard ? (

@@ -2227,6 +2227,17 @@
   background: #ece7f8;
 }
 
+/* イベントに画像が設定されている場合のみ表示するイメージ画像。
+   未設定イベントは要素自体が描画されないため、空枠やbroken imageは出ない。 */
+.event-modal-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
 .modal__title {
   font-size: 21px;
   font-weight: 800;
