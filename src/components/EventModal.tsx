@@ -124,7 +124,7 @@ function EventModal({
 
   return (
     <div className="modal-overlay">
-      <div className={`modal ${moodClass}`}>
+      <div className={`modal modal--event ${moodClass}`}>
         {event.image && (
           <img
             src={event.image}
@@ -132,115 +132,127 @@ function EventModal({
             className="event-modal-image"
           />
         )}
-        {result === null ? (
-          <>
-            {isMemoryCard ? (
-              <div className="modal__mood-banner modal__mood-banner--memory-card">📼 思い出カード</div>
-            ) : (
-              <div className={`modal__mood-banner ${primaryBanner.className}`}>
-                {primaryBanner.text}
-                {primaryBanner.sub && <span className="modal__risk-sublabel">{primaryBanner.sub}</span>}
-                {primaryBanner.showAge && <span className="modal__banner-age">{age}歳</span>}
-              </div>
-            )}
+        <div className="modal__body">
+          {result === null ? (
+            <>
+              {isMemoryCard ? (
+                <div className="modal__mood-banner modal__mood-banner--memory-card">📼 思い出カード</div>
+              ) : (
+                <div className={`modal__mood-banner ${primaryBanner.className}`}>
+                  {primaryBanner.text}
+                  {primaryBanner.sub && <span className="modal__risk-sublabel">{primaryBanner.sub}</span>}
+                  {primaryBanner.showAge && <span className="modal__banner-age">{age}歳</span>}
+                </div>
+              )}
 
-            {rarityBadge && <div className="modal__badge modal__badge--rare">{rarityBadge}</div>}
-            <h3 className="modal__title">{event.title}</h3>
-            <p className="modal__description">{event.description}</p>
-            {isMemoryCard && event.memoryQuote && <p className="modal__memory-quote">「{event.memoryQuote}」</p>}
+              {rarityBadge && <div className="modal__badge modal__badge--rare">{rarityBadge}</div>}
+              <h3 className="modal__title">{event.title}</h3>
+              <p className="modal__description">{event.description}</p>
+              {isMemoryCard && event.memoryQuote && <p className="modal__memory-quote">「{event.memoryQuote}」</p>}
 
-            {pendingFate ? (
-              <FateRoulette
-                title={pendingFate.fateRoulette.title}
-                outcomes={pendingFate.fateRoulette.outcomes}
-                soundEnabled={soundEnabled}
-                onSpin={onSpinFate}
-                onSettled={onFateSettled}
-              />
-            ) : event.choices ? (
-              <div className="modal__choices">
-                {event.choices.map((choice) => (
-                  <button
-                    key={choice.id}
-                    type="button"
-                    className="btn btn--primary"
-                    onClick={() => onChoose(choice)}
-                  >
-                    {choice.label}
-                  </button>
-                ))}
+              {pendingFate && (
+                <FateRoulette
+                  title={pendingFate.fateRoulette.title}
+                  outcomes={pendingFate.fateRoulette.outcomes}
+                  soundEnabled={soundEnabled}
+                  onSpin={onSpinFate}
+                  onSettled={onFateSettled}
+                />
+              )}
+            </>
+          ) : (
+            <>
+              <div className="modal__badge-row">
+                <div className="modal__badge">結果</div>
+                <div className="modal__badge modal__badge--type">
+                  {EVENT_TYPE_ICONS[eventType]} {EVENT_TYPE_LABELS[eventType]}
+                </div>
               </div>
-            ) : (
-              <button type="button" className="btn btn--primary btn--large" onClick={() => onChoose(undefined)}>
-                次へ
-              </button>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="modal__badge-row">
-              <div className="modal__badge">結果</div>
-              <div className="modal__badge modal__badge--type">
-                {EVENT_TYPE_ICONS[eventType]} {EVENT_TYPE_LABELS[eventType]}
-              </div>
-            </div>
-            <h3 className="modal__title">{event.title}</h3>
-            {result.choiceLabel && <p className="modal__choice-label">選択：{result.choiceLabel}</p>}
-            {result.fateOutcomeLabel && result.fateSeverity && (
-              <div className={`modal__fate-result modal__fate-result--${result.fateSeverity}`}>
-                <span className="modal__fate-result-icon">{FATE_SEVERITY_ICONS[result.fateSeverity]}</span>
-                <span className="modal__fate-result-label">
-                  運命の結果：{result.fateOutcomeLabel}（{FATE_SEVERITY_LABELS[result.fateSeverity]}）
-                </span>
-              </div>
-            )}
+              <h3 className="modal__title">{event.title}</h3>
+              {result.choiceLabel && <p className="modal__choice-label">選択：{result.choiceLabel}</p>}
+              {result.fateOutcomeLabel && result.fateSeverity && (
+                <div className={`modal__fate-result modal__fate-result--${result.fateSeverity}`}>
+                  <span className="modal__fate-result-icon">{FATE_SEVERITY_ICONS[result.fateSeverity]}</span>
+                  <span className="modal__fate-result-label">
+                    運命の結果：{result.fateOutcomeLabel}（{FATE_SEVERITY_LABELS[result.fateSeverity]}）
+                  </span>
+                </div>
+              )}
 
-            <ul className="modal__effects">
-              {(Object.keys(result.effects) as StatKey[]).map((key) => {
-                const value = result.effects[key] ?? 0;
-                if (value === 0) return null;
-                return (
-                  <li key={key} className={value > 0 ? 'modal__effect--up' : 'modal__effect--down'}>
-                    <span className="modal__effect-arrow">{value > 0 ? '▲' : '▼'}</span>
-                    {STAT_ICONS[key]} {STAT_LABELS[key]} {value > 0 ? '+' : ''}
-                    {value}
+              <ul className="modal__effects">
+                {(Object.keys(result.effects) as StatKey[]).map((key) => {
+                  const value = result.effects[key] ?? 0;
+                  if (value === 0) return null;
+                  return (
+                    <li key={key} className={value > 0 ? 'modal__effect--up' : 'modal__effect--down'}>
+                      <span className="modal__effect-arrow">{value > 0 ? '▲' : '▼'}</span>
+                      {STAT_ICONS[key]} {STAT_LABELS[key]} {value > 0 ? '+' : ''}
+                      {value}
+                    </li>
+                  );
+                })}
+                {result.statusEffects?.occupation !== undefined && (
+                  <li className="modal__effect--status">
+                    {STATUS_FIELD_ICONS.occupation} {STATUS_FIELD_LABELS.occupation} → {result.statusEffects.occupation}
                   </li>
-                );
-              })}
-              {result.statusEffects?.occupation !== undefined && (
-                <li className="modal__effect--status">
-                  {STATUS_FIELD_ICONS.occupation} {STATUS_FIELD_LABELS.occupation} → {result.statusEffects.occupation}
-                </li>
-              )}
-              {result.statusEffects?.annualIncomeDelta !== undefined && result.statusEffects.annualIncomeDelta !== 0 && (
-                <li className={result.statusEffects.annualIncomeDelta > 0 ? 'modal__effect--up' : 'modal__effect--down'}>
-                  <span className="modal__effect-arrow">{result.statusEffects.annualIncomeDelta > 0 ? '▲' : '▼'}</span>
-                  {STATUS_FIELD_ICONS.annualIncome} {STATUS_FIELD_LABELS.annualIncome}{' '}
-                  {result.statusEffects.annualIncomeDelta > 0 ? '+' : ''}
-                  {result.statusEffects.annualIncomeDelta}万円
-                </li>
-              )}
-              {result.statusEffects?.romanceStatus !== undefined && (
-                <li className="modal__effect--status">
-                  {STATUS_FIELD_ICONS.romanceStatus} {STATUS_FIELD_LABELS.romanceStatus} → {result.statusEffects.romanceStatus}
-                </li>
-              )}
-              {result.statusEffects?.housingStatus !== undefined && (
-                <li className="modal__effect--status">
-                  {STATUS_FIELD_ICONS.housingStatus} {STATUS_FIELD_LABELS.housingStatus} → {result.statusEffects.housingStatus}
-                </li>
-              )}
-              {Object.keys(result.effects).length === 0 && !result.statusEffects && (
-                <li className="modal__effect--none">ステータスの変化はありませんでした</li>
-              )}
-            </ul>
+                )}
+                {result.statusEffects?.annualIncomeDelta !== undefined && result.statusEffects.annualIncomeDelta !== 0 && (
+                  <li className={result.statusEffects.annualIncomeDelta > 0 ? 'modal__effect--up' : 'modal__effect--down'}>
+                    <span className="modal__effect-arrow">{result.statusEffects.annualIncomeDelta > 0 ? '▲' : '▼'}</span>
+                    {STATUS_FIELD_ICONS.annualIncome} {STATUS_FIELD_LABELS.annualIncome}{' '}
+                    {result.statusEffects.annualIncomeDelta > 0 ? '+' : ''}
+                    {result.statusEffects.annualIncomeDelta}万円
+                  </li>
+                )}
+                {result.statusEffects?.romanceStatus !== undefined && (
+                  <li className="modal__effect--status">
+                    {STATUS_FIELD_ICONS.romanceStatus} {STATUS_FIELD_LABELS.romanceStatus} → {result.statusEffects.romanceStatus}
+                  </li>
+                )}
+                {result.statusEffects?.housingStatus !== undefined && (
+                  <li className="modal__effect--status">
+                    {STATUS_FIELD_ICONS.housingStatus} {STATUS_FIELD_LABELS.housingStatus} → {result.statusEffects.housingStatus}
+                  </li>
+                )}
+                {Object.keys(result.effects).length === 0 && !result.statusEffects && (
+                  <li className="modal__effect--none">ステータスの変化はありませんでした</li>
+                )}
+              </ul>
 
-            <p className="modal__log-preview">📖 人生ログに記録：「{age}歳：{event.title}」</p>
+              <p className="modal__log-preview">📖 人生ログに記録：「{age}歳：{event.title}」</p>
+            </>
+          )}
+        </div>
 
+        {result === null ? (
+          !pendingFate && (
+            <div className="modal__footer">
+              {event.choices ? (
+                <div className="modal__choices">
+                  {event.choices.map((choice) => (
+                    <button
+                      key={choice.id}
+                      type="button"
+                      className="btn btn--primary"
+                      onClick={() => onChoose(choice)}
+                    >
+                      {choice.label}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <button type="button" className="btn btn--primary btn--large" onClick={() => onChoose(undefined)}>
+                  次へ
+                </button>
+              )}
+            </div>
+          )
+        ) : (
+          <div className="modal__footer">
             <button type="button" className="btn btn--primary btn--large" onClick={onConfirm}>
               次へ
             </button>
-          </>
+          </div>
         )}
       </div>
     </div>

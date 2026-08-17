@@ -2232,10 +2232,49 @@
 .event-modal-image {
   width: 100%;
   aspect-ratio: 16 / 9;
-  max-height: 260px;
+  max-height: 180px;
   object-fit: cover;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 380px), (max-height: 700px) {
+  .event-modal-image {
+    max-height: 150px;
+  }
+}
+
+/* EventModal専用のレイアウト調整（.modalの共通スタイルは他のモーダルとも共有しているため、
+   ここでは.modal--eventだけに効くオーバーライドとして追加する）。
+   本文（.modal__body）だけをスクロール領域にし、次へボタンを含む.modal__footerを
+   常にスマホ画面内の下部に表示し続けるための構造。 */
+.modal--event {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 20px 0;
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px);
+  overflow: hidden;
+}
+
+.modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 4px;
+}
+
+.modal__footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 0 max(16px, calc(env(safe-area-inset-bottom, 0px) + 10px));
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .modal__title {
@@ -2368,7 +2407,7 @@
   gap: 6px;
   background: #f7f9fd;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 10px 14px;
 }
 
 .modal__effect--up {
@@ -2439,7 +2478,7 @@
   font-weight: 600;
   color: #2f6fed;
   background: #f0f5ff;
-  padding: 8px 12px;
+  padding: 6px 12px;
   border-radius: 10px;
 }
 
