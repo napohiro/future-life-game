@@ -441,6 +441,9 @@ const showaTeenEvents: GameEvent[] = [
     rarity: 'common',
     image: '/assets/events/showa/showa-expo70.webp',
     imageAlt: '1970年大阪万博の未来感とにぎわいをイメージした風景',
+    historicalPriority: true,
+    targetYear: 1970,
+    oncePerGame: true,
   },
   {
     id: 'showa-teen-longing-goods',
@@ -620,6 +623,9 @@ const showaYouthEvents: GameEvent[] = [
     rarity: 'common',
     image: '/assets/events/showa/showa-oil-shock.webp',
     imageAlt: '1973年のオイルショックによる物不足と家計不安をイメージした風景',
+    historicalPriority: true,
+    targetYear: 1973,
+    oncePerGame: true,
   },
   {
     id: 'showa-youth-appliances',
@@ -773,6 +779,9 @@ const showaAdultEvents: GameEvent[] = [
     rarity: 'rare',
     image: '/assets/events/showa/showa-heisei-change.webp',
     imageAlt: '昭和から平成へ時代が移り変わる家庭の風景',
+    historicalPriority: true,
+    targetYear: 1989,
+    oncePerGame: true,
   },
   {
     id: 'showa-adult-stock-land-talk',
@@ -853,6 +862,9 @@ const showaAdultEvents: GameEvent[] = [
     rarity: 'common',
     image: '/assets/events/showa/heisei-disaster-1995.webp',
     imageAlt: '1995年の阪神・淡路大震災を象徴的に扱った街の風景',
+    historicalPriority: true,
+    targetYear: 1995,
+    oncePerGame: true,
   },
 ];
 
@@ -938,6 +950,9 @@ const showaMidlifeEvents: GameEvent[] = [
     rarity: 'common',
     image: '/assets/events/showa/heisei-financial-crisis.webp',
     imageAlt: '2008年のリーマンショックによる金融不安をイメージした画像',
+    historicalPriority: true,
+    targetYear: 2008,
+    oncePerGame: true,
   },
   {
     id: 'showa-midlife-community',
@@ -1898,6 +1913,8 @@ const showaRiskEvents: GameEvent[] = [
     rarity: 'superRare',
     image: '/assets/events/showa/showa-flight-123-symbolic.webp',
     imageAlt: '1985年の航空機事故を象徴的に扱った夕暮れの空港',
+    historicalPriority: true,
+    targetYear: 1985,
     eventType: 'choice',
     choices: [
       {
@@ -1949,6 +1966,9 @@ const showaHistoricalEvents: GameEvent[] = [
     rarity: 'common',
     image: '/assets/events/showa/showa-tv-begins.webp',
     imageAlt: '白黒テレビを囲んで見る昭和の家族',
+    historicalPriority: true,
+    targetYear: 1953,
+    oncePerGame: true,
   },
   {
     id: 'showa-history-three-treasures',
@@ -1985,6 +2005,9 @@ const showaHistoricalEvents: GameEvent[] = [
     rarity: 'common',
     image: '/assets/events/showa/showa-tokyo-tower.webp',
     imageAlt: '夕暮れの東京タワーを見上げる昭和の家族',
+    historicalPriority: true,
+    targetYear: 1958,
+    oncePerGame: true,
   },
   {
     id: 'showa-history-tokyo-olympics',
@@ -2003,6 +2026,9 @@ const showaHistoricalEvents: GameEvent[] = [
     rarity: 'rare',
     image: '/assets/events/showa/showa-olympic-1964.webp',
     imageAlt: '1964年東京オリンピックの熱気をイメージした風景',
+    historicalPriority: true,
+    targetYear: 1964,
+    oncePerGame: true,
   },
   {
     id: 'showa-history-shinkansen',
@@ -2021,6 +2047,9 @@ const showaHistoricalEvents: GameEvent[] = [
     rarity: 'rare',
     image: '/assets/events/showa/showa-shinkansen.webp',
     imageAlt: '1964年に開業した東海道新幹線をイメージした風景',
+    historicalPriority: true,
+    targetYear: 1964,
+    oncePerGame: true,
   },
   {
     id: 'showa-history-300million-case',
@@ -2039,6 +2068,9 @@ const showaHistoricalEvents: GameEvent[] = [
     rarity: 'common',
     image: '/assets/events/showa/showa-300million-case.webp',
     imageAlt: '1968年の三億円事件を象徴的に表した雨の昭和の街角',
+    historicalPriority: true,
+    targetYear: 1968,
+    oncePerGame: true,
   },
   {
     id: 'showa-history-student-movement',
@@ -2094,6 +2126,9 @@ const showaHistoricalEvents: GameEvent[] = [
     rarity: 'common',
     image: '/assets/events/showa/showa-family-computer.webp',
     imageAlt: '1983年に家族でファミコンを楽しむ昭和の居間',
+    historicalPriority: true,
+    targetYear: 1983,
+    oncePerGame: true,
   },
   {
     id: 'showa-history-neighborhood-association',

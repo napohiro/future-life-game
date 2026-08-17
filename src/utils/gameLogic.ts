@@ -795,6 +795,46 @@ function preferUnexperienced(pool: GameEvent[], player: Player): GameEvent[] {
   return unexperienced.length > 0 ? unexperienced : pool;
 }
 
+// 昭和編の画像付き史実イベント（historicalPriority: true）の優先出現確率。
+// キーは「現在の暦年とtargetYearの差の絶対値」、値はその年に優先イベントを出す確率。
+// 3年以上離れている場合はテーブルに無いため対象外（＝通常抽選にすべて委ねる）。
+const HISTORICAL_PRIORITY_CHANCE_BY_DISTANCE: Record<number, number> = {
+  0: 0.7,
+  1: 0.4,
+  2: 0.2,
+};
+
+/**
+ * 昭和編限定：現在の暦年（1948＋年齢）が targetYear に近い、未経験の画像付き史実イベント
+ * （historicalPriority: true）を、通常のマス種類・年代カテゴリ抽選より前に優先判定する。
+ * カテゴリがSTAGE_CATEGORY_ALLOWLISTに含まれているかは問わない（史実イベントは意図的に
+ * ハンドピックされた候補のため、通常のカテゴリしばりの対象外として扱う）。
+ * 対象イベントが無い・3年より離れている・確率抽選に外れた場合は null を返し、
+ * 呼び出し元（getEventForSquare）は通常のカスケード抽選にそのまま進む。
+ */
+function drawHistoricalPriorityEvent(player: Player, stage: LifeStage, settings: GameSettings): GameEvent | null {
+  if (settings.era !== 'showa') return null;
+
+  const currentYear = getCalendarYear('showa', player.age);
+  const candidates = ALL_EVENTS.filter(
+    (e) =>
+      e.historicalPriority === true &&
+      e.targetYear !== undefined &&
+      e.ageCategory === stage &&
+      isEventEligibleForPlayer(e, player, player.age) &&
+      isEventAvailableForEra(e, settings.era),
+  );
+  if (candidates.length === 0) return null;
+
+  const distances = candidates.map((e) => Math.abs(currentYear - e.targetYear!));
+  const minDistance = Math.min(...distances);
+  const chance = HISTORICAL_PRIORITY_CHANCE_BY_DISTANCE[minDistance];
+  if (chance === undefined || Math.random() >= chance) return null;
+
+  const closest = candidates.filter((_, i) => distances[i] === minDistance);
+  return pickRandomEvent(closest);
+}
+
 /**
  * マス種類・人生ステージ・世界設定・プレイヤー自身の状態から、抽選対象のイベント1件を選ぶ。
  * 固定イベントデータベースからの抽選ロジック本体。将来AI生成に差し替える際は、
@@ -808,6 +848,12 @@ function preferUnexperienced(pool: GameEvent[], player: Player): GameEvent[] {
  */
 export function getEventForSquare(player: Player, stage: LifeStage, squareType: SquareType, settings: GameSettings): GameEvent {
   const age = player.age;
+
+  // 0段階目：昭和編の画像付き史実イベント優先抽選。対象年に近ければ高確率で割り込み、
+  // 対象外・確率抽選に外れた場合は何もせず、以下の通常カスケードへそのまま進む。
+  const historicalEvent = drawHistoricalPriorityEvent(player, stage, settings);
+  if (historicalEvent) return historicalEvent;
+
   const stageAllowedCategories = STAGE_CATEGORY_ALLOWLIST[stage];
   const preferredCategories = SQUARE_TYPE_CATEGORY_MAP[squareType].filter((c) => stageAllowedCategories.includes(c));
 

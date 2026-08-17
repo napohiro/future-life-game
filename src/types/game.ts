@@ -248,6 +248,12 @@ export interface GameEvent {
   image?: string;
   // 画像のalt属性。未指定の場合はEventModal側でevent.titleをalt代わりに使う。
   imageAlt?: string;
+  // このイベントが象徴する実際の西暦年（昭和編の史実イベント優先抽選で使う）。
+  // 現在の暦年（1948＋年齢）との近さに応じて、通常抽選より優先的に出現させる基準になる。
+  targetYear?: number;
+  // trueの場合、drawHistoricalPriorityEvent（gameLogic.ts）による優先抽選の対象になる。
+  // 通常のSTAGE_CATEGORY_ALLOWLISTによるカテゴリしばりを受けない、ハンドピックされた史実イベント用。
+  historicalPriority?: boolean;
 }
 
 export type LogImportance = 'normal' | 'high' | 'critical';
