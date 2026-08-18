@@ -37,6 +37,7 @@ import {
   createInitialGameState,
   deriveImportance,
   drawEventForPosition,
+  eventNeedsStagedFlow,
   findNextActivePlayerIndex,
   forcedGraduationAtBoardEnd,
   getBoardMilestone,
@@ -212,6 +213,20 @@ function App() {
     };
     const draw = drawEventForPosition(finalizedPlayer, settings);
     setActiveDraw(draw);
+    // 選択肢・運命ルーレット・早期ゲームオーバー判定を伴わない「通常イベント」は、抽選と同時に
+    // 結果を確定してしまう（choice未指定でhandleChooseEventOptionを呼んだ場合と全く同じ計算）。
+    // これにより、EventModalは最初から内容と結果を1モーダルにまとめて表示できる
+    // （スマホで同じイベントを2回見せられるテンポの悪さを避けるため）。
+    const instantResult = eventNeedsStagedFlow(draw.event)
+      ? null
+      : {
+          effects: draw.event.effects,
+          statusEffects: draw.event.statusEffects,
+          endsLifeChance: draw.event.endsLifeChance,
+          grantsFlags: draw.event.grantsFlags,
+          graduationReasonId: draw.event.graduationReasonId,
+          eventType: getEventType(draw.event),
+        };
     setGameState((prev) => ({
       ...prev,
       players: prev.players.map((p) =>
@@ -223,7 +238,7 @@ function App() {
       turnCount: prev.turnCount + 1,
       activeEvent: draw.event,
       activePlayerIdForEvent: playerId,
-      pendingResult: null,
+      pendingResult: instantResult,
     }));
     setMoveAnimation(null);
   };

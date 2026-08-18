@@ -10,6 +10,7 @@ import {
   STAT_LABELS,
   STATUS_FIELD_ICONS,
   STATUS_FIELD_LABELS,
+  eventNeedsStagedFlow,
   getBoardMilestone,
   getEventType,
 } from '../utils/gameLogic';
@@ -111,6 +112,11 @@ function EventModal({
   const moodBanner = MOOD_BANNER[squareType];
   const riskCategoryLabel = RISK_CATEGORY_LABEL[event.category];
   const eventType = result ? result.eventType : getEventType(event);
+  // 選択肢・運命ルーレット・早期ゲームオーバー判定を伴わない「通常イベント」は、抽選と同時に
+  // 結果が確定済み（App.tsx側）で渡ってくる。この場合は内容と結果を1モーダルにまとめて表示し、
+  // 「次へ」を1回押すだけで完結させる（同じ内容を2回見せない）。
+  const isInstantResult = result !== null && !eventNeedsStagedFlow(event);
+  const showPersonalHeading = societyEvents.length > 0;
 
   // イベントの「種別」を表すラベルは、常にこの1個だけに統一する（squareType別・eventType別の
   // バッジを別々に並べない）。年齢は末尾に小さく添えるだけにし、思い出カードだけは例外的に年齢を出さない。
@@ -151,7 +157,7 @@ function EventModal({
           )}
           {result === null ? (
             <>
-              {societyEvents.length > 0 && <div className="modal__section-heading">👤 あなたの出来事</div>}
+              {showPersonalHeading && <div className="modal__section-heading">👤 あなたの出来事</div>}
               {isMemoryCard ? (
                 <div className="modal__mood-banner modal__mood-banner--memory-card">📼 思い出カード</div>
               ) : (
@@ -179,13 +185,32 @@ function EventModal({
             </>
           ) : (
             <>
+              {isInstantResult && (
+                <>
+                  {showPersonalHeading && <div className="modal__section-heading">👤 あなたの出来事</div>}
+                  {isMemoryCard ? (
+                    <div className="modal__mood-banner modal__mood-banner--memory-card">📼 思い出カード</div>
+                  ) : (
+                    <div className={`modal__mood-banner ${primaryBanner.className}`}>
+                      {primaryBanner.text}
+                      {primaryBanner.sub && <span className="modal__risk-sublabel">{primaryBanner.sub}</span>}
+                      {primaryBanner.showAge && <span className="modal__banner-age">{age}歳</span>}
+                    </div>
+                  )}
+                  {rarityBadge && <div className="modal__badge modal__badge--rare">{rarityBadge}</div>}
+                  <h3 className="modal__title">{event.title}</h3>
+                  <p className="modal__description">{event.description}</p>
+                  {isMemoryCard && event.memoryQuote && <p className="modal__memory-quote">「{event.memoryQuote}」</p>}
+                  <div className="modal__result-divider" />
+                </>
+              )}
               <div className="modal__badge-row">
                 <div className="modal__badge">結果</div>
                 <div className="modal__badge modal__badge--type">
                   {EVENT_TYPE_ICONS[eventType]} {EVENT_TYPE_LABELS[eventType]}
                 </div>
               </div>
-              <h3 className="modal__title">{event.title}</h3>
+              {!isInstantResult && <h3 className="modal__title">{event.title}</h3>}
               {result.choiceLabel && <p className="modal__choice-label">選択：{result.choiceLabel}</p>}
               {result.fateOutcomeLabel && result.fateSeverity && (
                 <div className={`modal__fate-result modal__fate-result--${result.fateSeverity}`}>

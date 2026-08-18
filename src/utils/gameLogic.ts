@@ -1173,6 +1173,16 @@ export function getEventType(event: GameEvent): EventType {
   return 'growth';
 }
 
+/**
+ * このイベントが「選択肢を選ぶ」「運命ルーレットを回す」「早期ゲームオーバー判定を伴う」といった、
+ * プレイヤーの操作・追加演出を必要とする段階表示（内容確認→結果確認の2ステップ）が要るかどうか。
+ * false の場合、App.tsx はイベント抽選と同時に結果を確定し、EventModalは1モーダルで
+ * 内容と結果を一度に表示する（スマホでの「同じ内容を2回見る」テンポの悪さを避けるため）。
+ */
+export function eventNeedsStagedFlow(event: GameEvent): boolean {
+  return (event.choices?.length ?? 0) > 0 || event.fateRoulette !== undefined || event.endsLifeChance !== undefined;
+}
+
 // ---------------------------------------------------------------------------
 // 運命ルーレット（イベント専用の小型ルーレットで「運」の要素を決める）
 // ---------------------------------------------------------------------------

@@ -2311,6 +2311,13 @@
   align-self: flex-start;
 }
 
+/* 通常イベント（選択肢・運命ルーレット不要）を1モーダルにまとめた際、内容部分と
+   結果・ステータス変化部分の間にだけ入れる、控えめな区切り線。 */
+.modal__result-divider {
+  border-top: 1px dashed rgba(15, 23, 42, 0.12);
+  margin: 2px 0;
+}
+
 .modal__title {
   font-size: 21px;
   font-weight: 800;
