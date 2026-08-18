@@ -420,8 +420,8 @@ const presentCareEvents: GameEvent[] = [
     effects: { mentalStrength: -10, money: -10 },
     logText: '親の介護という現実と向き合うことになった。',
     rarity: 'common',
-    image: '/assets/events/modern/caregiving.webp',
-    imageAlt: '現代の介護をイメージした画像',
+    image: '/assets/events/common/pinch.webp',
+    imageAlt: 'ピンチのイメージ画像',
     eventType: 'choice',
     choices: [
       { id: 'balance', label: '仕事と両立しながら介護する', effects: { health: -10, mentalStrength: -5, relationships: 10 } },
@@ -469,8 +469,8 @@ const presentFraudEvents: GameEvent[] = [
     effects: { mentalStrength: -15, trust: -10 },
     logText: 'SNSでの炎上騒動に、しばらく心を痛めた。',
     rarity: 'common',
-    image: '/assets/events/modern/sns-trouble.webp',
-    imageAlt: 'SNSトラブルをイメージした画像',
+    image: '/assets/events/common/pinch.webp',
+    imageAlt: 'ピンチのイメージ画像',
   },
   {
     id: 'present-fraud-sidejob-scam',

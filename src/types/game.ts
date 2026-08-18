@@ -387,7 +387,6 @@ export type GamePhase =
   | 'title'
   | 'eraSelect'
   | 'setup'
-  | 'worldSettings'
   | 'howToPlay'
   | 'playing'
   | 'finished';

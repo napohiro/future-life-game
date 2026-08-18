@@ -835,6 +835,47 @@ function drawHistoricalPriorityEvent(player: Player, stage: LifeStage, settings:
   return pickRandomEvent(closest);
 }
 
+// ============================================================
+// 「この年の社会」表示（EventModal上部）用の見出し
+// ------------------------------------------------------------
+// 既存の史実イベント（historicalPriority: true / targetYear指定あり）を、その手番で実際に
+// 抽選されたかどうかに関わらず「その年、世の中で起きていたこと」として見出し表示するための
+// マッピング。抽選ロジック（drawHistoricalPriorityEvent・出現率）や効果・人生ログには一切影響しない、
+// 表示専用の追加情報。
+// ============================================================
+export interface SocietyHeadline {
+  year: number;
+  headline: string;
+}
+
+const SOCIETY_HEADLINE_BY_EVENT_ID: Record<string, string> = {
+  'showa-history-tv-broadcast': 'テレビ放送が始まる',
+  'showa-history-tokyo-tower': '東京タワー完成',
+  'showa-history-tokyo-olympics': '東京オリンピック開催',
+  'showa-history-shinkansen': '東海道新幹線開業',
+  'showa-history-300million-case': '三億円事件が発生',
+  'showa-teen-expo-inspired': '大阪万博（日本万国博覧会）開催',
+  'showa-youth-oil-shock': 'オイルショック（石油危機）',
+  'showa-history-famicom': '家庭用ゲーム機（ファミコン）発売',
+  'showa-history-heisei-change': '昭和から平成へ改元',
+  'showa-history-great-earthquake-1995': '大規模な地震災害が発生',
+  'showa-history-lehman-shock': 'リーマン・ショック（世界的な金融危機）',
+};
+
+/**
+ * 現在の暦年（時代の開始年＋年齢）に該当する「社会イベント見出し」一覧を返す
+ * （EventModal上部の「この年の社会」表示用）。該当が無い年は空配列を返し、
+ * 呼び出し元はその場合セクション自体を表示しない。
+ */
+export function getSocietyHeadlinesForYear(era: EraId, calendarYear: number): SocietyHeadline[] {
+  return ALL_EVENTS.filter(
+    (e) =>
+      e.targetYear === calendarYear &&
+      (!e.era || e.era.includes(era)) &&
+      SOCIETY_HEADLINE_BY_EVENT_ID[e.id] !== undefined,
+  ).map((e) => ({ year: e.targetYear!, headline: SOCIETY_HEADLINE_BY_EVENT_ID[e.id] }));
+}
+
 /**
  * マス種類・人生ステージ・世界設定・プレイヤー自身の状態から、抽選対象のイベント1件を選ぶ。
  * 固定イベントデータベースからの抽選ロジック本体。将来AI生成に差し替える際は、

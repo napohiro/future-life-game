@@ -13,6 +13,7 @@ import {
   getBoardMilestone,
   getEventType,
 } from '../utils/gameLogic';
+import type { SocietyHeadline } from '../utils/gameLogic';
 
 interface EventModalProps {
   event: GameEvent;
@@ -21,6 +22,8 @@ interface EventModalProps {
   result: PendingEventResult | null;
   pendingFate: PendingFateRoulette | null;
   soundEnabled: boolean;
+  // その年に世の中で起きていたこと（この手番で抽選されたイベントとは独立）。無ければ空配列。
+  societyEvents: SocietyHeadline[];
   onChoose: (choice?: EventChoice) => void;
   onConfirm: () => void;
   onSpinFate: () => FateOutcome;
@@ -87,6 +90,7 @@ function EventModal({
   result,
   pendingFate,
   soundEnabled,
+  societyEvents,
   onChoose,
   onConfirm,
   onSpinFate,
@@ -133,8 +137,21 @@ function EventModal({
           />
         )}
         <div className="modal__body">
+          {societyEvents.length > 0 && (
+            <div className="modal__society">
+              <div className="modal__society-heading">🗞️ この年の社会</div>
+              <ul className="modal__society-list">
+                {societyEvents.map((item) => (
+                  <li key={`${item.year}-${item.headline}`}>
+                    {item.year}年：{item.headline}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {result === null ? (
             <>
+              {societyEvents.length > 0 && <div className="modal__section-heading">👤 あなたの出来事</div>}
               {isMemoryCard ? (
                 <div className="modal__mood-banner modal__mood-banner--memory-card">📼 思い出カード</div>
               ) : (

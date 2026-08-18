@@ -145,7 +145,7 @@ function PlayerSetup({ onStart, onBack }: PlayerSetupProps) {
           戻る
         </button>
         <button type="button" className="btn btn--primary" disabled={!isValid} onClick={handleSubmit}>
-          つぎへ（世界設定）
+          この時代でゲームスタート
         </button>
       </div>
     </div>

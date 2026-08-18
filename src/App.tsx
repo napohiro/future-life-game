@@ -14,7 +14,7 @@ import ReleaseNotesModal from './components/ReleaseNotesModal';
 import RouteChoiceModal from './components/RouteChoiceModal';
 import TitleScreen from './components/TitleScreen';
 import TurnAnnouncement from './components/TurnAnnouncement';
-import WorldSettings from './components/WorldSettings';
+import { getCalendarYear, getEraSocietyProfile } from './data/eras';
 import type {
   BranchRoute,
   EraId,
@@ -41,6 +41,7 @@ import {
   forcedGraduationAtBoardEnd,
   getBoardMilestone,
   getEventType,
+  getSocietyHeadlinesForYear,
   initializePlayers,
   isGameFinished,
   mergeStatEffects,
@@ -72,7 +73,6 @@ interface PendingMove {
 
 function App() {
   const [gameState, setGameState] = useState<GameState>(createInitialGameState());
-  const [pendingPlayerInputs, setPendingPlayerInputs] = useState<PlayerSetupInput[] | null>(null);
   const [activeDraw, setActiveDraw] = useState<DrawnEvent | null>(null);
   const [moveAnimation, setMoveAnimation] = useState<MoveAnimationState | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -123,7 +123,6 @@ function App() {
   const handleCloseReleaseNotes = () => setShowReleaseNotes(false);
 
   const handleBackToTitle = () => {
-    setPendingPlayerInputs(null);
     setActiveDraw(null);
     setMoveAnimation(null);
     pendingMoveRef.current = null;
@@ -134,7 +133,6 @@ function App() {
 
   // 最終結果画面から、時代選択からやり直したい場合のショートカット（タイトル画面を経由しない）。
   const handlePlayDifferentEra = () => {
-    setPendingPlayerInputs(null);
     setActiveDraw(null);
     setMoveAnimation(null);
     pendingMoveRef.current = null;
@@ -145,20 +143,17 @@ function App() {
 
   const handleDismissTurnAnnouncement = () => setTurnAnnouncementPlayerId(null);
 
+  // 「この時代の社会」説明画面は廃止し、プレイヤー設定の直後に時代ごとの社会設定を自動適用して
+  // そのままゲームを開始する（時代選択後の導線を止めないため）。
   const handlePlayersReady = (inputs: PlayerSetupInput[]) => {
-    setPendingPlayerInputs(inputs);
-    setGameState((prev) => ({ ...prev, phase: 'worldSettings' }));
-  };
-
-  const handleStartGame = (settings: GameSettings) => {
-    if (!pendingPlayerInputs) return;
-    const players = initializePlayers(pendingPlayerInputs);
-    setGameState({
+    const players = initializePlayers(inputs);
+    const profile = getEraSocietyProfile(gameState.settings.era);
+    setGameState((prev) => ({
       ...createInitialGameState(),
       phase: 'playing',
       players,
-      settings,
-    });
+      settings: { ...prev.settings, ...profile.settings },
+    }));
   };
 
   const setPlayerPosition = (playerId: string, position: number) => {
@@ -626,14 +621,6 @@ function App() {
         />
       )}
 
-      {gameState.phase === 'worldSettings' && (
-        <WorldSettings
-          initialSettings={gameState.settings}
-          onStart={handleStartGame}
-          onBack={() => setGameState((prev) => ({ ...prev, phase: 'setup' }))}
-        />
-      )}
-
       {gameState.phase === 'playing' && (
         <>
           <GameBoard
@@ -680,6 +667,13 @@ function App() {
               result={gameState.pendingResult}
               pendingFate={gameState.pendingFateRoulette}
               soundEnabled={soundEnabled}
+              societyEvents={getSocietyHeadlinesForYear(
+                gameState.settings.era,
+                getCalendarYear(
+                  gameState.settings.era,
+                  gameState.players.find((p) => p.id === gameState.activePlayerIdForEvent)?.age ?? 0,
+                ),
+              )}
               onChoose={handleChooseEventOption}
               onConfirm={handleConfirmEventResult}
               onSpinFate={handleSpinFate}
