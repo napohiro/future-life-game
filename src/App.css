@@ -577,13 +577,13 @@
 }
 
 .game-board__stage-pill {
-  font-size: 11px;
+  font-size: 12.5px;
   font-weight: 700;
   color: #52596b;
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid #e7ebf3;
   border-radius: 999px;
-  padding: 3px 10px;
+  padding: 4px 10px;
   letter-spacing: 0.02em;
   white-space: nowrap;
   overflow: hidden;
@@ -593,15 +593,35 @@
 }
 
 .game-board__era-pill {
-  font-size: 11px;
+  font-size: 12.5px;
   font-weight: 700;
   color: #7a8299;
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid #e7ebf3;
   border-radius: 999px;
-  padding: 3px 10px;
+  padding: 4px 10px;
   letter-spacing: 0.02em;
   flex-shrink: 0;
+}
+
+/* 常時表示していた説明文を「i」アイコンに退避。タップ時だけモーダルで表示する。 */
+.game-board__info-btn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid #e7ebf3;
+  color: #8891a5;
+  font-size: 12px;
+  font-weight: 800;
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  cursor: pointer;
 }
 
 .game-board__era-pill--showa {
@@ -705,12 +725,12 @@
 }
 
 .game-board__turn-name {
-  font-size: 13.5px;
+  font-size: 16px;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 40vw;
+  max-width: 38vw;
 }
 
 /* 「現在34歳」表示。他の情報より少し目立つ大きさで現在の実年齢を表示する。
@@ -721,7 +741,7 @@
   align-items: baseline;
   flex-wrap: wrap;
   gap: 2px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: #6b7488;
 }
@@ -729,7 +749,7 @@
 /* 「（1956年）」の西暦部分。狭い画面では年齢部分と別行に折り返してもよいが、
    「〇〇年）」の途中では改行させたくないため、この単位自体はnowrapにしている。 */
 .game-board__turn-year {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: #8891a5;
   white-space: nowrap;
@@ -737,7 +757,7 @@
 
 .game-board__turn-age-value {
   display: inline-block;
-  font-size: 15px;
+  font-size: 19px;
   font-weight: 800;
   color: #1f2430;
   line-height: 1;
@@ -772,12 +792,12 @@
 .game-board__turn-priority-stats {
   display: flex;
   gap: 4px;
-  margin-top: 2px;
+  margin-top: 3px;
   flex-wrap: wrap;
 }
 
 .game-board__turn-stat {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   color: #414a5c;
   background: #f5f7fb;
@@ -793,7 +813,7 @@
 
 .game-board__top-actions {
   display: flex;
-  gap: 3px;
+  gap: 2px;
   flex-shrink: 0;
 }
 
@@ -805,14 +825,14 @@
 }
 
 .btn--icon-round {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1;
   border-radius: 50%;
   background: #f5f7fb;
@@ -900,12 +920,12 @@
 
 .board-info-note {
   margin: 0;
-  font-size: 11.5px;
+  font-size: 13px;
   color: #52596b;
   background: #fff;
   border-radius: 12px;
-  padding: 6px 12px;
-  line-height: 1.45;
+  padding: 8px 12px;
+  line-height: 1.5;
 }
 
 .board-info-note--fog {
@@ -946,7 +966,7 @@
   background-repeat: repeat-y;
   background-size: 100% auto;
   background-position: top center;
-  opacity: 0.26;
+  opacity: 0.15;
   pointer-events: none;
 }
 
@@ -996,7 +1016,7 @@
 .board-stage-band__scatter {
   position: absolute;
   font-size: 22px;
-  opacity: 0.22;
+  opacity: 0.13;
   pointer-events: none;
   z-index: 0;
 }
@@ -1014,7 +1034,7 @@
   pointer-events: none;
   /* 普段は控えめな透過表示にして、マス目・プレイヤーコマ・イベントアイコンの邪魔をしない
      「盤面の世界観を補助する装飾」として扱う。現在いるエリアだけ--currentで不透明に戻す。 */
-  opacity: 0.32;
+  opacity: 0.2;
   transition: opacity 0.25s ease;
 }
 
@@ -1295,11 +1315,9 @@
   flex-shrink: 0;
 }
 
+/* マス番号は読めても読めなくてもゲーム進行に支障がないため、視覚ノイズを減らす目的で非表示にする。 */
 .board-square__index {
-  font-size: 7px;
-  color: rgba(0, 0, 0, 0.35);
-  font-weight: 600;
-  line-height: 1;
+  display: none;
 }
 
 .board-square__branch-mark {
@@ -1357,8 +1375,8 @@
 }
 
 .token {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1475,8 +1493,8 @@
   position: relative;
   /* タップ領域は操作性のため十分に確保しつつ、見た目のホイール自体は
      一回り小さくして（下のroulette-wheelを参照）フッター全体の高さを抑える。 */
-  width: 84px;
-  height: 84px;
+  width: 96px;
+  height: 96px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -1515,8 +1533,8 @@
 
 .roulette-wheel {
   position: relative;
-  width: 76px;
-  height: 76px;
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
   background: conic-gradient(
     from -30deg,
@@ -1584,7 +1602,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
   color: #fff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
@@ -1602,8 +1620,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 21px;
-  height: 21px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #ffffff, #d9dfe8 70%);
   display: flex;
@@ -1642,20 +1660,20 @@
 }
 
 .roulette__result-row {
-  min-height: 22px;
+  min-height: 24px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
 }
 
 .roulette__result-readout {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: #1f2430;
 }
 
 .roulette__result-readout strong {
-  font-size: 26px;
+  font-size: 28px;
   color: #2f6fed;
 }
 

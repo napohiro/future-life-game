@@ -66,6 +66,7 @@ function GameBoard({
   const eraDefinition = getEraDefinition(era);
   const currentSquareRef = useRef<HTMLDivElement>(null);
   const [showParticipants, setShowParticipants] = useState(false);
+  const [showInfoNote, setShowInfoNote] = useState(false);
 
   useEffect(() => {
     currentSquareRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -117,6 +118,14 @@ function GameBoard({
           <span className={`game-board__era-pill game-board__era-pill--${era}`}>
             {eraDefinition.icon} {eraDefinition.year}年｜{eraDefinition.name}
           </span>
+          <button
+            type="button"
+            className="game-board__info-btn"
+            onClick={() => setShowInfoNote(true)}
+            aria-label="遊び方のヒントを見る"
+          >
+            i
+          </button>
         </div>
         <div
           className="game-board__top"
@@ -225,7 +234,7 @@ function GameBoard({
               );
             })}
           </span>
-          <span className="game-board__participants-label">参加者 {players.length}人</span>
+          <span className="game-board__participants-label">{players.length}人</span>
           <span className="game-board__participants-chevron" aria-hidden="true">
             ›
           </span>
@@ -235,11 +244,11 @@ function GameBoard({
       <div className="game-board__board-area">
         {moveAnimation && (
           <div className="game-board__move-toast">
-            {moveAnimation.playerName}さん、{moveAnimation.totalSteps}マス進みます
+            {moveAnimation.totalSteps}マス進みます
             {moveAnimation.stepIndex > 0 && (
               <span className="game-board__move-toast-progress">
                 {' '}
-                （{moveAnimation.stepIndex} / {moveAnimation.totalSteps}マス）
+                （{moveAnimation.stepIndex} / {moveAnimation.totalSteps}）
               </span>
             )}
           </div>
@@ -247,12 +256,9 @@ function GameBoard({
 
         <div className="board-scroll">
           <div className="board-scroll__notes">
-            <p className="board-info-note">
-              💡 人生の節目（18・30・45・60歳）では、将来のルートが分かれることがあります。
-            </p>
             {currentStage === 'stage6' && (
               <p className="board-info-note board-info-note--fog">
-                🌫️ この先の人生は、まだ見えていません。進むごとに、少しずつ道が開けていきます。
+                🌫️ この先の人生は、まだ見えていません。進むごとに道が開けていきます。
               </p>
             )}
           </div>
@@ -391,6 +397,22 @@ function GameBoard({
                 <PlayerCard key={player.id} player={player} index={index} isCurrent={index === currentPlayerIndex} era={era} />
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {showInfoNote && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal__header">
+              <h3 className="modal__title">💡 ヒント</h3>
+              <button type="button" className="btn btn--ghost btn--small" onClick={() => setShowInfoNote(false)}>
+                閉じる
+              </button>
+            </div>
+            <p className="board-info-note">
+              人生の節目（18・30・45・60歳）では、将来のルートが分かれることがあります。
+            </p>
           </div>
         </div>
       )}
