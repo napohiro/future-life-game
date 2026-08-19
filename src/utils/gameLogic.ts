@@ -862,7 +862,8 @@ const SOCIETY_HEADLINE_BY_EVENT_ID: Record<string, string> = {
   'showa-history-great-earthquake-1995': '大規模な地震災害が発生',
   'showa-history-lehman-shock': 'リーマン・ショック（世界的な金融危機）',
   // 現代編（2026年スタート）：史実ではなく、ゲーム内フィクションとしての未来予測トピック。
-  'present-future-2026-ai-daily': '生成AIが日常化',
+  // 2026年はゲーム開始年そのものなので、最初の社会イベントは2027年から。
+  'present-future-2027-ai-daily': '生成AIが日常化',
   'present-future-2031-ai-education': 'AI教育の普及',
   'present-future-2036-sns-trust': 'SNS信用社会',
   'present-future-2041-path-diversity': '進路の多様化',
