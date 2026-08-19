@@ -1,3 +1,4 @@
+import { getGengoLabel } from '../data/eras';
 import FateRoulette from './FateRoulette';
 import type { EventChoice, FateOutcome, GameEvent, PendingEventResult, PendingFateRoulette, SquareType, StatKey } from '../types/game';
 import {
@@ -149,7 +150,10 @@ function EventModal({
               <ul className="modal__society-list">
                 {societyEvents.map((item) => (
                   <li key={`${item.year}-${item.headline}`}>
-                    {item.year}年：{item.headline}
+                    <span className="modal__society-year">
+                      {item.year}年（{getGengoLabel(item.year)}）
+                    </span>
+                    <span className="modal__society-headline">｜{item.headline}</span>
                   </li>
                 ))}
               </ul>

@@ -2316,11 +2316,28 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   font-size: 13px;
   color: #5c6478;
   line-height: 1.5;
 }
+
+.modal__society-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 4px;
+}
+
+/* 「1958年（昭和33年）」のような年表示。和暦を含めても改行で分断されないよう、
+   この単位自体はnowrapにし、長い見出しだけが次の行に折り返すようにする。 */
+.modal__society-year {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #33394a;
+  white-space: nowrap;
+}
+
 
 .modal__section-heading {
   font-size: 12px;
