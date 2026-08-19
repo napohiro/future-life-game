@@ -805,16 +805,17 @@ const HISTORICAL_PRIORITY_CHANCE_BY_DISTANCE: Record<number, number> = {
 };
 
 /**
- * 昭和編・現代編限定：現在の暦年（時代の開始年＋年齢）が targetYear に近い、未経験の
+ * 昭和編・現代編・近未来編共通：現在の暦年（時代の開始年＋年齢）が targetYear に近い、未経験の
  * 史実／未来予測イベント（historicalPriority: true）を、通常のマス種類・年代カテゴリ抽選より
- * 前に優先判定する。昭和編は実際の史実、現代編は2026年スタートのフィクションとしての
- * 未来予測イベントが対象。カテゴリがSTAGE_CATEGORY_ALLOWLISTに含まれているかは問わない
- * （史実・未来予測イベントは意図的にハンドピックされた候補のため、通常のカテゴリしばりの対象外として扱う）。
+ * 前に優先判定する。昭和編は実際の史実、現代編（2026年スタート）・近未来編（2050年スタート）は
+ * それぞれの世界線でのフィクションとしての未来予測イベントが対象。カテゴリがSTAGE_CATEGORY_ALLOWLIST
+ * に含まれているかは問わない（史実・未来予測イベントは意図的にハンドピックされた候補のため、
+ * 通常のカテゴリしばりの対象外として扱う）。
  * 対象イベントが無い・3年より離れている・確率抽選に外れた場合は null を返し、
  * 呼び出し元（getEventForSquare）は通常のカスケード抽選にそのまま進む。
  */
 function drawHistoricalPriorityEvent(player: Player, stage: LifeStage, settings: GameSettings): GameEvent | null {
-  if (settings.era !== 'showa' && settings.era !== 'present') return null;
+  if (settings.era !== 'showa' && settings.era !== 'present' && settings.era !== 'future') return null;
 
   const currentYear = getCalendarYear(settings.era, player.age);
   const candidates = ALL_EVENTS.filter(
@@ -875,6 +876,19 @@ const SOCIETY_HEADLINE_BY_EVENT_ID: Record<string, string> = {
   'present-future-2071-life-redesign': '人生再設計ブーム',
   'present-future-2076-healthspan-business': '健康寿命ビジネス拡大',
   'present-future-2086-second-career': 'セカンドキャリア時代',
+  // 近未来編（2050年スタート）：宇宙開発・宇宙人との協力を軸にした未来フィクションのトピック。
+  'future-society-2051-private-spaceport': '民間宇宙港が一般利用を開始',
+  'future-society-2055-lunar-city': '月面居住区が本格稼働',
+  'future-society-2060-mars-route': '火星定期航路が開設',
+  'future-society-2065-deep-space-signal': '深宇宙から知的信号を受信',
+  'future-society-2070-first-contact': '宇宙人との平和的接触が実現',
+  'future-society-2075-alien-cooperation': '宇宙人との共同研究が始まる',
+  'future-society-2080-stellar-engine': '宇宙人技術で新型航行エンジンが実用化',
+  'future-society-2085-solar-system-network': '地球・月・火星を結ぶ生活圏が形成',
+  'future-society-2090-jovian-mission': '木星圏探査プロジェクトが始動',
+  'future-society-2095-exoplanet-project': '居住可能惑星への移住計画が発表',
+  'future-society-2100-interplanetary-school': '他惑星留学・移住準備制度が始まる',
+  'future-society-2110-new-world-settlement': '人類と宇宙人が協力する新惑星都市が誕生',
 };
 
 /**
