@@ -1,6 +1,6 @@
 import { getGengoLabel } from '../data/eras';
 import FateRoulette from './FateRoulette';
-import type { EventChoice, FateOutcome, GameEvent, PendingEventResult, PendingFateRoulette, SquareType, StatKey } from '../types/game';
+import type { EraId, EventChoice, FateOutcome, GameEvent, PendingEventResult, PendingFateRoulette, SquareType, StatKey } from '../types/game';
 import {
   EVENT_TYPE_ICONS,
   EVENT_TYPE_LABELS,
@@ -20,6 +20,7 @@ import type { SocietyHeadline } from '../utils/gameLogic';
 interface EventModalProps {
   event: GameEvent;
   age: number;
+  era: EraId;
   squareType: SquareType;
   result: PendingEventResult | null;
   pendingFate: PendingFateRoulette | null;
@@ -31,6 +32,15 @@ interface EventModalProps {
   onSpinFate: () => FateOutcome;
   onFateSettled: (outcome: FateOutcome) => void;
 }
+
+// 時代によって「この年の社会」セクションの見出しを出し分ける。昭和編は史実、現代編は
+// 2026年スタートのフィクションとしての未来予測、近未来編は近未来編の世界観トピックという
+// 位置づけの違いを、見出しの言葉でも伝える。
+const SOCIETY_HEADING_LABEL: Record<EraId, string> = {
+  showa: '🗞️ この年の社会',
+  present: '📡 この年の社会変化',
+  future: '🔭 未来社会トピック',
+};
 
 const RARITY_BADGE: Record<GameEvent['rarity'], string | null> = {
   common: null,
@@ -88,6 +98,7 @@ const MOOD_BANNER: Partial<Record<SquareType, { text: string; className: string 
 function EventModal({
   event,
   age,
+  era,
   squareType,
   result,
   pendingFate,
@@ -146,12 +157,12 @@ function EventModal({
         <div className="modal__body">
           {societyEvents.length > 0 && (
             <div className="modal__society">
-              <div className="modal__society-heading">🗞️ この年の社会</div>
+              <div className="modal__society-heading">{SOCIETY_HEADING_LABEL[era]}</div>
               <ul className="modal__society-list">
                 {societyEvents.map((item) => (
                   <li key={`${item.year}-${item.headline}`}>
                     <span className="modal__society-year">
-                      {item.year}年（{getGengoLabel(item.year)}）
+                      {item.year}年{era === 'showa' && `（${getGengoLabel(item.year)}）`}
                     </span>
                     <span className="modal__society-headline">｜{item.headline}</span>
                   </li>

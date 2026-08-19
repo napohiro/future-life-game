@@ -248,11 +248,12 @@ export interface GameEvent {
   image?: string;
   // 画像のalt属性。未指定の場合はEventModal側でevent.titleをalt代わりに使う。
   imageAlt?: string;
-  // このイベントが象徴する実際の西暦年（昭和編の史実イベント優先抽選で使う）。
-  // 現在の暦年（1948＋年齢）との近さに応じて、通常抽選より優先的に出現させる基準になる。
+  // このイベントが象徴する西暦年（昭和編の史実／現代編の未来予測イベント優先抽選で使う）。
+  // 現在の暦年（時代の開始年＋年齢）との近さに応じて、通常抽選より優先的に出現させる基準になる。
   targetYear?: number;
   // trueの場合、drawHistoricalPriorityEvent（gameLogic.ts）による優先抽選の対象になる。
-  // 通常のSTAGE_CATEGORY_ALLOWLISTによるカテゴリしばりを受けない、ハンドピックされた史実イベント用。
+  // 通常のSTAGE_CATEGORY_ALLOWLISTによるカテゴリしばりを受けない、ハンドピックされた
+  // 史実（昭和編）・未来予測（現代編）イベント用。
   historicalPriority?: boolean;
 }
 

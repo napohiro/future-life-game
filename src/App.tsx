@@ -678,6 +678,7 @@ function App() {
             <EventModal
               event={gameState.activeEvent}
               age={gameState.players.find((p) => p.id === gameState.activePlayerIdForEvent)?.age ?? 0}
+              era={gameState.settings.era}
               squareType={activeDraw.squareType}
               result={gameState.pendingResult}
               pendingFate={gameState.pendingFateRoulette}

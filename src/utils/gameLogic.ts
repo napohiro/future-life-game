@@ -805,17 +805,18 @@ const HISTORICAL_PRIORITY_CHANCE_BY_DISTANCE: Record<number, number> = {
 };
 
 /**
- * 昭和編限定：現在の暦年（1948＋年齢）が targetYear に近い、未経験の画像付き史実イベント
- * （historicalPriority: true）を、通常のマス種類・年代カテゴリ抽選より前に優先判定する。
- * カテゴリがSTAGE_CATEGORY_ALLOWLISTに含まれているかは問わない（史実イベントは意図的に
- * ハンドピックされた候補のため、通常のカテゴリしばりの対象外として扱う）。
+ * 昭和編・現代編限定：現在の暦年（時代の開始年＋年齢）が targetYear に近い、未経験の
+ * 史実／未来予測イベント（historicalPriority: true）を、通常のマス種類・年代カテゴリ抽選より
+ * 前に優先判定する。昭和編は実際の史実、現代編は2026年スタートのフィクションとしての
+ * 未来予測イベントが対象。カテゴリがSTAGE_CATEGORY_ALLOWLISTに含まれているかは問わない
+ * （史実・未来予測イベントは意図的にハンドピックされた候補のため、通常のカテゴリしばりの対象外として扱う）。
  * 対象イベントが無い・3年より離れている・確率抽選に外れた場合は null を返し、
  * 呼び出し元（getEventForSquare）は通常のカスケード抽選にそのまま進む。
  */
 function drawHistoricalPriorityEvent(player: Player, stage: LifeStage, settings: GameSettings): GameEvent | null {
-  if (settings.era !== 'showa') return null;
+  if (settings.era !== 'showa' && settings.era !== 'present') return null;
 
-  const currentYear = getCalendarYear('showa', player.age);
+  const currentYear = getCalendarYear(settings.era, player.age);
   const candidates = ALL_EVENTS.filter(
     (e) =>
       e.historicalPriority === true &&
@@ -860,6 +861,19 @@ const SOCIETY_HEADLINE_BY_EVENT_ID: Record<string, string> = {
   'showa-history-heisei-change': '昭和から平成へ改元',
   'showa-history-great-earthquake-1995': '大規模な地震災害が発生',
   'showa-history-lehman-shock': 'リーマン・ショック（世界的な金融危機）',
+  // 現代編（2026年スタート）：史実ではなく、ゲーム内フィクションとしての未来予測トピック。
+  'present-future-2026-ai-daily': '生成AIが日常化',
+  'present-future-2031-ai-education': 'AI教育の普及',
+  'present-future-2036-sns-trust': 'SNS信用社会',
+  'present-future-2041-path-diversity': '進路の多様化',
+  'present-future-2046-side-job-standard': '副業・複業が標準化',
+  'present-future-2051-housing-loan': '住宅ローン・住まいの選択',
+  'present-future-2056-care-work-balance': '介護と仕事の両立',
+  'present-future-2061-ai-colleague': 'AI同僚時代',
+  'present-future-2066-dual-residence': '地方移住・二拠点生活',
+  'present-future-2071-life-redesign': '人生再設計ブーム',
+  'present-future-2076-healthspan-business': '健康寿命ビジネス拡大',
+  'present-future-2086-second-career': 'セカンドキャリア時代',
 };
 
 /**
